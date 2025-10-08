@@ -14,8 +14,8 @@ const ADDED_BG_DARK = RGBA.fromInts(0, 120, 0, 220); // Darker green for emphasi
 const UNCHANGED_CODE_BG = RGBA.fromInts(15, 15, 15, 255); // Dark background for unchanged code lines
 const UNCHANGED_BG = RGBA.fromInts(128, 128, 128, 16); // Light gray for unchanged lines (legacy)
 const LINE_NUMBER_BG = RGBA.fromInts(5, 5, 5, 255); // Darker gray background for line numbers
-const REMOVED_LINE_NUMBER_BG = RGBA.fromInts(40, 0, 0, 255); // Darker red for removed line numbers
-const ADDED_LINE_NUMBER_BG = RGBA.fromInts(0, 40, 0, 255); // Darker green for added line numbers
+const REMOVED_LINE_NUMBER_BG = RGBA.fromInts(60, 0, 0, 255); // Much darker red for removed line numbers
+const ADDED_LINE_NUMBER_BG = RGBA.fromInts(0, 50, 0, 255); // Much darker green for added line numbers
 
 // Custom error boundary class
 class ErrorBoundary extends React.Component<
@@ -414,6 +414,7 @@ const StructuredDiff = ({
                     : LINE_NUMBER_BG
               }
               wrap={false}
+              style={{ width: maxWidth + 2 }}
             >
               {" "}
               {lineNumber}{" "}
@@ -493,6 +494,7 @@ const StructuredDiff = ({
                   : LINE_NUMBER_BG
               }
               wrap={false}
+              style={{ width: leftMaxWidth + 2 }}
             >
               {" "}
               {leftLine.lineNumber}{" "}
@@ -522,6 +524,7 @@ const StructuredDiff = ({
                   : LINE_NUMBER_BG
               }
               wrap={false}
+              style={{ width: rightMaxWidth + 2 }}
             >
               {" "}
               {rightLine.lineNumber}{" "}

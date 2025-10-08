@@ -47,37 +47,39 @@ cli
     function App() {
       return (
         <box style={{ flexDirection: "column", height: "100%", padding: 1 }}>
-          {parsedFiles.map((file, idx) => (
-            <box
-              key={idx}
-              style={{ flexDirection: "column", marginBottom: idx < parsedFiles.length - 1 ? 2 : 0 }}
-            >
-              <FileEditPreviewTitle
-                filePath={file.newFileName || file.oldFileName || "unknown"}
-                hunks={file.hunks}
-              />
-              <box paddingTop={1} />
-              <scrollbox
-                style={{
-                  flexGrow: 1,
-                  rootOptions: {
-                    backgroundColor: "transparent",
-                    border: false,
-                  },
-                  scrollbarOptions: {
-                    showArrows: false,
-                    trackOptions: {
-                      foregroundColor: "#4a4a4a",
-                      backgroundColor: "transparent",
-                    },
-                  },
-                }}
-                focused={idx === 0}
-              >
-                <FileEditPreview hunks={file.hunks} paddingLeft={0} />
-              </scrollbox>
+          <scrollbox
+            style={{
+              flexGrow: 1,
+              rootOptions: {
+                backgroundColor: "transparent",
+                border: false,
+              },
+              scrollbarOptions: {
+                showArrows: false,
+                trackOptions: {
+                  foregroundColor: "#4a4a4a",
+                  backgroundColor: "transparent",
+                },
+              },
+            }}
+            focused
+          >
+            <box style={{ flexDirection: "column" }}>
+              {parsedFiles.map((file, idx) => (
+                <box
+                  key={idx}
+                  style={{ flexDirection: "column", marginBottom: idx < parsedFiles.length - 1 ? 2 : 0 }}
+                >
+                  <FileEditPreviewTitle
+                    filePath={file.newFileName || file.oldFileName || "unknown"}
+                    hunks={file.hunks}
+                  />
+                  <box paddingTop={1} />
+                  <FileEditPreview hunks={file.hunks} paddingLeft={0} />
+                </box>
+              ))}
             </box>
-          ))}
+          </scrollbox>
         </box>
       );
     }

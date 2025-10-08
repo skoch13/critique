@@ -1,8 +1,9 @@
 {
-  "name": "diff-view",
+  "name": "critique",
   "module": "src/index.tsx",
   "type": "module",
-  "private": true,
+  "version": "0.0.0",
+  "private": false,
   "devDependencies": {
     "@types/bun": "latest"
   },

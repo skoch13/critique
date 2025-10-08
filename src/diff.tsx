@@ -422,6 +422,7 @@ const StructuredDiff = ({
             <box
               style={{
                 flexGrow: 1,
+                paddingLeft: 1,
                 backgroundColor:
                   type === "add"
                     ? ADDED_BG_LIGHT
@@ -502,6 +503,7 @@ const StructuredDiff = ({
             <box
               style={{
                 flexGrow: 1,
+                paddingLeft: 1,
                 backgroundColor:
                   leftLine.type === "remove"
                     ? REMOVED_BG_LIGHT
@@ -532,6 +534,7 @@ const StructuredDiff = ({
             <box
               style={{
                 flexGrow: 1,
+                paddingLeft: 1,
                 backgroundColor:
                   rightLine.type === "add"
                     ? ADDED_BG_LIGHT

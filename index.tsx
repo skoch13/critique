@@ -215,20 +215,27 @@ const StructuredDiff = ({
       return { code, type: "nochange", originalCode: code };
     });
 
-    // Find pairs of removed/added lines for word-level diff
+    // Check if hunk is fully additions or fully deletions
+    const hasRemovals = processedLines.some((line) => line.type === "remove");
+    const hasAdditions = processedLines.some((line) => line.type === "add");
+    const shouldShowWordDiff = hasRemovals && hasAdditions;
+
+    // Find pairs of removed/added lines for word-level diff (only if hunk has both)
     const linePairs: Array<{ remove?: number; add?: number }> = [];
-    for (let i = 0; i < processedLines.length; i++) {
-      if (processedLines[i]?.type === "remove") {
-        // Look ahead for corresponding add
-        let j = i + 1;
-        while (
-          j < processedLines.length &&
-          processedLines[j]?.type === "remove"
-        ) {
-          j++;
-        }
-        if (j < processedLines.length && processedLines[j]?.type === "add") {
-          linePairs.push({ remove: i, add: j });
+    if (shouldShowWordDiff) {
+      for (let i = 0; i < processedLines.length; i++) {
+        if (processedLines[i]?.type === "remove") {
+          // Look ahead for corresponding add
+          let j = i + 1;
+          while (
+            j < processedLines.length &&
+            processedLines[j]?.type === "remove"
+          ) {
+            j++;
+          }
+          if (j < processedLines.length && processedLines[j]?.type === "add") {
+            linePairs.push({ remove: i, add: j });
+          }
         }
       }
     }
@@ -260,7 +267,7 @@ const StructuredDiff = ({
 
         // Create word-level diff display for removed line
         const removedContent = isSplitView ? (
-          <text bg={REMOVED_BG_LIGHT} wrap={false}>
+          <text wrap={false}>
             {wordDiff.map((part, idx) => {
               if (part.removed) {
                 return (
@@ -276,7 +283,7 @@ const StructuredDiff = ({
             })}
           </text>
         ) : (
-          <text bg={REMOVED_BG_LIGHT} wrap={false}>
+          <text wrap={false}>
             {wordDiff.map((part, idx) => {
               if (part.removed) {
                 return (
@@ -303,7 +310,7 @@ const StructuredDiff = ({
 
         // Create word-level diff display for added line
         const addedContent = isSplitView ? (
-          <text bg={ADDED_BG_LIGHT} wrap={false}>
+          <text wrap={false}>
             {wordDiff.map((part, idx) => {
               if (part.added) {
                 return (
@@ -319,7 +326,7 @@ const StructuredDiff = ({
             })}
           </text>
         ) : (
-          <text bg={ADDED_BG_LIGHT} wrap={false}>
+          <text wrap={false}>
             {wordDiff.map((part, idx) => {
               if (part.added) {
                 return (
@@ -336,17 +343,7 @@ const StructuredDiff = ({
         result.push({ code: addedContent, type, lineNumber });
       } else {
         // Regular line without word-level diff
-        const content =
-          type === "add" || type === "remove" ? (
-            <text
-              bg={type === "add" ? ADDED_BG_LIGHT : REMOVED_BG_LIGHT}
-              wrap={false}
-            >
-              {code}
-            </text>
-          ) : (
-            <text wrap={false}>{code}</text>
-          );
+        const content = <text wrap={false}>{code}</text>;
 
         result.push({ code: content, type, lineNumber });
       }

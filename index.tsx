@@ -105,9 +105,11 @@ export const FileEditPreviewTitle = ({
 export const FileEditPreview = ({
   hunks,
   paddingLeft = 0,
+  splitView = true,
 }: {
   hunks: Hunk[];
   paddingLeft?: number;
+  splitView?: boolean;
 }) => {
   return (
     <box style={{ flexDirection: "column" }}>
@@ -117,7 +119,7 @@ export const FileEditPreview = ({
             style={{ flexDirection: "column", paddingLeft }}
             key={patch.newStart}
           >
-            <StructuredDiff patch={patch} />
+            <StructuredDiff patch={patch} splitView={splitView} />
           </box>,
         ];
         if (i < hunks.length - 1) {
@@ -141,7 +143,13 @@ const getWordDiff = (oldLine: string, newLine: string) => {
 };
 
 // StructuredDiff component
-const StructuredDiff = ({ patch }: { patch: Hunk }) => {
+const StructuredDiff = ({
+  patch,
+  splitView = true,
+}: {
+  patch: Hunk;
+  splitView?: boolean;
+}) => {
   const formatDiff = (lines: string[], startingLineNumber: number) => {
     const processedLines = lines.map((code) => {
       if (code.startsWith("+")) {
@@ -282,35 +290,121 @@ const StructuredDiff = ({ patch }: { patch: Hunk }) => {
   };
 
   const diff = formatDiff(patch.lines, patch.oldStart);
-  return (
-    <>
-      {diff.map(({ lineNumber, code, type, key }) => (
-        <box key={key} style={{ flexDirection: "row" }}>
-          <text
-            fg="brightBlack"
-            bg={
-              type === "add"
-                ? ADDED_BG_LIGHT
-                : type === "remove"
-                  ? REMOVED_BG_LIGHT
-                  : undefined
-            }
-            wrap={false}
-          >
-            {" "}{lineNumber}{" "}
-          </text>
-          <box
-            style={{
-              flexGrow: 1,
-              backgroundColor:
+
+  if (!splitView) {
+    return (
+      <>
+        {diff.map(({ lineNumber, code, type, key }) => (
+          <box key={key} style={{ flexDirection: "row" }}>
+            <text
+              fg="brightBlack"
+              bg={
                 type === "add"
                   ? ADDED_BG_LIGHT
                   : type === "remove"
                     ? REMOVED_BG_LIGHT
-                    : undefined,
-            }}
-          >
-            {code}
+                    : undefined
+              }
+              wrap={false}
+            >
+              {" "}
+              {lineNumber}{" "}
+            </text>
+            <box
+              style={{
+                flexGrow: 1,
+                backgroundColor:
+                  type === "add"
+                    ? ADDED_BG_LIGHT
+                    : type === "remove"
+                      ? REMOVED_BG_LIGHT
+                      : undefined,
+              }}
+            >
+              {code}
+            </box>
+          </box>
+        ))}
+      </>
+    );
+  }
+
+  // Split view: separate left (removals) and right (additions)
+  const splitLines = diff.map((line) => {
+    if (line.type === "remove") {
+      return {
+        left: line,
+        right: {
+          lineNumber: "",
+          code: <text wrap={false}></text>,
+          type: "empty",
+          key: `${line.key}-empty-right`,
+        },
+      };
+    } else if (line.type === "add") {
+      return {
+        left: {
+          lineNumber: "",
+          code: <text wrap={false}></text>,
+          type: "empty",
+          key: `${line.key}-empty-left`,
+        },
+        right: line,
+      };
+    } else {
+      return {
+        left: line,
+        right: line,
+      };
+    }
+  });
+
+  return (
+    <>
+      {splitLines.map(({ left: leftLine, right: rightLine }) => (
+        <box key={leftLine.key} style={{ flexDirection: "row" }}>
+          {/* Left side (removals) */}
+          <box style={{ flexDirection: "row", width: "50%" }}>
+            <text
+              fg="brightBlack"
+              bg={
+                leftLine.type === "remove" ? REMOVED_BG_LIGHT : undefined
+              }
+              wrap={false}
+            >
+              {" "}
+              {leftLine.lineNumber}{" "}
+            </text>
+            <box
+              style={{
+                flexGrow: 1,
+                backgroundColor:
+                  leftLine.type === "remove" ? REMOVED_BG_LIGHT : undefined,
+              }}
+            >
+              {leftLine.code}
+            </box>
+          </box>
+
+          {/* Right side (additions) */}
+          <box style={{ flexDirection: "row", width: "50%" }}>
+            <text
+              fg="brightBlack"
+              bg={rightLine.type === "add" ? ADDED_BG_LIGHT : undefined}
+              wrap={false}
+            >
+              {" "}
+              {rightLine.lineNumber}{" "}
+            </text>
+            <box
+              style={{
+                flexGrow: 1,
+                backgroundColor:
+                  rightLine.type === "add" ? ADDED_BG_LIGHT : undefined,
+              }}
+            >
+              {rightLine.code}
+            </box>
           </box>
         </box>
       ))}

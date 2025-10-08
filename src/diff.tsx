@@ -1,6 +1,6 @@
-import { TextAttributes, RGBA } from "@opentui/core";
+import { TextAttributes, RGBA,  } from "@opentui/core";
 import { structuredPatch } from "diff";
-import { render } from "@opentui/react";
+import { render, useOnResize, useTerminalDimensions } from "@opentui/react";
 
 import * as React from "react";
 

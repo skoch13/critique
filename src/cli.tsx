@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { cac } from "cac";
 import { parsePatch } from "diff";
-import { render } from "@opentui/react";
+import { render, useTerminalDimensions } from "@opentui/react";
 import * as React from "react";
 import { execSync } from "child_process";
 import {
@@ -45,6 +45,9 @@ cli
     }
 
     function App() {
+      const { width } = useTerminalDimensions();
+      const useSplitView = width >= 100;
+
       return (
         <box style={{ flexDirection: "column", height: "100%", padding: 1 }}>
           <scrollbox
@@ -75,7 +78,7 @@ cli
                     hunks={file.hunks}
                   />
                   <box paddingTop={1} />
-                  <FileEditPreview hunks={file.hunks} paddingLeft={0} />
+                  <FileEditPreview hunks={file.hunks} paddingLeft={0} splitView={useSplitView} />
                 </box>
               ))}
             </box>

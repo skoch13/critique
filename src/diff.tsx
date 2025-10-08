@@ -265,6 +265,20 @@ const StructuredDiff = ({
         const addedText = addedLine.code;
         const wordDiff = getWordDiff(removedText, addedText);
 
+        // Check if the highlighted portions would be too long (like GitHub does)
+        const removedLength = wordDiff.filter(p => p.removed).reduce((sum, p) => sum + p.value.length, 0);
+        const addedLength = wordDiff.filter(p => p.added).reduce((sum, p) => sum + p.value.length, 0);
+        
+        // If changed portions are too long, skip word diff
+        const shouldSkipWordDiff = removedLength > 80 || addedLength > 80;
+
+        if (shouldSkipWordDiff) {
+          // Skip word diff, treat as regular line
+          const removedContent = <text wrap={false}>{removedText}</text>;
+          result.push({ code: removedContent, type, lineNumber });
+          continue;
+        }
+
         // Create word-level diff display for removed line
         const removedContent = isSplitView ? (
           <text wrap={false}>
@@ -307,6 +321,20 @@ const StructuredDiff = ({
         const removedText = removedLine.code;
         const addedText = addedLine.code;
         const wordDiff = getWordDiff(removedText, addedText);
+
+        // Check if the highlighted portions would be too long (like GitHub does)
+        const removedLength = wordDiff.filter(p => p.removed).reduce((sum, p) => sum + p.value.length, 0);
+        const addedLength = wordDiff.filter(p => p.added).reduce((sum, p) => sum + p.value.length, 0);
+        
+        // If changed portions are too long, skip word diff
+        const shouldSkipWordDiff = removedLength > 80 || addedLength > 80;
+
+        if (shouldSkipWordDiff) {
+          // Skip word diff, treat as regular line
+          const addedContent = <text wrap={false}>{addedText}</text>;
+          result.push({ code: addedContent, type, lineNumber });
+          continue;
+        }
 
         // Create word-level diff display for added line
         const addedContent = isSplitView ? (

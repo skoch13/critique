@@ -1,7 +1,13 @@
 #!/usr/bin/env bun
 import { cac } from "cac";
 import { parsePatch } from "diff";
-import { render, useKeyboard, useOnResize, useRenderer, useTerminalDimensions } from "@opentui/react";
+import {
+  render,
+  useKeyboard,
+  useOnResize,
+  useRenderer,
+  useTerminalDimensions,
+} from "@opentui/react";
 import * as React from "react";
 import { execSync } from "child_process";
 import {
@@ -63,9 +69,8 @@ cli
       const renderer = useRenderer();
 
       useKeyboard((key) => {
-
         if (key.name === "z" && key.ctrl) {
-          renderer.console.toggle()
+          renderer.console.toggle();
         }
       });
 

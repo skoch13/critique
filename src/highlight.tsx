@@ -1,11 +1,7 @@
 import { RGBA } from "@opentui/core";
 import { render } from "@opentui/react";
 import * as React from "react";
-import {
-  createHighlighter,
-  type GrammarState,
-  type ThemedToken,
-} from "shiki";
+import { createHighlighter, type GrammarState, type ThemedToken } from "shiki";
 
 const lines = [
   'const greeting = "Hello, World!";',
@@ -24,7 +20,7 @@ const lines = [
   "console.log(doubled);",
 ];
 
-const dark = 'github-dark-high-contrast'
+const dark = "github-dark-high-contrast";
 
 const highlighter = await createHighlighter({
   themes: ["github-light", dark],

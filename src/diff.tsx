@@ -156,7 +156,6 @@ class ErrorBoundary extends React.Component<
     const { execSync } = require("child_process");
     try {
       execSync("pbcopy", { input: stackTrace });
-      console.log("Stack trace copied to clipboard");
     } catch (copyError) {
       console.error("Failed to copy to clipboard:", copyError);
     }
@@ -346,13 +345,7 @@ const StructuredDiff = ({
           grammarState: beforeState,
         });
         const tokens = result.tokens[0] || null;
-        if (idx < 3) {
-          console.log(
-            `Before[${idx}] type=${line.type} tokens=`,
-            tokens?.length,
-            tokens?.[0],
-          );
-        }
+
         beforeTokens.push(tokens);
         beforeState = highlighter.getLastGrammarState(result.tokens);
       } else {
@@ -558,17 +551,6 @@ const StructuredDiff = ({
             : type === "add"
               ? afterTokens[i]
               : beforeTokens[i] || afterTokens[i];
-
-        if (i < 3) {
-          console.log(
-            `Render[${i}] type=${type} tokens=`,
-            tokens?.length,
-            "beforeTokens[i]=",
-            beforeTokens[i]?.length,
-            "afterTokens[i]=",
-            afterTokens[i]?.length,
-          );
-        }
 
         const content =
           tokens && tokens.length > 0 ? (

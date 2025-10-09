@@ -6,7 +6,6 @@ IMPORTANT! before starting every task ALWAYS read opentui docs with `curl -s htt
 
 ALWAYS!
 
-
 ## bun
 
 NEVER run bun run index.tsx. You cannot directly run the tui app. it will hang. instead ask me to do so.
@@ -52,7 +51,6 @@ for example when working with the vercel ai sdk, you can fetch the latest docs u
 https://gitchamber.com/repos/repos/vercel/ai/main/files
 
 use gitchamber to read the .md files using curl
-
 
 ## researching opentui patterns
 

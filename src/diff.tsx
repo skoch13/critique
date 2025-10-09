@@ -17,16 +17,18 @@ import {
 // Color constants for diff display
 const REMOVED_BG_LIGHT = RGBA.fromInts(255, 0, 0, 32);
 const REMOVED_BG_DARK = RGBA.fromInts(120, 0, 0, 220);
-const ADDED_BG_LIGHT = RGBA.fromInts(100, 255, 160, 20);
 const ADDED_BG_DARK = RGBA.fromInts(0, 120, 0, 220);
 const UNCHANGED_CODE_BG = RGBA.fromInts(15, 15, 15, 255);
+const ADDED_BG_LIGHT = UNCHANGED_CODE_BG
 const UNCHANGED_BG = RGBA.fromInts(128, 128, 128, 16);
 const LINE_NUMBER_BG = RGBA.fromInts(5, 5, 5, 255);
 const REMOVED_LINE_NUMBER_BG = RGBA.fromInts(60, 0, 0, 255);
 const ADDED_LINE_NUMBER_BG = RGBA.fromInts(0, 50, 0, 255);
 
+
+const theme = "github-dark-high-contrast";
 const highlighter = await createHighlighter({
-  themes: ["github-dark"],
+  themes: [theme],
   langs: ["javascript", "typescript", "tsx", "jsx"],
 });
 
@@ -214,9 +216,7 @@ export const FileEditPreview = ({
         if (i < hunks.length - 1) {
           elements.push(
             <box style={{ paddingLeft }} key={`ellipsis-${i}`}>
-              <text fg="brightBlack">
-                {" ".repeat(leftMaxWidth + 2)}…
-              </text>
+              <text fg="brightBlack">{" ".repeat(leftMaxWidth + 2)}…</text>
             </box>,
           );
         }
@@ -244,7 +244,6 @@ const StructuredDiff = ({
   rightMaxWidth?: number;
   filePath?: string;
 }) => {
-
   const formatDiff = (
     lines: string[],
     startingLineNumber: number,
@@ -276,12 +275,16 @@ const StructuredDiff = ({
       if (line.type === "remove" || line.type === "nochange") {
         const result = highlighter.codeToTokens(line.code, {
           lang,
-          theme: "github-dark",
+          theme,
           grammarState: beforeState,
         });
         const tokens = result.tokens[0] || null;
         if (idx < 3) {
-          console.log(`Before[${idx}] type=${line.type} tokens=`, tokens?.length, tokens?.[0]);
+          console.log(
+            `Before[${idx}] type=${line.type} tokens=`,
+            tokens?.length,
+            tokens?.[0],
+          );
         }
         beforeTokens.push(tokens);
         beforeState = highlighter.getLastGrammarState(result.tokens);
@@ -297,7 +300,7 @@ const StructuredDiff = ({
       if (line.type === "add" || line.type === "nochange") {
         const result = highlighter.codeToTokens(line.code, {
           lang,
-          theme: "github-dark",
+          theme,
           grammarState: afterState,
         });
         const tokens = result.tokens[0] || null;
@@ -316,28 +319,50 @@ const StructuredDiff = ({
     // Find pairs of removed/added lines for word-level diff (only if hunk has both)
     const linePairs: Array<{ remove?: number; add?: number }> = [];
     if (shouldShowWordDiff) {
-      for (let i = 0; i < processedLines.length; i++) {
+      let i = 0;
+      while (i < processedLines.length) {
         if (processedLines[i]?.type === "remove") {
-          // Look ahead for corresponding add
-          let j = i + 1;
+          // Collect all consecutive removes
+          const removes: number[] = [];
+          let j = i;
           while (
             j < processedLines.length &&
             processedLines[j]?.type === "remove"
           ) {
+            removes.push(j);
             j++;
           }
-          if (j < processedLines.length && processedLines[j]?.type === "add") {
-            linePairs.push({ remove: i, add: j });
+          
+          // Collect all consecutive adds that follow
+          const adds: number[] = [];
+          while (
+            j < processedLines.length &&
+            processedLines[j]?.type === "add"
+          ) {
+            adds.push(j);
+            j++;
           }
+          
+          // Pair them up
+          const minLength = Math.min(removes.length, adds.length);
+          for (let k = 0; k < minLength; k++) {
+            linePairs.push({ remove: removes[k], add: adds[k] });
+          }
+          
+          i = j;
+        } else {
+          i++;
         }
       }
     }
 
-    let lineNumber = startingLineNumber;
+    let oldLineNumber = startingLineNumber;
+    let newLineNumber = startingLineNumber;
     const result: Array<{
       code: any;
       type: string;
-      lineNumber: number;
+      oldLineNumber: number;
+      newLineNumber: number;
       pairedWith?: number;
     }> = [];
 
@@ -360,8 +385,12 @@ const StructuredDiff = ({
         const wordDiff = getWordDiff(removedText, addedText);
 
         // Check if the highlighted portions would be too long (like GitHub does)
-        const removedLength = wordDiff.filter(p => p.removed).reduce((sum, p) => sum + p.value.length, 0);
-        const addedLength = wordDiff.filter(p => p.added).reduce((sum, p) => sum + p.value.length, 0);
+        const removedLength = wordDiff
+          .filter((p) => p.removed)
+          .reduce((sum, p) => sum + p.value.length, 0);
+        const addedLength = wordDiff
+          .filter((p) => p.added)
+          .reduce((sum, p) => sum + p.value.length, 0);
 
         // If changed portions are too long, skip word diff
         const shouldSkipWordDiff = removedLength > 80 || addedLength > 80;
@@ -376,20 +405,30 @@ const StructuredDiff = ({
           result.push({
             code: removedContent,
             type,
-            lineNumber,
+            oldLineNumber,
+            newLineNumber,
             pairedWith: pair.add,
           });
+          oldLineNumber++;
           continue;
         }
 
         const tokens = beforeTokens[i];
-        const removedContent = tokens && tokens.length > 0 ? (
-          <text>{renderHighlightedTokens(tokens)}</text>
-        ) : (
-          <text>{removedText}</text>
-        );
+        const removedContent =
+          tokens && tokens.length > 0 ? (
+            <text>{renderHighlightedTokens(tokens)}</text>
+          ) : (
+            <text>{removedText}</text>
+          );
 
-        result.push({ code: removedContent, type, lineNumber, pairedWith: pair.add });
+        result.push({
+          code: removedContent,
+          type,
+          oldLineNumber,
+          newLineNumber,
+          pairedWith: pair.add,
+        });
+        oldLineNumber++;
       } else if (pair && pair.add === i && pair.remove !== undefined) {
         // This is an added line with a corresponding removed line
         const removedLine = processedLines[pair.remove];
@@ -401,8 +440,12 @@ const StructuredDiff = ({
         const wordDiff = getWordDiff(removedText, addedText);
 
         // Check if the highlighted portions would be too long (like GitHub does)
-        const removedLength = wordDiff.filter(p => p.removed).reduce((sum, p) => sum + p.value.length, 0);
-        const addedLength = wordDiff.filter(p => p.added).reduce((sum, p) => sum + p.value.length, 0);
+        const removedLength = wordDiff
+          .filter((p) => p.removed)
+          .reduce((sum, p) => sum + p.value.length, 0);
+        const addedLength = wordDiff
+          .filter((p) => p.added)
+          .reduce((sum, p) => sum + p.value.length, 0);
 
         // If changed portions are too long, skip word diff
         const shouldSkipWordDiff = removedLength > 80 || addedLength > 80;
@@ -417,20 +460,30 @@ const StructuredDiff = ({
           result.push({
             code: addedContent,
             type,
-            lineNumber,
+            oldLineNumber,
+            newLineNumber,
             pairedWith: pair.remove,
           });
+          newLineNumber++;
           continue;
         }
 
         const tokens = afterTokens[i];
-        const addedContent = tokens && tokens.length > 0 ? (
-          <text>{renderHighlightedTokens(tokens)}</text>
-        ) : (
-          <text>{addedText}</text>
-        );
+        const addedContent =
+          tokens && tokens.length > 0 ? (
+            <text>{renderHighlightedTokens(tokens)}</text>
+          ) : (
+            <text>{addedText}</text>
+          );
 
-        result.push({ code: addedContent, type, lineNumber, pairedWith: pair.remove });
+        result.push({
+          code: addedContent,
+          type,
+          oldLineNumber,
+          newLineNumber,
+          pairedWith: pair.remove,
+        });
+        newLineNumber++;
       } else {
         const tokens =
           type === "remove"
@@ -440,32 +493,53 @@ const StructuredDiff = ({
               : beforeTokens[i] || afterTokens[i];
 
         if (i < 3) {
-          console.log(`Render[${i}] type=${type} tokens=`, tokens?.length, 'beforeTokens[i]=', beforeTokens[i]?.length, 'afterTokens[i]=', afterTokens[i]?.length);
+          console.log(
+            `Render[${i}] type=${type} tokens=`,
+            tokens?.length,
+            "beforeTokens[i]=",
+            beforeTokens[i]?.length,
+            "afterTokens[i]=",
+            afterTokens[i]?.length,
+          );
         }
 
-        const content = tokens && tokens.length > 0 ? (
-          <text>{renderHighlightedTokens(tokens)}</text>
-        ) : (
-          <text>{code}</text>
-        );
+        const content =
+          tokens && tokens.length > 0 ? (
+            <text>{renderHighlightedTokens(tokens)}</text>
+          ) : (
+            <text>{code}</text>
+          );
 
-        result.push({ code: content, type, lineNumber });
+        result.push({
+          code: content,
+          type,
+          oldLineNumber,
+          newLineNumber,
+        });
       }
 
-      if (type === "nochange" || type === "add") {
-        lineNumber++;
+      if (type === "remove") {
+        oldLineNumber++;
+      } else if (type === "add") {
+        newLineNumber++;
+      } else {
+        oldLineNumber++;
+        newLineNumber++;
       }
     }
 
-    return result.map(({ type, code, lineNumber, pairedWith }, index) => {
-      return {
-        lineNumber: lineNumber.toString(),
-        code,
-        type,
-        pairedWith,
-        key: `line-${index}`,
-      };
-    });
+    return result.map(
+      ({ type, code, oldLineNumber, newLineNumber, pairedWith }, index) => {
+        return {
+          oldLineNumber: oldLineNumber.toString(),
+          newLineNumber: newLineNumber.toString(),
+          code,
+          type,
+          pairedWith,
+          key: `line-${index}`,
+        };
+      },
+    );
   };
 
   const diff = formatDiff(patch.lines, patch.oldStart, splitView);
@@ -475,7 +549,10 @@ const StructuredDiff = ({
   if (!splitView) {
     const paddedDiff = diff.map((item) => ({
       ...item,
-      lineNumber: item.lineNumber ? item.lineNumber.padStart(maxWidth) : " ".repeat(maxWidth),
+      lineNumber:
+        item.newLineNumber && item.newLineNumber !== "0"
+          ? item.newLineNumber.padStart(maxWidth)
+          : " ".repeat(maxWidth),
     }));
     return (
       <>
@@ -538,11 +615,11 @@ const StructuredDiff = ({
         splitLines.push({
           left: {
             ...line,
-            lineNumber: line.lineNumber.padStart(leftMaxWidth),
+            lineNumber: line.oldLineNumber.padStart(leftMaxWidth),
           },
           right: {
             ...pairedLine,
-            lineNumber: pairedLine.lineNumber.padStart(rightMaxWidth),
+            lineNumber: pairedLine.newLineNumber.padStart(rightMaxWidth),
           },
         });
         processedIndices.add(i);
@@ -556,7 +633,7 @@ const StructuredDiff = ({
       splitLines.push({
         left: {
           ...line,
-          lineNumber: line.lineNumber.padStart(leftMaxWidth),
+          lineNumber: line.oldLineNumber.padStart(leftMaxWidth),
         },
         right: {
           lineNumber: " ".repeat(rightMaxWidth),
@@ -577,7 +654,7 @@ const StructuredDiff = ({
         },
         right: {
           ...line,
-          lineNumber: line.lineNumber.padStart(rightMaxWidth),
+          lineNumber: line.newLineNumber.padStart(rightMaxWidth),
         },
       });
       processedIndices.add(i);
@@ -586,11 +663,11 @@ const StructuredDiff = ({
       splitLines.push({
         left: {
           ...line,
-          lineNumber: line.lineNumber.padStart(leftMaxWidth),
+          lineNumber: line.oldLineNumber.padStart(leftMaxWidth),
         },
         right: {
           ...line,
-          lineNumber: line.lineNumber.padStart(rightMaxWidth),
+          lineNumber: line.newLineNumber.padStart(rightMaxWidth),
         },
       });
       processedIndices.add(i);

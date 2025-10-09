@@ -2,19 +2,15 @@
   "name": "critique",
   "module": "src/diff.tsx",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": false,
-  "bin": {
-    "critique": "./src/cli.tsx"
-  },
+  "bin": "./src/cli.tsx",
   "scripts": {
     "cli": "bun --watch src/cli.tsx",
     "example": "bun --watch src/example.tsx"
   },
   "devDependencies": {
-    "@types/bun": "1.2.23"
-  },
-  "peerDependencies": {
+    "@types/bun": "1.2.23",
     "typescript": "^5.9.3"
   },
   "dependencies": {

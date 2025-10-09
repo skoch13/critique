@@ -24,8 +24,10 @@ const lines = [
   "console.log(doubled);",
 ];
 
+const dark = 'github-dark-high-contrast'
+
 const highlighter = await createHighlighter({
-  themes: ["github-light", "github-dark-dimmed"],
+  themes: ["github-light", dark],
   langs: ["javascript"],
 });
 
@@ -35,7 +37,7 @@ const highlightedLines: ThemedToken[][] = [];
 for (const line of lines) {
   const result = highlighter.codeToTokens(line, {
     lang: "js",
-    themes: { light: "github-light", dark: "github-dark-dimmed" },
+    themes: { light: "github-light", dark },
     defaultColor: false,
     grammarState: state,
   });

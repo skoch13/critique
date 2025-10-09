@@ -10,10 +10,26 @@ import {
 import * as React from "react";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { MacOSScrollAccel } from "@opentui/core";
 
 const execAsync = promisify(exec);
 
 const cli = cac("critique");
+
+class ScrollAcceleration {
+  public multiplier: number = 1;
+  private macosAccel: MacOSScrollAccel;
+  constructor() {
+    this.macosAccel = new MacOSScrollAccel();
+  }
+  tick(delta: number) {
+    return this.macosAccel.tick(delta) * this.multiplier;
+  }
+  reset() {
+    this.macosAccel.reset();
+    // this.multiplier = 1;
+  }
+}
 
 cli
   .command(
@@ -56,6 +72,9 @@ cli
       function App() {
         const { width: initialWidth } = useTerminalDimensions();
         const [width, setWidth] = React.useState(initialWidth);
+        const [scrollAcceleration] = React.useState(
+          () => new ScrollAcceleration(),
+        );
 
         useOnResize(
           React.useCallback((newWidth: number) => {
@@ -70,6 +89,15 @@ cli
           if (key.name === "z" && key.ctrl) {
             renderer.console.toggle();
           }
+          // TODO does not work
+          if (key.option) {
+            console.log(key);
+            if (key.eventType === "release") {
+              scrollAcceleration.multiplier = 1;
+            } else {
+              scrollAcceleration.multiplier = 10;
+            }
+          }
         });
 
         return (
@@ -78,6 +106,7 @@ cli
             style={{ flexDirection: "column", height: "100%", padding: 1 }}
           >
             <scrollbox
+              scrollAcceleration={scrollAcceleration}
               style={{
                 flexGrow: 1,
                 rootOptions: {

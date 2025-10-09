@@ -17,7 +17,7 @@ import {
 // Color constants for diff display
 const REMOVED_BG_LIGHT = RGBA.fromInts(255, 0, 0, 32);
 const REMOVED_BG_DARK = RGBA.fromInts(120, 0, 0, 220);
-const ADDED_BG_LIGHT = RGBA.fromInts(0, 255, 0, 32);
+const ADDED_BG_LIGHT = RGBA.fromInts(100, 255, 160, 20);
 const ADDED_BG_DARK = RGBA.fromInts(0, 120, 0, 220);
 const UNCHANGED_CODE_BG = RGBA.fromInts(15, 15, 15, 255);
 const UNCHANGED_BG = RGBA.fromInts(128, 128, 128, 16);
@@ -267,7 +267,12 @@ const StructuredDiff = ({
     const lang = detectLanguage(filePath);
 
     let beforeState: GrammarState | undefined;
-    const beforeTokens = processedLines.map((line) => {
+    const beforeTokens: (ThemedToken[] | null)[] = [];
+
+    for (let idx = 0; idx < processedLines.length; idx++) {
+      const line = processedLines[idx];
+      if (!line) continue;
+
       if (line.type === "remove" || line.type === "nochange") {
         const result = highlighter.codeToTokens(line.code, {
           lang,
@@ -275,14 +280,20 @@ const StructuredDiff = ({
           grammarState: beforeState,
         });
         const tokens = result.tokens[0] || null;
+        if (idx < 3) {
+          console.log(`Before[${idx}] type=${line.type} tokens=`, tokens?.length, tokens?.[0]);
+        }
+        beforeTokens.push(tokens);
         beforeState = highlighter.getLastGrammarState(result.tokens);
-        return tokens;
+      } else {
+        beforeTokens.push(null);
       }
-      return null;
-    });
+    }
 
     let afterState: GrammarState | undefined;
-    const afterTokens = processedLines.map((line) => {
+    const afterTokens: (ThemedToken[] | null)[] = [];
+
+    for (const line of processedLines) {
       if (line.type === "add" || line.type === "nochange") {
         const result = highlighter.codeToTokens(line.code, {
           lang,
@@ -290,11 +301,12 @@ const StructuredDiff = ({
           grammarState: afterState,
         });
         const tokens = result.tokens[0] || null;
+        afterTokens.push(tokens);
         afterState = highlighter.getLastGrammarState(result.tokens);
-        return tokens;
+      } else {
+        afterTokens.push(null);
       }
-      return null;
-    });
+    }
 
     // Check if hunk is fully additions or fully deletions
     const hasRemovals = processedLines.some((line) => line.type === "remove");
@@ -350,7 +362,7 @@ const StructuredDiff = ({
         // Check if the highlighted portions would be too long (like GitHub does)
         const removedLength = wordDiff.filter(p => p.removed).reduce((sum, p) => sum + p.value.length, 0);
         const addedLength = wordDiff.filter(p => p.added).reduce((sum, p) => sum + p.value.length, 0);
-        
+
         // If changed portions are too long, skip word diff
         const shouldSkipWordDiff = removedLength > 80 || addedLength > 80;
 
@@ -370,36 +382,11 @@ const StructuredDiff = ({
           continue;
         }
 
-        // Create word-level diff display for removed line
-        const removedContent = isSplitView ? (
-          <text wrap={false}>
-            {wordDiff.map((part, idx) => {
-              if (part.removed) {
-                return (
-                  <span key={`removed-${i}-${idx}`} bg={REMOVED_BG_DARK}>
-                    {part.value}
-                  </span>
-                );
-              }
-              if (!part.added) {
-                return part.value;
-              }
-              return null;
-            })}
-          </text>
+        const tokens = beforeTokens[i];
+        const removedContent = tokens && tokens.length > 0 ? (
+          <text wrap={false}>{renderHighlightedTokens(tokens)}</text>
         ) : (
-          <text wrap={false}>
-            {wordDiff.map((part, idx) => {
-              if (part.removed) {
-                return (
-                  <span key={`removed-${i}-${idx}`} bg={REMOVED_BG_DARK}>
-                    {part.value}
-                  </span>
-                );
-              }
-              return part.value;
-            })}
-          </text>
+          <text wrap={false}>{removedText}</text>
         );
 
         result.push({ code: removedContent, type, lineNumber, pairedWith: pair.add });
@@ -416,7 +403,7 @@ const StructuredDiff = ({
         // Check if the highlighted portions would be too long (like GitHub does)
         const removedLength = wordDiff.filter(p => p.removed).reduce((sum, p) => sum + p.value.length, 0);
         const addedLength = wordDiff.filter(p => p.added).reduce((sum, p) => sum + p.value.length, 0);
-        
+
         // If changed portions are too long, skip word diff
         const shouldSkipWordDiff = removedLength > 80 || addedLength > 80;
 
@@ -436,36 +423,11 @@ const StructuredDiff = ({
           continue;
         }
 
-        // Create word-level diff display for added line
-        const addedContent = isSplitView ? (
-          <text wrap={false}>
-            {wordDiff.map((part, idx) => {
-              if (part.added) {
-                return (
-                  <span key={`added-${i}-${idx}`} bg={ADDED_BG_DARK}>
-                    {part.value}
-                  </span>
-                );
-              }
-              if (!part.removed) {
-                return part.value;
-              }
-              return null;
-            })}
-          </text>
+        const tokens = afterTokens[i];
+        const addedContent = tokens && tokens.length > 0 ? (
+          <text wrap={false}>{renderHighlightedTokens(tokens)}</text>
         ) : (
-          <text wrap={false}>
-            {wordDiff.map((part, idx) => {
-              if (part.added) {
-                return (
-                  <span key={`added-${i}-${idx}`} bg={ADDED_BG_DARK}>
-                    {part.value}
-                  </span>
-                );
-              }
-              return part.value;
-            })}
-          </text>
+          <text wrap={false}>{addedText}</text>
         );
 
         result.push({ code: addedContent, type, lineNumber, pairedWith: pair.remove });
@@ -476,7 +438,12 @@ const StructuredDiff = ({
             : type === "add"
               ? afterTokens[i]
               : beforeTokens[i] || afterTokens[i];
-        const content = tokens ? (
+
+        if (i < 3) {
+          console.log(`Render[${i}] type=${type} tokens=`, tokens?.length, 'beforeTokens[i]=', beforeTokens[i]?.length, 'afterTokens[i]=', afterTokens[i]?.length);
+        }
+
+        const content = tokens && tokens.length > 0 ? (
           <text wrap={false}>{renderHighlightedTokens(tokens)}</text>
         ) : (
           <text wrap={false}>{code}</text>

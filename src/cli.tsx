@@ -41,10 +41,10 @@ cli
   .action(async (ref, options) => {
     try {
       const gitCommand = (() => {
-        if (options.staged) return "git diff --cached";
-        if (options.commit) return `git show ${options.commit}`;
-        if (ref) return `git show ${ref}`;
-        return "git diff";
+        if (options.staged) return "git diff --cached --no-prefix";
+        if (options.commit) return `git show ${options.commit} --no-prefix`;
+        if (ref) return `git show ${ref} --no-prefix`;
+        return "git diff --no-prefix";
       })();
 
       const [{ stdout: gitDiff }, diffModule, { parsePatch }] =

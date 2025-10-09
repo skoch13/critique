@@ -616,7 +616,16 @@ const StructuredDiff = ({
         {paddedDiff.map(({ lineNumber, code, type, key, newLineNumber }) => (
           <box key={key} style={{ flexDirection: "row" }}>
             <box
-              style={{ flexShrink: 0 }}
+              style={{
+                flexShrink: 0,
+                alignSelf: "stretch",
+                backgroundColor:
+                  type === "add"
+                    ? ADDED_LINE_NUMBER_BG
+                    : type === "remove"
+                      ? REMOVED_LINE_NUMBER_BG
+                      : LINE_NUMBER_BG,
+              }}
               onMouse={(event: MouseEvent) => {
                 if (event.type === "down") {
                   openInEditor(filePath, parseInt(newLineNumber));
@@ -629,13 +638,6 @@ const StructuredDiff = ({
                   type === "add" || type === "remove"
                     ? LINE_NUMBER_FG_BRIGHT
                     : LINE_NUMBER_FG_DIM
-                }
-                bg={
-                  type === "add"
-                    ? ADDED_LINE_NUMBER_BG
-                    : type === "remove"
-                      ? REMOVED_LINE_NUMBER_BG
-                      : LINE_NUMBER_BG
                 }
                 style={{ width: maxWidth + 2 }}
               >
@@ -750,7 +752,15 @@ const StructuredDiff = ({
           {/* Left side (removals) */}
           <box style={{ flexDirection: "row", width: "50%" }}>
             <box
-              style={{ flexShrink: 0, minWidth: leftMaxWidth + 2 }}
+              style={{
+                flexShrink: 0,
+                minWidth: leftMaxWidth + 2,
+                alignSelf: "stretch",
+                backgroundColor:
+                  leftLine.type === "remove"
+                    ? REMOVED_LINE_NUMBER_BG
+                    : LINE_NUMBER_BG,
+              }}
               onMouse={(event: MouseEvent) => {
                 if (
                   event.type === "down" &&
@@ -767,11 +777,6 @@ const StructuredDiff = ({
                   leftLine.type === "remove"
                     ? LINE_NUMBER_FG_BRIGHT
                     : LINE_NUMBER_FG_DIM
-                }
-                bg={
-                  leftLine.type === "remove"
-                    ? REMOVED_LINE_NUMBER_BG
-                    : LINE_NUMBER_BG
                 }
               >
                 {" "}
@@ -798,7 +803,15 @@ const StructuredDiff = ({
           {/* Right side (additions) */}
           <box style={{ flexDirection: "row", width: "50%" }}>
             <box
-              style={{ flexShrink: 0, minWidth: leftMaxWidth + 2 }}
+              style={{
+                flexShrink: 0,
+                minWidth: leftMaxWidth + 2,
+                alignSelf: "stretch",
+                backgroundColor:
+                  rightLine.type === "add"
+                    ? ADDED_LINE_NUMBER_BG
+                    : LINE_NUMBER_BG,
+              }}
               onMouse={(event: MouseEvent) => {
                 if (event.type === "down") {
                   openInEditor(filePath, parseInt(rightLine.newLineNumber));
@@ -811,11 +824,6 @@ const StructuredDiff = ({
                   rightLine.type === "add"
                     ? LINE_NUMBER_FG_BRIGHT
                     : LINE_NUMBER_FG_DIM
-                }
-                bg={
-                  rightLine.type === "add"
-                    ? ADDED_LINE_NUMBER_BG
-                    : LINE_NUMBER_BG
                 }
               >
                 {" "}

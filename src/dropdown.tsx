@@ -30,8 +30,7 @@ export interface DropdownProps extends SearchBarInterface, CommonProps {
   tooltip?: string;
   placeholder?: string;
   storeValue?: boolean | undefined;
-  value?: string;
-  defaultValue?: string;
+  selectedValues?: string[];
   children?: ReactNode;
   onChange?: (newValue: string) => void;
 }
@@ -70,7 +69,7 @@ interface DropdownContextValue {
   currentSection?: string;
   selectedIndex: number;
   setSelectedIndex?: (index: number) => void;
-  currentValue?: string;
+  selectedValues?: string[];
   onChange?: (value: string) => void;
 }
 
@@ -90,8 +89,7 @@ const Dropdown: DropdownType = (props) => {
   const {
     tooltip,
     onChange,
-    value,
-    defaultValue,
+    selectedValues,
     children,
     placeholder = "Search…",
     storeValue,
@@ -103,9 +101,6 @@ const Dropdown: DropdownType = (props) => {
 
   const [selected, setSelected] = useState(0);
   const [searchText, setSearchText] = useState("");
-  const [currentValue, setCurrentValue] = useState<string | undefined>(
-    value || defaultValue,
-  );
   const inputRef = useRef<any>(null);
   const lastSearchTextRef = useRef("");
   const throttleTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -121,18 +116,11 @@ const Dropdown: DropdownType = (props) => {
       currentSection: undefined,
       selectedIndex: selected,
       setSelectedIndex: setSelected,
-      currentValue,
+      selectedValues,
       onChange: (value: string) => selectItem(value),
     }),
-    [searchText, filtering, selected, currentValue],
+    [searchText, filtering, selected, selectedValues],
   );
-
-  // Update controlled value
-  useEffect(() => {
-    if (value !== undefined) {
-      setCurrentValue(value);
-    }
-  }, [value]);
 
   // Reset selected index when search changes
   useEffect(() => {
@@ -173,12 +161,10 @@ const Dropdown: DropdownType = (props) => {
   };
 
   const selectItem = (itemValue: string) => {
-    setCurrentValue(itemValue);
     if (onChange) {
       onChange(itemValue);
     }
     if (storeValue) {
-      // In a real implementation, this would persist the value
       logger.log("Storing value:", itemValue);
     }
   };
@@ -338,7 +324,7 @@ const DropdownItem: (props: DropdownItemProps) => any = (props) => {
   const context = useContext(DropdownContext);
   if (!context) return null;
 
-  const { searchText, filtering, currentSection, selectedIndex, currentValue } =
+  const { searchText, filtering, currentSection, selectedIndex, selectedValues } =
     context;
 
   // Apply filtering logic
@@ -364,7 +350,7 @@ const DropdownItem: (props: DropdownItemProps) => any = (props) => {
 
   // Determine if active (index will be -1 if hidden)
   const isActive = index === selectedIndex && index !== -1;
-  const isCurrent = props.value === currentValue;
+  const isCurrent = selectedValues ? selectedValues.includes(props.value) : false;
 
   // Handle mouse events
   const handleMouseMove = () => {

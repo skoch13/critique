@@ -333,8 +333,12 @@ cli
             try {
               try {
                 execSync(`git apply --3way "${patchFile}"`, { stdio: "pipe" });
-              } catch {
-                execSync(`git apply "${patchFile}"`, { stdio: "pipe" });
+              } catch (e1) {
+                try {
+                  execSync(`git apply "${patchFile}"`, { stdio: "pipe" });
+                } catch (e2) {
+                  throw e2;
+                }
               }
 
               usePickStore.setState((state) => ({
@@ -347,8 +351,11 @@ cli
                 messageType: "",
               }));
             } catch (error) {
+              const errorMessage = error instanceof Error
+                ? error.message
+                : String(error);
               usePickStore.setState({
-                message: `Failed to apply patch for ${value}`,
+                message: `Failed to apply ${value}: ${errorMessage}`,
                 messageType: "error",
               });
             } finally {
@@ -359,6 +366,23 @@ cli
 
         return (
           <box style={{ padding: 1, flexDirection: "column" }}>
+            <Dropdown
+              tooltip={`Pick files from "${branch}"`}
+              onChange={handleChange}
+              selectedValues={Array.from(selectedFiles)}
+              placeholder="Search files..."
+            >
+              <Dropdown.Section>
+                {files.map((file) => (
+                  <Dropdown.Item
+                    key={file}
+                    value={file}
+                    title={file}
+                    keywords={file.split("/")}
+                  />
+                ))}
+              </Dropdown.Section>
+            </Dropdown>
             {message && (
               <box
                 style={{
@@ -366,7 +390,7 @@ cli
                   paddingRight: 2,
                   paddingTop: 1,
                   paddingBottom: 1,
-                  marginBottom: 1,
+                  marginTop: 1,
                 }}
               >
                 <text
@@ -382,23 +406,6 @@ cli
                 </text>
               </box>
             )}
-            <Dropdown
-              tooltip={`Pick files from "${branch}"`}
-              onChange={handleChange}
-              value={Array.from(selectedFiles)[0]}
-              placeholder="Search files..."
-            >
-              <Dropdown.Section>
-                {files.map((file) => (
-                  <Dropdown.Item
-                    key={file}
-                    value={file}
-                    title={file}
-                    keywords={file.split("/")}
-                  />
-                ))}
-              </Dropdown.Section>
-            </Dropdown>
           </box>
         );
       }
@@ -414,5 +421,5 @@ cli
 
 cli.help();
 cli.version("1.0.0");
-
+// comment
 cli.parse();

@@ -1,3 +1,11 @@
+# 0.0.5
+
+- Fix patch application to use merge-base for correct ahead-only commits
+- Use `git checkout HEAD` for reliable file restoration on deselect
+- Improve error messages with full stderr output
+- Add `execSyncWithError` wrapper for better error handling
+- Support multi-select with array-based selected values in Dropdown
+
 # 0.0.4
 
 - Add `pick` command to selectively apply files from another branch using interactive UI

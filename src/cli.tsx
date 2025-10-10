@@ -17,8 +17,21 @@ import { join } from "path";
 import * as p from "@clack/prompts";
 import { create } from "zustand";
 import Dropdown from "./dropdown.tsx";
+import * as watcher from "@parcel/watcher";
+import { debounce } from "./utils.ts";
 
 const execAsync = promisify(exec);
+
+const IGNORED_FILES = [
+  "pnpm-lock.yaml",
+  "package-lock.json",
+  "yarn.lock",
+  "bun.lockb",
+  "Cargo.lock",
+  "poetry.lock",
+  "Gemfile.lock",
+  "composer.lock",
+];
 
 function execSyncWithError(
   command: string,
@@ -139,6 +152,8 @@ function App({ parsedFiles }: AppProps) {
   );
 }
 
+
+
 cli
   .command(
     "[ref]",
@@ -146,6 +161,7 @@ cli
   )
   .option("--staged", "Show staged changes")
   .option("--commit <ref>", "Show changes from a specific commit")
+  .option("--watch", "Watch for file changes and refresh diff")
   .action(async (ref, options) => {
     try {
       const gitCommand = (() => {
@@ -155,23 +171,102 @@ cli
         return "git diff --no-prefix";
       })();
 
-      const [{ stdout: gitDiff }, diffModule, { parsePatch }] =
-        await Promise.all([
-          execAsync(gitCommand, { encoding: "utf-8" }),
-          import("./diff.tsx"),
-          import("diff"),
-        ]);
+      const [diffModule, { parsePatch }] = await Promise.all([
+        import("./diff.tsx"),
+        import("diff"),
+      ]);
 
-      if (!gitDiff.trim()) {
-        console.log("No changes to display");
-        process.exit(0);
-      }
+      const shouldWatch = options.watch && !ref && !options.commit;
 
-      const parsedFiles = parsePatch(gitDiff);
+      function AppWithWatch() {
+        const [parsedFiles, setParsedFiles] = React.useState<Array<{
+          oldFileName?: string;
+          newFileName?: string;
+          hunks: any[];
+        }>>([]);
 
-      if (parsedFiles.length === 0) {
-        console.log("No changes to display");
-        process.exit(0);
+        React.useEffect(() => {
+          const fetchDiff = async () => {
+            try {
+              const { stdout: gitDiff } = await execAsync(gitCommand, {
+                encoding: "utf-8",
+              });
+
+              if (!gitDiff.trim()) {
+                setParsedFiles([]);
+                return;
+              }
+
+              const files = parsePatch(gitDiff);
+              
+              const filteredFiles = files.filter((file) => {
+                const fileName = file.newFileName || file.oldFileName || "";
+                const baseName = fileName.split("/").pop() || "";
+                
+                if (IGNORED_FILES.includes(baseName) || baseName.endsWith(".lock")) {
+                  return false;
+                }
+                
+                const totalLines = file.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
+                return totalLines <= 1000;
+              });
+              
+              const sortedFiles = filteredFiles.sort((a, b) => {
+                const aSize = a.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
+                const bSize = b.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
+                return aSize - bSize;
+              });
+              
+              setParsedFiles(sortedFiles);
+            } catch (error) {
+              setParsedFiles([]);
+            }
+          };
+
+          fetchDiff();
+
+          if (!shouldWatch) {
+            return;
+          }
+
+          const cwd = process.cwd();
+
+          const debouncedFetch = debounce(() => {
+            fetchDiff();
+          }, 200);
+
+          let subscription: watcher.AsyncSubscription | undefined;
+
+          watcher
+            .subscribe(cwd, (err, events) => {
+              if (err) {
+                return;
+              }
+
+              if (events.length > 0) {
+                debouncedFetch();
+              }
+            })
+            .then((sub) => {
+              subscription = sub;
+            });
+
+          return () => {
+            if (subscription) {
+              subscription.unsubscribe();
+            }
+          };
+        }, []);
+
+        if (parsedFiles.length === 0) {
+          return (
+            <box style={{ padding: 1 }}>
+              <text>No changes to display</text>
+            </box>
+          );
+        }
+
+        return <App parsedFiles={parsedFiles} />;
       }
 
       const { ErrorBoundary } = diffModule;
@@ -180,8 +275,8 @@ cli
         React.createElement(
           ErrorBoundary,
           null,
-          React.createElement(App, { parsedFiles }),
-        ),
+          React.createElement(AppWithWatch)
+        )
       );
     } catch (error) {
       console.error("Error getting git diff:", error);
@@ -228,8 +323,8 @@ cli
         React.createElement(
           ErrorBoundary,
           null,
-          React.createElement(App, { parsedFiles: [patch] }),
-        ),
+          React.createElement(App, { parsedFiles: [patch] })
+        )
       );
     } catch (error) {
       console.error("Error displaying diff:", error);

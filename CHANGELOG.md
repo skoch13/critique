@@ -1,3 +1,12 @@
+# 0.0.7
+
+- Default command:
+  - Add `--watch` flag to enable live refresh on file changes
+  - Sort files by diff size (smallest first)
+  - Hide files with more than 1000 lines of diff
+  - Ignore lock files (pnpm-lock.yaml, package-lock.json, etc.)
+  - Replace React.createElement with JSX syntax
+
 # 0.0.6
 
 - Simplify Dropdown component with options prop instead of descendants pattern

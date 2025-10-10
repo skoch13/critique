@@ -63,6 +63,8 @@ you can read more examples of opentui react code using gitchamber by listing and
 
 after any meaningful change update CHANGELOG.md with the version number and the list of changes made. in concise bullet points
 
+in bullet points use nested list and specify for which command exactly are the changes. or group them to make it clear what they cover.
+
 before updating the changelog bump the package.json version field first. NEVER do major bumps. NEVER publish yourself
 
 NEVER update existing changelog bullet points for previous version unless you added those bullet points yourself recently and the change is of the same version as it is now.

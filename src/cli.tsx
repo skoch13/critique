@@ -223,7 +223,10 @@ cli
   });
 
 cli
-  .command("pick <branch>", "Pick files from another branch to apply to HEAD")
+  .command(
+    "pick <branch>",
+    "Pick files from another branch to apply to HEAD (experimental)",
+  )
   .action(async (branch: string) => {
     try {
       const { stdout: currentBranch } = await execAsync(
@@ -261,7 +264,7 @@ cli
         process.exit(0);
       }
 
-      const selectedFiles = await p.multiselect({
+      const selectedFiles = await p.autocompleteMultiselect({
         message: `Select files to pick from "${branch}":`,
         options: files.map((file) => ({
           value: file,
@@ -297,7 +300,10 @@ cli
           { encoding: "utf-8" },
         );
 
-        const conflicts = conflictFiles.trim().split("\n").filter((f) => f);
+        const conflicts = conflictFiles
+          .trim()
+          .split("\n")
+          .filter((f) => f);
 
         if (conflicts.length > 0) {
           p.log.warn(`Applied with conflicts in ${conflicts.length} file(s):`);

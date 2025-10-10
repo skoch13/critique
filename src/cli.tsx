@@ -15,6 +15,8 @@ import fs from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import * as p from "@clack/prompts";
+import { create } from "zustand";
+import Dropdown from "./dropdown.tsx";
 
 const execAsync = promisify(exec);
 
@@ -223,10 +225,7 @@ cli
   });
 
 cli
-  .command(
-    "pick <branch>",
-    "Pick files from another branch to apply to HEAD (experimental)",
-  )
+  .command("pick <branch>", "Pick files from another branch to apply to HEAD")
   .action(async (branch: string) => {
     try {
       const { stdout: currentBranch } = await execAsync(
@@ -235,7 +234,7 @@ cli
       const current = currentBranch.trim();
 
       if (current === branch) {
-        p.log.error("Cannot pick from the same branch");
+        console.error("Cannot pick from the same branch");
         process.exit(1);
       }
 
@@ -245,7 +244,7 @@ cli
       ).catch(() => ({ stdout: "" }));
 
       if (!branchExists.trim()) {
-        p.log.error(`Branch "${branch}" does not exist`);
+        console.error(`Branch "${branch}" does not exist`);
         process.exit(1);
       }
 
@@ -260,64 +259,147 @@ cli
         .filter((f) => f);
 
       if (files.length === 0) {
-        p.log.info("No differences found between branches");
+        console.log("No differences found between branches");
         process.exit(0);
       }
 
-      const selectedFiles = await p.autocompleteMultiselect({
-        message: `Select files to pick from "${branch}":`,
-        options: files.map((file) => ({
-          value: file,
-          label: file,
-        })),
-        required: false,
-      });
-
-      if (p.isCancel(selectedFiles)) {
-        p.cancel("Operation cancelled.");
-        process.exit(0);
+      interface PickState {
+        selectedFiles: Set<string>;
+        appliedFiles: Map<string, string | undefined>;
+        message: string;
+        messageType: "info" | "error" | "success" | "";
       }
 
-      if (!selectedFiles || selectedFiles.length === 0) {
-        p.log.info("No files selected");
-        process.exit(0);
+      const usePickStore = create<PickState>(() => ({
+        selectedFiles: new Set(),
+        appliedFiles: new Map(),
+        message: "",
+        messageType: "",
+      }));
+
+      interface PickAppProps {
+        files: string[];
+        branch: string;
       }
 
-      const { stdout: patchData } = await execAsync(
-        `git diff HEAD ${branch} -- ${selectedFiles.join(" ")}`,
-        { encoding: "utf-8" },
-      );
+      function PickApp({ files, branch }: PickAppProps) {
+        const selectedFiles = usePickStore((s) => s.selectedFiles);
+        const message = usePickStore((s) => s.message);
+        const messageType = usePickStore((s) => s.messageType);
 
-      const patchFile = join(tmpdir(), `critique-pick-${Date.now()}.patch`);
-      fs.writeFileSync(patchFile, patchData);
+        const handleChange = async (value: string) => {
+          const isSelected = selectedFiles.has(value);
 
-      try {
-        execSync(`git apply --3way "${patchFile}"`, { stdio: "pipe" });
-      } catch {
-        execSync(`git apply "${patchFile}"`, { stdio: "inherit" });
+          if (isSelected) {
+            const appliedFiles = usePickStore.getState().appliedFiles;
+            const originalContent = appliedFiles.get(value);
+
+            if (originalContent !== undefined) {
+              fs.writeFileSync(value, originalContent);
+              usePickStore.setState((state) => ({
+                appliedFiles: new Map(
+                  Array.from(state.appliedFiles).filter(([k]) => k !== value),
+                ),
+              }));
+            }
+
+            usePickStore.setState((state) => ({
+              selectedFiles: new Set(
+                Array.from(state.selectedFiles).filter((f) => f !== value),
+              ),
+            }));
+          } else {
+            const originalContent = fs.existsSync(value)
+              ? fs.readFileSync(value, "utf-8")
+              : undefined;
+
+            const { stdout: patchData } = await execAsync(
+              `git diff HEAD ${branch} -- ${value}`,
+              { encoding: "utf-8" },
+            );
+
+            const patchFile = join(
+              tmpdir(),
+              `critique-pick-${Date.now()}.patch`,
+            );
+            fs.writeFileSync(patchFile, patchData);
+
+            try {
+              try {
+                execSync(`git apply --3way "${patchFile}"`, { stdio: "pipe" });
+              } catch {
+                execSync(`git apply "${patchFile}"`, { stdio: "pipe" });
+              }
+
+              usePickStore.setState((state) => ({
+                selectedFiles: new Set([...state.selectedFiles, value]),
+                appliedFiles: new Map([
+                  ...state.appliedFiles,
+                  [value, originalContent],
+                ]),
+                message: "",
+                messageType: "",
+              }));
+            } catch (error) {
+              usePickStore.setState({
+                message: `Failed to apply patch for ${value}`,
+                messageType: "error",
+              });
+            } finally {
+              fs.unlinkSync(patchFile);
+            }
+          }
+        };
+
+        return (
+          <box style={{ padding: 1, flexDirection: "column" }}>
+            {message && (
+              <box
+                style={{
+                  paddingLeft: 2,
+                  paddingRight: 2,
+                  paddingTop: 1,
+                  paddingBottom: 1,
+                  marginBottom: 1,
+                }}
+              >
+                <text
+                  fg={
+                    messageType === "error"
+                      ? "#ff6b6b"
+                      : messageType === "success"
+                        ? "#51cf66"
+                        : "#ffffff"
+                  }
+                >
+                  {message}
+                </text>
+              </box>
+            )}
+            <Dropdown
+              tooltip={`Pick files from "${branch}"`}
+              onChange={handleChange}
+              value={Array.from(selectedFiles)[0]}
+              placeholder="Search files..."
+            >
+              <Dropdown.Section>
+                {files.map((file) => (
+                  <Dropdown.Item
+                    key={file}
+                    value={file}
+                    title={file}
+                    keywords={file.split("/")}
+                  />
+                ))}
+              </Dropdown.Section>
+            </Dropdown>
+          </box>
+        );
       }
 
-      fs.unlinkSync(patchFile);
-
-      const { stdout: conflictFiles } = await execAsync(
-        "git diff --name-only --diff-filter=U",
-        { encoding: "utf-8" },
-      );
-
-      const conflicts = conflictFiles
-        .trim()
-        .split("\n")
-        .filter((f) => f);
-
-      if (conflicts.length > 0) {
-        p.log.warn(`Applied with conflicts in ${conflicts.length} file(s):`);
-        conflicts.forEach((file) => p.log.message(`  - ${file}`));
-      } else {
-        p.log.success(`Applied changes from ${selectedFiles.length} file(s)`);
-      }
-      process.exit(0);
+      await render(<PickApp files={files} branch={branch} />);
     } catch (error) {
-      p.log.error(
+      console.error(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
       process.exit(1);

@@ -10,6 +10,8 @@ ALWAYS!
 
 NEVER run bun run index.tsx. You cannot directly run the tui app. it will hang. instead ask me to do so.
 
+NEVER use require. just import at the top of the file with esm
+
 use bun add to install packages instead of npm
 
 ## React

@@ -24,6 +24,7 @@
     "diff": "^8.0.2",
     "react": "^19.2.0",
     "react-error-boundary": "^6.0.0",
-    "shiki": "^3.13.0"
+    "shiki": "^3.13.0",
+    "zustand": "^5.0.8"
   }
 }

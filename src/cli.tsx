@@ -20,6 +20,19 @@ import Dropdown from "./dropdown.tsx";
 
 const execAsync = promisify(exec);
 
+function execSyncWithError(
+  command: string,
+  options?: any,
+): { data?: any; error?: string } {
+  try {
+    const data = execSync(command, options);
+    return { data };
+  } catch (error: any) {
+    const stderr = error.stderr?.toString() || error.message || String(error);
+    return { error: stderr };
+  }
+}
+
 const cli = cac("critique");
 
 class ScrollAcceleration {
@@ -265,7 +278,7 @@ cli
 
       interface PickState {
         selectedFiles: Set<string>;
-        appliedFiles: Map<string, string | undefined>;
+        appliedFiles: Map<string, boolean>; // Track which files have patches applied
         message: string;
         messageType: "info" | "error" | "success" | "";
       }
@@ -291,28 +304,27 @@ cli
           const isSelected = selectedFiles.has(value);
 
           if (isSelected) {
-            const appliedFiles = usePickStore.getState().appliedFiles;
-            const originalContent = appliedFiles.get(value);
-
-            if (originalContent !== undefined) {
-              fs.writeFileSync(value, originalContent);
-              usePickStore.setState((state) => ({
-                appliedFiles: new Map(
-                  Array.from(state.appliedFiles).filter(([k]) => k !== value),
-                ),
-              }));
+            const { error } = execSyncWithError(
+              `git checkout HEAD -- "${value}"`,
+              { stdio: "pipe" },
+            );
+            if (error) {
+              usePickStore.setState({
+                message: `Failed to restore ${value}: ${error}`,
+                messageType: "error",
+              });
+              return;
             }
 
             usePickStore.setState((state) => ({
               selectedFiles: new Set(
                 Array.from(state.selectedFiles).filter((f) => f !== value),
               ),
+              appliedFiles: new Map(
+                Array.from(state.appliedFiles).filter(([k]) => k !== value),
+              ),
             }));
           } else {
-            const originalContent = fs.existsSync(value)
-              ? fs.readFileSync(value, "utf-8")
-              : undefined;
-
             const { stdout: mergeBase } = await execAsync(
               `git merge-base HEAD ${branch}`,
               { encoding: "utf-8" },
@@ -330,37 +342,36 @@ cli
             );
             fs.writeFileSync(patchFile, patchData);
 
-            try {
-              try {
-                execSync(`git apply --3way "${patchFile}"`, { stdio: "pipe" });
-              } catch (e1) {
-                try {
-                  execSync(`git apply "${patchFile}"`, { stdio: "pipe" });
-                } catch (e2) {
-                  throw e2;
-                }
-              }
+            const result1 = execSyncWithError(
+              `git apply --3way "${patchFile}"`,
+              {
+                stdio: "pipe",
+              },
+            );
 
-              usePickStore.setState((state) => ({
-                selectedFiles: new Set([...state.selectedFiles, value]),
-                appliedFiles: new Map([
-                  ...state.appliedFiles,
-                  [value, originalContent],
-                ]),
-                message: "",
-                messageType: "",
-              }));
-            } catch (error) {
-              const errorMessage = error instanceof Error
-                ? error.message
-                : String(error);
-              usePickStore.setState({
-                message: `Failed to apply ${value}: ${errorMessage}`,
-                messageType: "error",
+            if (result1.error) {
+              const result2 = execSyncWithError(`git apply "${patchFile}"`, {
+                stdio: "pipe",
               });
-            } finally {
-              fs.unlinkSync(patchFile);
+
+              if (result2.error) {
+                usePickStore.setState({
+                  message: `Failed to apply ${value}: ${result2.error}`,
+                  messageType: "error",
+                });
+                fs.unlinkSync(patchFile);
+                return;
+              }
             }
+
+            fs.unlinkSync(patchFile);
+
+            usePickStore.setState((state) => ({
+              selectedFiles: new Set([...state.selectedFiles, value]),
+              appliedFiles: new Map([...state.appliedFiles, [value, true]]),
+              message: "",
+              messageType: "",
+            }));
           }
         };
 

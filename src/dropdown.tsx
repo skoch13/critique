@@ -48,12 +48,12 @@ const Dropdown = (props: DropdownProps) => {
   // Filter options based on search
   const filteredOptions = options.filter((option) => {
     if (!searchText.trim()) return true;
-    const needle = searchText.toLowerCase().trim();
+    const needles = searchText.toLowerCase().trim().split(/\s+/);
     const searchableText = [option.title, ...(option.keywords || [])]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-    return searchableText.includes(needle);
+    return needles.every((needle) => searchableText.includes(needle));
   });
 
   // Get visible options for current page

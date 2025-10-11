@@ -198,25 +198,25 @@ cli
               }
 
               const files = parsePatch(gitDiff);
-              
+
               const filteredFiles = files.filter((file) => {
                 const fileName = file.newFileName || file.oldFileName || "";
                 const baseName = fileName.split("/").pop() || "";
-                
+
                 if (IGNORED_FILES.includes(baseName) || baseName.endsWith(".lock")) {
                   return false;
                 }
-                
+
                 const totalLines = file.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
-                return totalLines <= 1000;
+                return totalLines <= 6000;
               });
-              
+
               const sortedFiles = filteredFiles.sort((a, b) => {
                 const aSize = a.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
                 const bSize = b.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
                 return aSize - bSize;
               });
-              
+
               setParsedFiles(sortedFiles);
             } catch (error) {
               setParsedFiles([]);
@@ -411,7 +411,7 @@ cli
               `git checkout HEAD -- "${value}"`,
               { stdio: "pipe" },
             );
-            
+
             if (error) {
               if (error.includes("did not match any file(s) known to git")) {
                 if (fs.existsSync(value)) {

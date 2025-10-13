@@ -168,7 +168,7 @@ cli
         if (options.staged) return "git diff --cached --no-prefix";
         if (options.commit) return `git show ${options.commit} --no-prefix`;
         if (ref) return `git show ${ref} --no-prefix`;
-        return "git diff --no-prefix";
+        return "git add -N . && git diff --no-prefix";
       })();
 
       const [diffModule, { parsePatch }] = await Promise.all([
@@ -205,11 +205,6 @@ cli
 
                 if (IGNORED_FILES.includes(baseName) || baseName.endsWith(".lock")) {
                   return false;
-                }
-
-                const isNewFile = !file.oldFileName || file.oldFileName === "/dev/null";
-                if (isNewFile) {
-                  return true;
                 }
 
                 const totalLines = file.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);

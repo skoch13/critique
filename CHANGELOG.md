@@ -1,3 +1,8 @@
+# 0.0.10
+
+- Default command:
+  - Include untracked files in diff using `git add -N`
+
 # 0.0.9
 
 - Default command:

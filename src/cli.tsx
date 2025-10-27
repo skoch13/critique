@@ -14,7 +14,6 @@ import { MacOSScrollAccel } from "@opentui/core";
 import fs from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import * as p from "@clack/prompts";
 import { create } from "zustand";
 import Dropdown from "./dropdown.tsx";
 import * as watcher from "@parcel/watcher";

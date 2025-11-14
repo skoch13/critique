@@ -35,6 +35,17 @@ const IGNORED_FILES = [
 
 const BACKGROUND_COLOR = "#0f0f0f";
 
+function getFileName(file: { oldFileName?: string; newFileName?: string }): string {
+  const newName = file.newFileName;
+  const oldName = file.oldFileName;
+  
+  // Filter out /dev/null which appears for new/deleted files
+  if (newName && newName !== "/dev/null") return newName;
+  if (oldName && oldName !== "/dev/null") return oldName;
+  
+  return "unknown";
+}
+
 function execSyncWithError(
   command: string,
   options?: any,
@@ -147,7 +158,7 @@ function App({ parsedFiles }: AppProps) {
     );
   }
 
-  const fileName = currentFile.newFileName || currentFile.oldFileName || "unknown";
+  const fileName = getFileName(currentFile);
 
   // Calculate additions and deletions
   let additions = 0;
@@ -160,7 +171,7 @@ function App({ parsedFiles }: AppProps) {
   });
 
   const dropdownOptions = parsedFiles.map((file, idx) => {
-    const name = file.newFileName || file.oldFileName || "unknown";
+    const name = getFileName(file);
     return {
       title: name,
       value: String(idx),
@@ -303,7 +314,7 @@ cli
               const files = parsePatch(gitDiff);
 
               const filteredFiles = files.filter((file) => {
-                const fileName = file.newFileName || file.oldFileName || "";
+                const fileName = getFileName(file);
                 const baseName = fileName.split("/").pop() || "";
 
                 if (IGNORED_FILES.includes(baseName) || baseName.endsWith(".lock")) {

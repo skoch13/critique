@@ -125,7 +125,7 @@ function App({ parsedFiles }: AppProps) {
 
   if (!currentFile) {
     return (
-      <box style={{ padding: 1 }}>
+      <box style={{ padding: 1, backgroundColor: "#0f0f0f" }}>
         <text>No files to display</text>
       </box>
     );
@@ -136,10 +136,10 @@ function App({ parsedFiles }: AppProps) {
   return (
     <box
       key={String(useSplitView)}
-      style={{ flexDirection: "column", height: "100%", padding: 1 }}
+      style={{ flexDirection: "column", height: "100%", padding: 1, backgroundColor: "#0f0f0f" }}
     >
       {/* Navigation header */}
-      <box style={{ marginBottom: 1, justifyContent: "center", alignItems: "center" }}>
+      <box style={{ marginBottom: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0f0f0f" }}>
         <text fg={validIndex > 0 ? "#ffffff" : "#666666"}>←</text>
         <text style={{ marginLeft: 2, marginRight: 2 }}>
           {fileName} ({validIndex + 1}/{parsedFiles.length})
@@ -301,7 +301,7 @@ cli
 
         if (parsedFiles === null) {
           return (
-            <box style={{ padding: 1 }}>
+            <box style={{ padding: 1, backgroundColor: "#0f0f0f" }}>
               <text>Loading...</text>
             </box>
           );
@@ -309,7 +309,7 @@ cli
 
         if (parsedFiles.length === 0) {
           return (
-            <box style={{ padding: 1 }}>
+            <box style={{ padding: 1, backgroundColor: "#0f0f0f" }}>
               <text>No changes to display</text>
             </box>
           );
@@ -536,7 +536,7 @@ cli
         };
 
         return (
-          <box style={{ padding: 1, flexDirection: "column" }}>
+          <box style={{ padding: 1, flexDirection: "column", backgroundColor: "#0f0f0f" }}>
             <Dropdown
               tooltip={`Pick files from "${branch}"`}
               onChange={handleChange}
@@ -556,6 +556,7 @@ cli
                   paddingTop: 1,
                   paddingBottom: 1,
                   marginTop: 1,
+                  backgroundColor: "#0f0f0f",
                 }}
               >
                 <text

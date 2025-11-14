@@ -8,21 +8,21 @@ export const Theme = {
   backgroundPanel: "#1E1E1E", // Dark gray panel background
 
   // Primary/accent colors
-  primary: "#0080FF", // Blue
+  primary: "#FFA500", // Orange
   accent: "#00FF80", // Light green (was using this for dates)
 
   // Accessory colors (from List component)
-  info: "#0080FF", // Blue for text accessories
+  info: "#FFA500", // Orange for text accessories
   success: "#00FF80", // Green for date accessories
   warning: "#FF8000", // Orange for tag accessories
   error: "#FF0000", // Red for errors
 
   // Additional UI colors
   border: "#333333",
-  highlight: "#0080FF",
-  selected: "#0080FF",
-  yellow: "#FFFF00", // Yellow for icons
-  link: "#0080FF", // Blue for links
+  highlight: "#FFA500",
+  selected: "#FFA500",
+  yellow: "#FFA500", // Orange for icons
+  link: "#FFA500", // Orange for links
 
   // Transparent
   transparent: undefined, // Use undefined for no background color

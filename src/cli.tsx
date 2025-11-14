@@ -142,7 +142,7 @@ function App({ parsedFiles }: AppProps) {
       style={{ flexDirection: "column", height: "100%", padding: 1, backgroundColor: BACKGROUND_COLOR }}
     >
       {/* Navigation header */}
-      <box style={{ paddingTop: 1, flexDirection: "row", alignItems: "center",  }}>
+      <box style={{ paddingBottom: 1, flexShrink: 0, flexDirection: "row", alignItems: "center",  }}>
         <text fg={validIndex > 0 ? "#ffffff" : "#666666"}> ← </text>
           <box flexGrow={1} />
           <text>
@@ -160,8 +160,6 @@ function App({ parsedFiles }: AppProps) {
           rootOptions: {
             backgroundColor: "transparent",
             border: false,
-            marginTop: 0,
-            paddingTop: 0
           },
 
           scrollbarOptions: {

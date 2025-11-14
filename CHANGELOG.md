@@ -1,3 +1,10 @@
+# 0.0.14
+
+- Default command:
+  - Fix `/dev/null` appearing as filename for new/deleted files
+  - Simplify top navigation by removing "prev file" and "next file" text labels
+  - Move file counter from top to bottom navigation bar next to "select file"
+
 # 0.0.13
 
 - Default command:

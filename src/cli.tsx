@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { cac } from "cac";
+import { FileEditPreviewTitle, FileEditPreview } from "./diff.tsx";
 import {
   createRoot,
   useKeyboard,
@@ -31,6 +32,8 @@ const IGNORED_FILES = [
   "Gemfile.lock",
   "composer.lock",
 ];
+
+const BACKGROUND_COLOR = "#0f0f0f";
 
 function execSyncWithError(
   command: string,
@@ -117,7 +120,7 @@ function App({ parsedFiles }: AppProps) {
     }
   });
 
-  const { FileEditPreviewTitle, FileEditPreview } = require("./diff.tsx");
+
 
   // Ensure current index is valid
   const validIndex = Math.min(currentFileIndex, parsedFiles.length - 1);
@@ -125,7 +128,7 @@ function App({ parsedFiles }: AppProps) {
 
   if (!currentFile) {
     return (
-      <box style={{ padding: 1, backgroundColor: "#0f0f0f" }}>
+      <box style={{ padding: 1, backgroundColor: BACKGROUND_COLOR }}>
         <text>No files to display</text>
       </box>
     );
@@ -136,15 +139,18 @@ function App({ parsedFiles }: AppProps) {
   return (
     <box
       key={String(useSplitView)}
-      style={{ flexDirection: "column", height: "100%", padding: 1, backgroundColor: "#0f0f0f" }}
+      style={{ flexDirection: "column", height: "100%", padding: 1, backgroundColor: BACKGROUND_COLOR }}
     >
       {/* Navigation header */}
-      <box style={{ marginBottom: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0f0f0f" }}>
-        <text fg={validIndex > 0 ? "#ffffff" : "#666666"}>←</text>
-        <text style={{ marginLeft: 2, marginRight: 2 }}>
-          {fileName} ({validIndex + 1}/{parsedFiles.length})
-        </text>
-        <text fg={validIndex < parsedFiles.length - 1 ? "#ffffff" : "#666666"}>→</text>
+      <box style={{ paddingTop: 1, flexDirection: "row", alignItems: "center",  }}>
+        <text fg={validIndex > 0 ? "#ffffff" : "#666666"}> ← </text>
+          <box flexGrow={1} />
+          <text>
+            {fileName.trim()} ({validIndex + 1}/{parsedFiles.length})
+          </text>
+          <box flexGrow={1} />
+
+        <text fg={validIndex < parsedFiles.length - 1 ? "#ffffff" : "#666666"}> → </text>
       </box>
 
       <scrollbox
@@ -154,7 +160,10 @@ function App({ parsedFiles }: AppProps) {
           rootOptions: {
             backgroundColor: "transparent",
             border: false,
+            marginTop: 0,
+            paddingTop: 0
           },
+
           scrollbarOptions: {
             showArrows: false,
             trackOptions: {
@@ -166,11 +175,6 @@ function App({ parsedFiles }: AppProps) {
         focused
       >
         <box style={{ flexDirection: "column" }}>
-          <FileEditPreviewTitle
-            filePath={fileName}
-            hunks={currentFile.hunks}
-          />
-          <box paddingTop={1} />
           <FileEditPreview
             hunks={currentFile.hunks}
             paddingLeft={0}
@@ -301,7 +305,7 @@ cli
 
         if (parsedFiles === null) {
           return (
-            <box style={{ padding: 1, backgroundColor: "#0f0f0f" }}>
+            <box style={{ padding: 1, backgroundColor: BACKGROUND_COLOR }}>
               <text>Loading...</text>
             </box>
           );
@@ -309,7 +313,7 @@ cli
 
         if (parsedFiles.length === 0) {
           return (
-            <box style={{ padding: 1, backgroundColor: "#0f0f0f" }}>
+            <box style={{ padding: 1, backgroundColor: BACKGROUND_COLOR }}>
               <text>No changes to display</text>
             </box>
           );
@@ -536,7 +540,7 @@ cli
         };
 
         return (
-          <box style={{ padding: 1, flexDirection: "column", backgroundColor: "#0f0f0f" }}>
+          <box style={{ padding: 1, flexDirection: "column", backgroundColor: BACKGROUND_COLOR }}>
             <Dropdown
               tooltip={`Pick files from "${branch}"`}
               onChange={handleChange}
@@ -556,7 +560,7 @@ cli
                   paddingTop: 1,
                   paddingBottom: 1,
                   marginTop: 1,
-                  backgroundColor: "#0f0f0f",
+                  backgroundColor: BACKGROUND_COLOR,
                 }}
               >
                 <text

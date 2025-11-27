@@ -669,6 +669,212 @@ cli
     }
   });
 
+cli
+  .command("web [ref]", "Generate web preview of diff")
+  .option("--staged", "Show staged changes")
+  .option("--commit <ref>", "Show changes from a specific commit")
+  .option("--width <width>", "Terminal width for rendering", { default: 120 })
+  .option("--height <height>", "Terminal height for rendering", { default: 40 })
+  .action(async (ref, options) => {
+    const pty = await import("node-pty");
+    const { spawn: bunSpawn } = await import("bun");
+
+    const gitCommand = (() => {
+      if (options.staged) return "git diff --cached --no-prefix";
+      if (options.commit) return `git show ${options.commit} --no-prefix`;
+      if (ref) return `git show ${ref} --no-prefix`;
+      return "git add -N . && git diff --no-prefix";
+    })();
+
+    const width = parseInt(options.width) || 120;
+    const height = parseInt(options.height) || 40;
+
+    console.log("Capturing diff output...");
+
+    // Get the git diff first
+    const { stdout: gitDiff } = await execAsync(gitCommand, { encoding: "utf-8" });
+
+    if (!gitDiff.trim()) {
+      console.log("No changes to display");
+      process.exit(0);
+    }
+
+    // Write diff to temp file
+    const diffFile = join(tmpdir(), `critique-web-diff-${Date.now()}.patch`);
+    fs.writeFileSync(diffFile, gitDiff);
+
+    // Spawn the TUI in a PTY to capture ANSI output
+    let ansiOutput = "";
+    const ptyProcess = pty.spawn("bun", [
+      process.argv[1]!, // path to cli.tsx
+      "web-render",
+      diffFile,
+      "--width", String(width),
+      "--height", String(height),
+    ], {
+      name: "xterm-256color",
+      cols: width,
+      rows: height,
+      cwd: process.cwd(),
+      env: { ...process.env, TERM: "xterm-256color" },
+    });
+
+    ptyProcess.onData((data) => {
+      ansiOutput += data;
+    });
+
+    await new Promise<void>((resolve) => {
+      ptyProcess.onExit(() => {
+        resolve();
+      });
+    });
+
+    // Clean up temp file
+    fs.unlinkSync(diffFile);
+
+    if (!ansiOutput.trim()) {
+      console.log("No output captured");
+      process.exit(1);
+    }
+
+    console.log("Uploading to gist...");
+
+    // Create gist using gh CLI
+    const gistFile = join(tmpdir(), `critique-${Date.now()}.ansi`);
+    fs.writeFileSync(gistFile, ansiOutput);
+
+    try {
+      const { stdout: gistUrl } = await execAsync(
+        `gh gist create "${gistFile}" --public -d "Critique diff preview"`,
+        { encoding: "utf-8" }
+      );
+      
+      const gistId = gistUrl.trim().split("/").pop();
+      fs.unlinkSync(gistFile);
+
+      console.log(`Gist created: ${gistUrl.trim()}`);
+      console.log(`\nStarting local server...`);
+      console.log(`Open: http://localhost:3000?gist=${gistId}`);
+
+      // Start vite dev server
+      const viteProcess = bunSpawn(["bun", "run", "web"], {
+        cwd: process.cwd(),
+        stdio: ["inherit", "inherit", "inherit"],
+      });
+
+      process.on("SIGINT", () => {
+        viteProcess.kill();
+        process.exit(0);
+      });
+
+      await viteProcess.exited;
+    } catch (error: any) {
+      fs.unlinkSync(gistFile);
+      console.error("Failed to create gist:", error.message);
+      console.log("\nMake sure you have gh CLI installed and authenticated.");
+      console.log("Run: gh auth login");
+      process.exit(1);
+    }
+  });
+
+// Internal command for web rendering (captures output to PTY)
+cli
+  .command("web-render <diffFile>", "Internal: Render diff for web capture", { allowUnknownOptions: true })
+  .option("--width <width>", "Terminal width", { default: 120 })
+  .option("--height <height>", "Terminal height", { default: 40 })
+  .action(async (diffFile: string, options) => {
+    const width = parseInt(options.width) || 120;
+    const height = parseInt(options.height) || 40;
+
+    const [diffModule, { parsePatch }] = await Promise.all([
+      import("./diff.tsx"),
+      import("diff"),
+    ]);
+
+    const gitDiff = fs.readFileSync(diffFile, "utf-8");
+    const files = parsePatch(gitDiff);
+
+    const filteredFiles = files.filter((file) => {
+      const fileName = getFileName(file);
+      const baseName = fileName.split("/").pop() || "";
+      if (IGNORED_FILES.includes(baseName) || baseName.endsWith(".lock")) {
+        return false;
+      }
+      const totalLines = file.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
+      return totalLines <= 6000;
+    });
+
+    const sortedFiles = filteredFiles.sort((a, b) => {
+      const aSize = a.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
+      const bSize = b.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
+      return aSize - bSize;
+    });
+
+    if (sortedFiles.length === 0) {
+      console.log("No files to display");
+      process.exit(0);
+    }
+
+    // Simple static renderer - just output ANSI for first file with split view
+    const { FileEditPreview, ErrorBoundary } = diffModule;
+
+    // Override terminal size
+    process.stdout.columns = width;
+    process.stdout.rows = height;
+
+    const renderer = await createCliRenderer({
+      exitOnCtrlC: false,
+      useAlternateScreen: false,
+    });
+
+    // Render all files
+    function WebApp() {
+      React.useEffect(() => {
+        // Give time for initial render then exit
+        setTimeout(() => {
+          renderer.destroy();
+          process.exit(0);
+        }, 500);
+      }, []);
+
+      return (
+        <box style={{ flexDirection: "column", height: "100%", padding: 1, backgroundColor: BACKGROUND_COLOR }}>
+          {sortedFiles.map((file, idx) => {
+            const fileName = getFileName(file);
+            let additions = 0;
+            let deletions = 0;
+            file.hunks.forEach((hunk: any) => {
+              hunk.lines.forEach((line: string) => {
+                if (line.startsWith("+")) additions++;
+                if (line.startsWith("-")) deletions++;
+              });
+            });
+
+            return (
+              <box key={idx} style={{ flexDirection: "column", marginBottom: 2 }}>
+                <box style={{ paddingBottom: 1, paddingLeft: 1, paddingRight: 1, flexShrink: 0, flexDirection: "row", alignItems: "center" }}>
+                  <text>{fileName.trim()}</text>
+                  <text fg="#00ff00"> +{additions}</text>
+                  <text fg="#ff0000">-{deletions}</text>
+                </box>
+                <FileEditPreview
+                  hunks={file.hunks}
+                  paddingLeft={0}
+                  splitView={true}
+                  filePath={fileName}
+                />
+              </box>
+            );
+          })}
+        </box>
+      );
+    }
+
+    createRoot(renderer).render(
+      React.createElement(ErrorBoundary, null, React.createElement(WebApp))
+    );
+  });
+
 cli.help();
 cli.version("1.0.0");
 // comment

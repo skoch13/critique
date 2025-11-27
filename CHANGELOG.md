@@ -8,6 +8,7 @@
   - Automatically starts local vite server at http://localhost:3000
   - Supports `--staged`, `--commit <ref>`, `--width`, `--height` options
   - Import ANSI content from file instead of hardcoding
+  - Fix screen clear sequence (`ESC[H ESC[J`) breaking ghostty-web rendering
 - New scripts:
   - `bun run web` - Start vite dev server for web preview
   - `bun run web:build` - Build web preview for production

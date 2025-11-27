@@ -35,6 +35,12 @@ function countRows(ansi: string): number {
   return ansi.split("\n").length;
 }
 
+// Clean ANSI content for ghostty-web rendering
+function cleanAnsi(content: string): string {
+  // Remove screen clear sequences that trip up ghostty-web
+  return content.replace(/\x1b\[H\x1b\[J/g, "");
+}
+
 // Create and render terminal
 function createTerminal(
   container: HTMLElement,
@@ -104,6 +110,9 @@ async function main() {
     : calculateFontSize(cols, window.innerWidth);
 
   console.log(`Terminal: ${cols} cols, fontSize: ${fontSize}px, window: ${window.innerWidth}px`);
+
+  // Clean content for ghostty-web
+  content = cleanAnsi(content);
 
   // Create terminal
   let term = createTerminal(container, content, cols, fontSize);

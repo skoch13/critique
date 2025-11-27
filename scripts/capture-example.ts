@@ -15,71 +15,6 @@ const __dirname = path.dirname(__filename);
 const COLS = 240;
 const ROWS = 50;
 
-/**
- * Clean ANSI output by removing terminal control sequences not needed for static display
- */
-function cleanAnsiOutput(raw: string): string {
-  let cleaned = raw;
-  
-  // Remove OSC sequences: ESC ] ... ST (or BEL)
-  // These are Operating System Commands like setting window title
-  cleaned = cleaned.replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, "");
-  
-  // Remove DCS sequences: ESC P ... ST
-  cleaned = cleaned.replace(/\x1bP[^\x1b]*\x1b\\/g, "");
-  
-  // Remove APC sequences: ESC _ ... ST
-  cleaned = cleaned.replace(/\x1b_[^\x1b]*\x1b\\/g, "");
-  
-  // Remove terminal query sequences (private modes, device attributes, etc.)
-  // [?...$ sequences (DECRQM - request mode)
-  cleaned = cleaned.replace(/\x1b\[\?[0-9;]*\$p/g, "");
-  // [>...q sequences (terminal version query)
-  cleaned = cleaned.replace(/\x1b\[>[0-9]*q/g, "");
-  // [?u sequences (kitty keyboard protocol query)
-  cleaned = cleaned.replace(/\x1b\[\?u/g, "");
-  // [c and [>c sequences (device attributes)
-  cleaned = cleaned.replace(/\x1b\[>?c/g, "");
-  // [6n sequences (cursor position query)
-  cleaned = cleaned.replace(/\x1b\[[0-9]*n/g, "");
-  
-  // Remove cursor save/restore that wrap queries
-  cleaned = cleaned.replace(/\x1b\[s/g, "");
-  cleaned = cleaned.replace(/\x1b\[u/g, "");
-  cleaned = cleaned.replace(/\x1b7/g, "");
-  cleaned = cleaned.replace(/\x1b8/g, "");
-  
-  // Remove cursor visibility sequences
-  cleaned = cleaned.replace(/\x1b\[\?25[hl]/g, "");
-  
-  // Remove mouse tracking sequences
-  cleaned = cleaned.replace(/\x1b\[\?100[0-6][hl]/g, "");
-  cleaned = cleaned.replace(/\x1b\[\?1015[hl]/g, "");
-  
-  // Remove bracketed paste mode
-  cleaned = cleaned.replace(/\x1b\[\?2004[hl]/g, "");
-  
-  // Remove focus tracking
-  cleaned = cleaned.replace(/\x1b\[\?1004[hl]/g, "");
-  
-  // Remove synchronized output
-  cleaned = cleaned.replace(/\x1b\[\?2026[hl]/g, "");
-  
-  // Remove other private mode sequences
-  cleaned = cleaned.replace(/\x1b\[\?[0-9;]+[hl]/g, "");
-  
-  // Remove window size query [14t]
-  cleaned = cleaned.replace(/\x1b\[[0-9]*t/g, "");
-  
-  // Remove cursor style [N q]
-  cleaned = cleaned.replace(/\x1b\[[0-9]* ?q/g, "");
-  
-  // Remove screen clear sequences at the end
-  cleaned = cleaned.replace(/\x1b\[H\x1b\[J/g, "");
-  
-  return cleaned;
-}
-
 // Create a sample diff
 const oldContent = `import { foo } from "./api";
 
@@ -154,13 +89,10 @@ ptyProcess.onExit(() => {
   fs.unlinkSync(newFile);
   fs.unlinkSync(diffFile);
 
-  // Clean the output to remove terminal control sequences
-  const cleaned = cleanAnsiOutput(output);
-
   // Save output
   const outputFile = path.join(__dirname, "../web/example.ansi");
-  fs.writeFileSync(outputFile, cleaned);
-  
-  console.log(`Saved ${cleaned.length} bytes to web/example.ansi (raw: ${output.length} bytes)`);
+  fs.writeFileSync(outputFile, output);
+
+  console.log(`Saved ${output.length} bytes to web/example.ansi`);
   process.exit(0);
 });

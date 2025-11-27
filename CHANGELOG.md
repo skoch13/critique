@@ -1,3 +1,18 @@
+# 0.0.15
+
+- Web preview:
+  - Add `web` command to generate shareable web preview of diffs
+  - Add `web-render` command for internal PTY capture
+  - Uses ghostty-web to render ANSI terminal output in the browser
+  - Captures TUI output via node-pty and uploads to GitHub gist
+  - Automatically starts local vite server at http://localhost:3000
+  - Supports `--staged`, `--commit <ref>`, `--width`, `--height` options
+  - Import ANSI content from file instead of hardcoding
+- New scripts:
+  - `bun run web` - Start vite dev server for web preview
+  - `bun run web:build` - Build web preview for production
+  - `scripts/capture-example.ts` - Generate example ANSI output for web preview
+
 # 0.0.14
 
 - Default command:

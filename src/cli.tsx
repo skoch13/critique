@@ -872,6 +872,9 @@ cli
       }, 100);
     };
 
+    // Use unified diff for narrow viewports (mobile), split view for wider ones
+    const useSplitView = cols >= 150;
+
     // Static component - no hooks that cause re-renders
     function WebApp() {
       return (
@@ -897,7 +900,7 @@ cli
                 <FileEditPreview
                   hunks={file.hunks}
                   paddingLeft={0}
-                  splitView={true}
+                  splitView={useSplitView}
                   filePath={fileName}
                 />
               </box>

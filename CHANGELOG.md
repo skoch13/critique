@@ -1,3 +1,8 @@
+# 0.0.23
+
+- Web preview:
+  - Use unified diff (instead of split view) when `--cols < 150` for better mobile readability
+
 # 0.0.22
 
 - Web preview:

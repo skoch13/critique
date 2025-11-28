@@ -4,6 +4,7 @@
   "main": "src/worker.ts",
   "compatibility_date": "2025-05-26",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
   
   // KV Namespace binding for storing HTML content
   "kv_namespaces": [
@@ -11,5 +12,11 @@
       "binding": "CRITIQUE_KV",
       "id": "844b10c9fea049c8b20fa4a8c5cae44e"
     }
+  ],
+
+  // Custom domain
+  "routes": [
+    { "pattern": "critique.work", "custom_domain": true },
+    { "pattern": "www.critique.work", "custom_domain": true }
   ]
 }

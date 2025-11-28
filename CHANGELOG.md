@@ -1,3 +1,7 @@
+# 0.0.20
+
+- Move `@xmorse/bun-pty` from devDependencies to dependencies (required at runtime for `web` command)
+
 # 0.0.19
 
 - Web preview:

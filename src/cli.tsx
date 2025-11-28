@@ -670,7 +670,7 @@ cli
   });
 
 // Worker URL for uploading HTML previews
-const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://critique-web.remorses.workers.dev";
+const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://critique.work";
 
 cli
   .command("web [ref]", "Generate web preview of diff")

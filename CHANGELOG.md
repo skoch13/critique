@@ -1,3 +1,7 @@
+# 0.0.25
+
+- Change default worker URL to https://critique.work/
+
 # 0.0.24
 
 - Worker:

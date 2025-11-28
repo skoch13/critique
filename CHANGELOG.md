@@ -1,3 +1,21 @@
+# 0.0.16
+
+- Web preview:
+  - Replace ghostty-web with opentui-ansi-vt for ANSI to HTML conversion
+  - Add Cloudflare Worker for hosting previews with KV storage (7-day expiration)
+  - Use `content-visibility: auto` for improved performance on large diffs
+  - Stream HTML responses for faster initial load
+  - Add `--local` flag to save HTML locally instead of uploading
+  - Remove dependency on GitHub CLI (`gh`) for gist uploads
+- New packages:
+  - `@critique/worker` - Cloudflare Worker with Hono routes
+    - `POST /upload` - Upload HTML and get shareable URL (hash-based deduplication)
+    - `GET /view/:id` - Stream HTML content with caching
+- CLI:
+  - Increase default width to 240 and height to 2000 for better web rendering
+  - Auto-open browser after upload
+  - Fallback to local file if upload fails
+
 # 0.0.15
 
 - Web preview:

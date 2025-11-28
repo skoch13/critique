@@ -676,8 +676,8 @@ cli
   .command("web [ref]", "Generate web preview of diff")
   .option("--staged", "Show staged changes")
   .option("--commit <ref>", "Show changes from a specific commit")
-  .option("--width <width>", "Terminal width for rendering", { default: 240 })
-  .option("--height <height>", "Terminal height for rendering", { default: 2000 })
+  .option("--cols <cols>", "Number of columns for rendering (use ~100 for mobile)", { default: 240 })
+  .option("--rows <rows>", "Number of rows for rendering", { default: 2000 })
   .option("--local", "Open local preview instead of uploading")
   .action(async (ref, options) => {
     const pty = await import("@xmorse/bun-pty");
@@ -690,8 +690,8 @@ cli
       return "git add -N . && git diff --no-prefix";
     })();
 
-    const width = parseInt(options.width) || 240;
-    const height = parseInt(options.height) || 2000;
+    const cols = parseInt(options.cols) || 240;
+    const rows = parseInt(options.rows) || 2000;
 
     console.log("Capturing diff output...");
 
@@ -713,12 +713,12 @@ cli
       process.argv[1]!, // path to cli.tsx
       "web-render",
       diffFile,
-      "--width", String(width),
-      "--height", String(height),
+      "--cols", String(cols),
+      "--rows", String(rows),
     ], {
       name: "xterm-256color",
-      cols: width,
-      rows: height,
+      cols: cols,
+      rows: rows,
 
       cwd: process.cwd(),
       env: { ...process.env, TERM: "xterm-256color" } as Record<string, string>,
@@ -752,7 +752,7 @@ cli
     }
 
     // Convert ANSI to HTML document
-    const html = ansiToHtmlDocument(ansiOutput, { cols: width, rows: height });
+    const html = ansiToHtmlDocument(ansiOutput, { cols, rows });
 
     if (options.local) {
       // Save locally and open
@@ -812,11 +812,11 @@ cli
 // Internal command for web rendering (captures output to PTY)
 cli
   .command("web-render <diffFile>", "Internal: Render diff for web capture", { allowUnknownOptions: true })
-  .option("--width <width>", "Terminal width", { default: 120 })
-  .option("--height <height>", "Terminal height", { default: 1000 })
+  .option("--cols <cols>", "Terminal columns", { default: 120 })
+  .option("--rows <rows>", "Terminal rows", { default: 1000 })
   .action(async (diffFile: string, options) => {
-    const width = parseInt(options.width) || 120;
-    const height = parseInt(options.height) || 40;
+    const cols = parseInt(options.cols) || 120;
+    const rows = parseInt(options.rows) || 40;
 
     const [diffModule, { parsePatch }] = await Promise.all([
       import("./diff.tsx"),
@@ -850,8 +850,8 @@ cli
     const { FileEditPreview, ErrorBoundary } = diffModule;
 
     // Override terminal size
-    process.stdout.columns = width;
-    process.stdout.rows = height;
+    process.stdout.columns = cols;
+    process.stdout.rows = rows;
 
     const renderer = await createCliRenderer({
       exitOnCtrlC: false,

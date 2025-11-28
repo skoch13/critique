@@ -1,3 +1,9 @@
+# 0.0.22
+
+- Web preview:
+  - Rename `--width`/`--height` options to `--cols`/`--rows` for clarity
+  - Add hint in help text: use `--cols ~100` for mobile-friendly output
+
 # 0.0.21
 
 - Update `@xmorse/bun-pty` to 0.4.0

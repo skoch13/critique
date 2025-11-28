@@ -1,3 +1,9 @@
+# 0.0.24
+
+- Worker:
+  - Increase ID length from 16 to 32 hex chars (128 bits) for better security against guessing
+  - Backwards compatible: accepts both old 16-char and new 32-char IDs
+
 # 0.0.23
 
 - Web preview:

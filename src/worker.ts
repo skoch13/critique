@@ -35,8 +35,8 @@ app.post("/upload", async (c) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("")
 
-    // Use first 16 chars of hash as ID (sufficient for uniqueness)
-    const id = hashHex.slice(0, 16)
+    // Use first 32 chars of hash as ID (128 bits, secure against guessing)
+    const id = hashHex.slice(0, 32)
 
     // Store in KV with 7 day expiration
     await c.env.CRITIQUE_KV.put(id, body.html, {
@@ -57,7 +57,7 @@ app.post("/upload", async (c) => {
 app.get("/view/:id", async (c) => {
   const id = c.req.param("id")
 
-  if (!id || !/^[a-f0-9]{16}$/.test(id)) {
+  if (!id || !/^[a-f0-9]{16,32}$/.test(id)) {
     return c.text("Invalid ID", 400)
   }
 
@@ -90,7 +90,7 @@ app.get("/view/:id", async (c) => {
 app.get("/raw/:id", async (c) => {
   const id = c.req.param("id")
 
-  if (!id || !/^[a-f0-9]{16}$/.test(id)) {
+  if (!id || !/^[a-f0-9]{16,32}$/.test(id)) {
     return c.json({ error: "Invalid ID" }, 400)
   }
 
@@ -110,7 +110,7 @@ app.get("/raw/:id", async (c) => {
 app.on("HEAD", "/view/:id", async (c) => {
   const id = c.req.param("id")
 
-  if (!id || !/^[a-f0-9]{16}$/.test(id)) {
+  if (!id || !/^[a-f0-9]{16,32}$/.test(id)) {
     return c.body(null, 400)
   }
 

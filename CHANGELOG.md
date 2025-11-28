@@ -1,8 +1,3 @@
-# 0.0.19
-
-- Worker:
-  - Add random salt to SHA-256 hash for upload URLs, preventing URL guessing from content
-
 # 0.0.18
 
 - Web preview:

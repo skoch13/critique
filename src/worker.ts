@@ -28,16 +28,14 @@ app.post("/upload", async (c) => {
       return c.json({ error: "Missing or invalid 'html' field" }, 400)
     }
 
-    // Generate random salt and hash together with content to create unguessable ID
-    const randomBytes = new Uint8Array(32)
-    crypto.getRandomValues(randomBytes)
+    // Generate hash of the HTML content as the key (enables caching/deduplication)
     const encoder = new TextEncoder()
-    const data = new Uint8Array([...randomBytes, ...encoder.encode(body.html)])
+    const data = encoder.encode(body.html)
     const hashBuffer = await crypto.subtle.digest("SHA-256", data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("")
 
-    // Use first 16 chars of hash as ID
+    // Use first 16 chars of hash as ID (sufficient for uniqueness)
     const id = hashHex.slice(0, 16)
 
     // Store in KV with 7 day expiration

@@ -156,6 +156,8 @@ html, body {
 .line {
   white-space: pre;
   display: flex;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 1lh;
 }
 .line span {
   white-space: pre;

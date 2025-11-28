@@ -669,15 +669,19 @@ cli
     }
   });
 
+// Worker URL for uploading HTML previews
+const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://critique-web.remorses.workers.dev";
+
 cli
   .command("web [ref]", "Generate web preview of diff")
   .option("--staged", "Show staged changes")
   .option("--commit <ref>", "Show changes from a specific commit")
-  .option("--width <width>", "Terminal width for rendering", { default: 120 })
-  .option("--height <height>", "Terminal height for rendering", { default: 40 })
+  .option("--width <width>", "Terminal width for rendering", { default: 240 })
+  .option("--height <height>", "Terminal height for rendering", { default: 2000 })
+  .option("--local", "Open local preview instead of uploading")
   .action(async (ref, options) => {
     const pty = await import("node-pty");
-    const { spawn: bunSpawn } = await import("bun");
+    const { ansiToHtmlDocument } = await import("./ansi-html.ts");
 
     const gitCommand = (() => {
       if (options.staged) return "git diff --cached --no-prefix";
@@ -686,8 +690,8 @@ cli
       return "git add -N . && git diff --no-prefix";
     })();
 
-    const width = parseInt(options.width) || 120;
-    const height = parseInt(options.height) || 40;
+    const width = parseInt(options.width) || 240;
+    const height = parseInt(options.height) || 2000;
 
     console.log("Capturing diff output...");
 
@@ -737,42 +741,62 @@ cli
       process.exit(1);
     }
 
-    console.log("Uploading to gist...");
+    console.log("Converting to HTML...");
 
-    // Create gist using gh CLI
-    const gistFile = join(tmpdir(), `critique-${Date.now()}.ansi`);
-    fs.writeFileSync(gistFile, ansiOutput);
+    // Convert ANSI to HTML document
+    const html = ansiToHtmlDocument(ansiOutput, { cols: width, rows: height });
+
+    if (options.local) {
+      // Save locally and open
+      const htmlFile = join(tmpdir(), `critique-${Date.now()}.html`);
+      fs.writeFileSync(htmlFile, html);
+      console.log(`Saved to: ${htmlFile}`);
+      
+      // Try to open in browser
+      const openCmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+      try {
+        await execAsync(`${openCmd} "${htmlFile}"`);
+      } catch {
+        console.log("Could not open browser automatically");
+      }
+      process.exit(0);
+    }
+
+    console.log("Uploading to worker...");
 
     try {
-      const { stdout: gistUrl } = await execAsync(
-        `gh gist create "${gistFile}" --public -d "Critique diff preview"`,
-        { encoding: "utf-8" }
-      );
-
-      const gistId = gistUrl.trim().split("/").pop();
-      fs.unlinkSync(gistFile);
-
-      console.log(`Gist created: ${gistUrl.trim()}`);
-      console.log(`\nStarting local server...`);
-      console.log(`Open: http://localhost:3000?gist=${gistId}`);
-
-      // Start vite dev server
-      const viteProcess = bunSpawn(["bun", "run", "web"], {
-        cwd: process.cwd(),
-        stdio: ["inherit", "inherit", "inherit"],
+      const response = await fetch(`${WORKER_URL}/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ html }),
       });
 
-      process.on("SIGINT", () => {
-        viteProcess.kill();
-        process.exit(0);
-      });
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Upload failed: ${error}`);
+      }
 
-      await viteProcess.exited;
+      const result = await response.json() as { id: string; url: string };
+      
+      console.log(`\nPreview URL: ${result.url}`);
+      console.log(`(expires in 7 days)`);
+
+      // Try to open in browser
+      const openCmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+      try {
+        await execAsync(`${openCmd} "${result.url}"`);
+      } catch {
+        // Silent fail - user can copy URL
+      }
     } catch (error: any) {
-      fs.unlinkSync(gistFile);
-      console.error("Failed to create gist:", error.message);
-      console.log("\nMake sure you have gh CLI installed and authenticated.");
-      console.log("Run: gh auth login");
+      console.error("Failed to upload:", error.message);
+      
+      // Fallback to local file
+      const htmlFile = join(tmpdir(), `critique-${Date.now()}.html`);
+      fs.writeFileSync(htmlFile, html);
+      console.log(`\nFallback: Saved locally to ${htmlFile}`);
       process.exit(1);
     }
   });

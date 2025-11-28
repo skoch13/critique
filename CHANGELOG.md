@@ -1,3 +1,13 @@
+# 0.0.17
+
+- Web preview:
+  - Use `ptyToHtml` from opentui-ansi-vt@1.2.10 instead of custom ANSI-to-HTML conversion
+  - Simplify `ansiToHtml` to be a thin wrapper around the native implementation
+  - HTML now uses CSS variables for color palette (better theming support)
+- Cleanup:
+  - Remove unused `web/` directory and `vite.config.ts`
+  - Fix TypeScript errors in `ansi-html.ts`
+
 # 0.0.16
 
 - Web preview:

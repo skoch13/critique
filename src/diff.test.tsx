@@ -20,7 +20,6 @@ const sampleHunks: StructuredPatch["hunks"] = [
       " ",
       "+// New comment",
     ],
-    linedelimiter: "\n",
   },
 ];
 
@@ -31,7 +30,6 @@ const additionOnlyHunks: StructuredPatch["hunks"] = [
     newStart: 1,
     newLines: 3,
     lines: ["+function newFunc() {", "+  return true;", "+}"],
-    linedelimiter: "\n",
   },
 ];
 
@@ -42,7 +40,6 @@ const deletionOnlyHunks: StructuredPatch["hunks"] = [
     newStart: 1,
     newLines: 0,
     lines: ["-function oldFunc() {", "-  return false;", "-}"],
-    linedelimiter: "\n",
   },
 ];
 

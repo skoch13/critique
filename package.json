@@ -22,12 +22,12 @@
     "wrangler": "^4.19.1"
   },
   "dependencies": {
-    "@xmorse/bun-pty": "0.4.0",
-    "@opentui/core": "^0.1.44",
-    "@opentui/react": "^0.1.44",
+    "@opentui/core": "^0.1.51",
+    "@opentui/react": "^0.1.51",
     "@parcel/watcher": "^2.5.1",
     "@shikijs/langs": "^3.15.0",
     "@shikijs/themes": "^3.15.0",
+    "@xmorse/bun-pty": "0.4.0",
     "cac": "^6.7.14",
     "diff": "^8.0.2",
     "opentui-ansi-vt": "1.2.10",

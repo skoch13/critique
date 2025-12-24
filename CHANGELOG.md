@@ -1,3 +1,9 @@
+# 0.0.29
+
+- Persist theme preference to `~/.critique/state.json`
+  - Theme selection is restored on next launch
+  - Directory is created automatically if missing
+
 # 0.0.28
 
 - Default command:

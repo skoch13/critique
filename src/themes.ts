@@ -50,6 +50,8 @@ interface ThemeJson {
 }
 
 export interface ResolvedTheme {
+  // UI colors
+  primary: RGBA;
   // Syntax colors
   syntaxComment: RGBA;
   syntaxKeyword: RGBA;
@@ -82,6 +84,7 @@ export interface SyntaxThemeStyle {
 }
 
 export interface SyntaxTheme {
+  [key: string]: SyntaxThemeStyle;
   keyword: SyntaxThemeStyle;
   "keyword.import": SyntaxThemeStyle;
   string: SyntaxThemeStyle;
@@ -135,7 +138,10 @@ const DEFAULT_THEMES: Record<string, ThemeJson> = {
   zenburn,
 };
 
-function resolveTheme(themeJson: ThemeJson, mode: "dark" | "light"): ResolvedTheme {
+function resolveTheme(
+  themeJson: ThemeJson,
+  mode: "dark" | "light",
+): ResolvedTheme {
   const defs = themeJson.defs ?? {};
 
   function resolveColor(c: ColorValue): RGBA {
@@ -157,35 +163,49 @@ function resolveTheme(themeJson: ThemeJson, mode: "dark" | "light"): ResolvedThe
     return resolveColor(c[mode]);
   }
 
+  const t = themeJson.theme;
+  const fallbackGray: ColorValue = "#808080";
+  const fallbackBg: ColorValue = "#1e1e1e";
+  const fallbackText: ColorValue = "#d4d4d4";
+
   return {
-    syntaxComment: resolveColor(themeJson.theme.syntaxComment),
-    syntaxKeyword: resolveColor(themeJson.theme.syntaxKeyword),
-    syntaxFunction: resolveColor(themeJson.theme.syntaxFunction),
-    syntaxVariable: resolveColor(themeJson.theme.syntaxVariable),
-    syntaxString: resolveColor(themeJson.theme.syntaxString),
-    syntaxNumber: resolveColor(themeJson.theme.syntaxNumber),
-    syntaxType: resolveColor(themeJson.theme.syntaxType),
-    syntaxOperator: resolveColor(themeJson.theme.syntaxOperator),
-    syntaxPunctuation: resolveColor(themeJson.theme.syntaxPunctuation),
-    text: resolveColor(themeJson.theme.text),
-    textMuted: resolveColor(themeJson.theme.textMuted),
-    diffAddedBg: resolveColor(themeJson.theme.diffAddedBg),
-    diffRemovedBg: resolveColor(themeJson.theme.diffRemovedBg),
-    diffContextBg: resolveColor(themeJson.theme.diffContextBg),
-    diffAddedLineNumberBg: resolveColor(themeJson.theme.diffAddedLineNumberBg),
-    diffRemovedLineNumberBg: resolveColor(themeJson.theme.diffRemovedLineNumberBg),
-    diffLineNumber: resolveColor(themeJson.theme.diffLineNumber),
-    background: resolveColor(themeJson.theme.background),
-    backgroundPanel: resolveColor(themeJson.theme.backgroundPanel),
+    primary: resolveColor(t.primary ?? t.syntaxFunction ?? fallbackGray),
+    syntaxComment: resolveColor(t.syntaxComment ?? fallbackGray),
+    syntaxKeyword: resolveColor(t.syntaxKeyword ?? fallbackGray),
+    syntaxFunction: resolveColor(t.syntaxFunction ?? fallbackGray),
+    syntaxVariable: resolveColor(t.syntaxVariable ?? fallbackGray),
+    syntaxString: resolveColor(t.syntaxString ?? fallbackGray),
+    syntaxNumber: resolveColor(t.syntaxNumber ?? fallbackGray),
+    syntaxType: resolveColor(t.syntaxType ?? fallbackGray),
+    syntaxOperator: resolveColor(t.syntaxOperator ?? fallbackGray),
+    syntaxPunctuation: resolveColor(t.syntaxPunctuation ?? fallbackGray),
+    text: resolveColor(t.text ?? fallbackText),
+    textMuted: resolveColor(t.textMuted ?? fallbackGray),
+    diffAddedBg: resolveColor(t.diffAddedBg ?? "#1e3a1e"),
+    diffRemovedBg: resolveColor(t.diffRemovedBg ?? "#3a1e1e"),
+    diffContextBg: resolveColor(t.diffContextBg ?? fallbackBg),
+    diffAddedLineNumberBg: resolveColor(t.diffAddedLineNumberBg ?? "#1e3a1e"),
+    diffRemovedLineNumberBg: resolveColor(
+      t.diffRemovedLineNumberBg ?? "#3a1e1e",
+    ),
+    diffLineNumber: resolveColor(t.diffLineNumber ?? fallbackGray),
+    background: resolveColor(t.background ?? fallbackBg),
+    backgroundPanel: resolveColor(t.backgroundPanel ?? fallbackBg),
   };
 }
 
-export function getResolvedTheme(name: string, mode: "dark" | "light" = "dark"): ResolvedTheme {
-  const themeJson = DEFAULT_THEMES[name] ?? DEFAULT_THEMES.github;
+export function getResolvedTheme(
+  name: string,
+  mode: "dark" | "light" = "dark",
+): ResolvedTheme {
+  const themeJson = DEFAULT_THEMES[name] ?? DEFAULT_THEMES.github!;
   return resolveTheme(themeJson, mode);
 }
 
-export function getSyntaxTheme(name: string, mode: "dark" | "light" = "dark"): SyntaxTheme {
+export function getSyntaxTheme(
+  name: string,
+  mode: "dark" | "light" = "dark",
+): SyntaxTheme {
   const resolved = getResolvedTheme(name, mode);
 
   return {
@@ -212,3 +232,17 @@ export function getSyntaxTheme(name: string, mode: "dark" | "light" = "dark"): S
 export const themeNames = Object.keys(DEFAULT_THEMES).sort();
 
 export const defaultThemeName = "github";
+
+// Helper to convert RGBA to hex string
+export function rgbaToHex(rgba: RGBA): string {
+  const r = Math.round(rgba.r * 255)
+    .toString(16)
+    .padStart(2, "0");
+  const g = Math.round(rgba.g * 255)
+    .toString(16)
+    .padStart(2, "0");
+  const b = Math.round(rgba.b * 255)
+    .toString(16)
+    .padStart(2, "0");
+  return `#${r}${g}${b}`;
+}

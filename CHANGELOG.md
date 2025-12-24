@@ -1,4 +1,4 @@
-# 0.0.30
+# 0.1.0
 
 - Diff view:
   - Use unified view for fully added or fully deleted files (split view would have one empty side)

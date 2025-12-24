@@ -1,3 +1,14 @@
+# 0.1.2
+
+- Branch comparison:
+  - Document two-ref comparison: `critique <base> <head>`
+  - Uses three-dot syntax (like GitHub PRs) to show what head added since diverging from base
+- Syntax highlighting:
+  - Fix filetype detection to match available tree-sitter parsers
+  - Map all JS/TS/JSX/TSX to `typescript` parser (handles all as superset)
+  - Map JSON to `javascript` parser (JSON is valid JS)
+  - Return `undefined` for unsupported extensions instead of passing them through
+
 # 0.1.0
 
 - Diff view:

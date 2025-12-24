@@ -31,6 +31,10 @@ critique --staged
 critique --commit HEAD~1
 critique abc1234
 
+# Compare two branches (PR-style, shows what head added since diverging from base)
+critique main feature-branch    # what feature-branch added vs main
+critique main HEAD              # what current branch added vs main
+
 # Watch mode - auto-refresh on file changes
 critique --watch
 ```

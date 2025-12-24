@@ -60,16 +60,22 @@ function savePersistedState(state: PersistedState): void {
 const persistedState = loadPersistedState();
 
 // Detect filetype from filename for syntax highlighting
+// Maps to tree-sitter parsers available in @opentui/core: typescript, javascript, markdown, zig
 function detectFiletype(filePath: string): string | undefined {
   const ext = filePath.split(".").pop()?.toLowerCase();
   switch (ext) {
+    // TypeScript parser handles TS, TSX, JS, JSX (it's a superset)
     case "ts":
-      return "typescript";
     case "tsx":
     case "js":
     case "jsx":
     case "mjs":
     case "cjs":
+    case "mts":
+    case "cts":
+      return "typescript";
+    // JSON uses JavaScript parser (JSON is valid JS)
+    case "json":
       return "javascript";
     case "md":
     case "mdx":
@@ -77,7 +83,7 @@ function detectFiletype(filePath: string): string | undefined {
     case "zig":
       return "zig";
     default:
-      return ext;
+      return undefined;
   }
 }
 
@@ -554,7 +560,7 @@ cli
           return `git diff --cached --no-prefix ${contextArg}`.trim();
         if (options.commit)
           return `git show ${options.commit} --no-prefix ${contextArg}`.trim();
-        // Two refs: compare base...head (three-dot, shows changes since branches diverged)
+        // Two refs: compare base...head (three-dot, shows changes since branches diverged, like GitHub PRs)
         if (base && head)
           return `git diff ${base}...${head} --no-prefix ${contextArg}`.trim();
         // Single ref: show that commit's changes

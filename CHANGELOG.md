@@ -1,3 +1,9 @@
+# 0.0.28
+
+- Default command:
+  - Add support for comparing two git refs: `critique <base> <head>`
+  - Uses three-dot notation (`base...head`) to show changes since branches diverged (GitHub PR-style diff)
+
 # 0.0.26
 
 - Web preview:

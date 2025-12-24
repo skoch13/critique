@@ -1,4 +1,4 @@
-import { RGBA, DiffRenderable, SyntaxStyle, type MouseEvent } from "@opentui/core";
+import { RGBA, DiffRenderable, SyntaxStyle, parseColor, addDefaultParsers, getTreeSitterClient, type MouseEvent } from "@opentui/core";
 import { extend } from "@opentui/react";
 import { execSync } from "child_process";
 import { diffWords } from "diff";
@@ -16,6 +16,9 @@ import {
 // Register the diff component with opentui react
 extend({ diff: DiffRenderable });
 
+// Initialize tree-sitter client to ensure parsers are loaded
+getTreeSitterClient();
+
 // Declare the diff component type for JSX
 declare module "@opentui/react" {
   interface OpenTUIComponents {
@@ -23,49 +26,38 @@ declare module "@opentui/react" {
   }
 }
 
-// GitHub Dark syntax style for the diff component
-export const diffSyntaxStyle = SyntaxStyle.fromStyles({
-  keyword: { fg: RGBA.fromHex("#FF7B72"), bold: true },
-  "keyword.import": { fg: RGBA.fromHex("#FF7B72"), bold: true },
-  string: { fg: RGBA.fromHex("#A5D6FF") },
-  comment: { fg: RGBA.fromHex("#8B949E"), italic: true },
-  number: { fg: RGBA.fromHex("#79C0FF") },
-  boolean: { fg: RGBA.fromHex("#79C0FF") },
-  constant: { fg: RGBA.fromHex("#79C0FF") },
-  function: { fg: RGBA.fromHex("#D2A8FF") },
-  "function.call": { fg: RGBA.fromHex("#D2A8FF") },
-  constructor: { fg: RGBA.fromHex("#FFA657") },
-  type: { fg: RGBA.fromHex("#FFA657") },
-  operator: { fg: RGBA.fromHex("#FF7B72") },
-  variable: { fg: RGBA.fromHex("#E6EDF3") },
-  property: { fg: RGBA.fromHex("#79C0FF") },
-  bracket: { fg: RGBA.fromHex("#F0F6FC") },
-  punctuation: { fg: RGBA.fromHex("#F0F6FC") },
-  default: { fg: RGBA.fromHex("#E6EDF3") },
-});
+// GitHub Dark theme - copied exactly from opentui diff-demo.ts
+export const githubDarkSyntaxTheme = {
+  keyword: { fg: parseColor("#FF7B72"), bold: true },
+  "keyword.import": { fg: parseColor("#FF7B72"), bold: true },
+  string: { fg: parseColor("#A5D6FF") },
+  comment: { fg: parseColor("#8B949E"), italic: true },
+  number: { fg: parseColor("#79C0FF") },
+  boolean: { fg: parseColor("#79C0FF") },
+  constant: { fg: parseColor("#79C0FF") },
+  function: { fg: parseColor("#D2A8FF") },
+  "function.call": { fg: parseColor("#D2A8FF") },
+  constructor: { fg: parseColor("#FFA657") },
+  type: { fg: parseColor("#FFA657") },
+  operator: { fg: parseColor("#FF7B72") },
+  variable: { fg: parseColor("#E6EDF3") },
+  property: { fg: parseColor("#79C0FF") },
+  bracket: { fg: parseColor("#F0F6FC") },
+  punctuation: { fg: parseColor("#F0F6FC") },
+  default: { fg: parseColor("#E6EDF3") },
+};
+
+export { SyntaxStyle };
 
 // Detect filetype from filename for syntax highlighting
+// Only returns filetypes that have parsers bundled in @opentui/core:
+// javascript, typescript, markdown, zig
 export function detectFiletype(filePath: string): string | undefined {
   const ext = filePath.split(".").pop()?.toLowerCase();
   switch (ext) {
-    case "ts": return "typescript";
-    case "tsx": return "tsx";
-    case "jsx": return "jsx";
-    case "js": case "mjs": case "cjs": return "javascript";
-    case "json": return "json";
+    case "ts": case "tsx": return "typescript";
+    case "js": case "jsx": case "mjs": case "cjs": return "javascript";
     case "md": case "mdx": return "markdown";
-    case "html": case "htm": return "html";
-    case "css": return "css";
-    case "py": return "python";
-    case "rs": return "rust";
-    case "go": return "go";
-    case "java": return "java";
-    case "c": case "h": return "c";
-    case "cpp": case "cc": case "hpp": return "cpp";
-    case "yaml": case "yml": return "yaml";
-    case "toml": return "toml";
-    case "sh": case "bash": return "bash";
-    case "sql": return "sql";
     case "zig": return "zig";
     default: return undefined;
   }

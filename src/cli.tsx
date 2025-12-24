@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { cac } from "cac";
-import { ErrorBoundary, diffSyntaxStyle, detectFiletype } from "./diff.tsx";
+import { ErrorBoundary, githubDarkSyntaxTheme, SyntaxStyle, detectFiletype } from "./diff.tsx";
 import {
   createRoot,
   useKeyboard,
@@ -95,6 +95,40 @@ interface AppProps {
   parsedFiles: ParsedFile[];
 }
 
+interface DiffViewProps {
+  diff: string;
+  view: "split" | "unified";
+  filetype?: string;
+  syntaxStyle: ReturnType<typeof SyntaxStyle.fromStyles>;
+}
+
+function DiffView({ diff, view, filetype, syntaxStyle }: DiffViewProps) {
+  return (
+    <diff
+      diff={diff}
+      view={view}
+      filetype={filetype}
+      syntaxStyle={syntaxStyle}
+      showLineNumbers
+      wrapMode="none"
+      addedBg="#1a4d1a33"
+      removedBg="#4d1a1a33"
+      contextBg="transparent"
+      addedContentBg="#1a4d1a33"
+      removedContentBg="#4d1a1a33"
+      contextContentBg="transparent"
+      addedSignColor="#22c55e"
+      removedSignColor="#ef4444"
+      lineNumberFg="#a0a0a0"
+      lineNumberBg="#161b22"
+      addedLineNumberBg="#1a4d1a"
+      removedLineNumberBg="#4d1a1a"
+      selectionBg="#264F78"
+      selectionFg="#FFFFFF"
+    />
+  );
+}
+
 function App({ parsedFiles }: AppProps) {
   const { width: initialWidth } = useTerminalDimensions();
   const [width, setWidth] = React.useState(initialWidth);
@@ -147,8 +181,6 @@ function App({ parsedFiles }: AppProps) {
     }
   });
 
-  const { FileEditPreview } = require("./diff.tsx");
-
   // Ensure current index is valid
   const validIndex = Math.min(currentFileIndex, parsedFiles.length - 1);
   const currentFile = parsedFiles[validIndex];
@@ -162,6 +194,10 @@ function App({ parsedFiles }: AppProps) {
   }
 
   const fileName = getFileName(currentFile);
+  const filetype = detectFiletype(fileName);
+
+  // Create syntax style - must be created after renderer is initialized (like in opentui demo)
+  const syntaxStyle = React.useMemo(() => SyntaxStyle.fromStyles(githubDarkSyntaxTheme), []);
 
   // Calculate additions and deletions
   let additions = 0;
@@ -232,7 +268,6 @@ function App({ parsedFiles }: AppProps) {
             backgroundColor: "transparent",
             border: false,
           },
-
           scrollbarOptions: {
             showArrows: false,
             trackOptions: {
@@ -243,14 +278,12 @@ function App({ parsedFiles }: AppProps) {
         }}
         focused
       >
-        <box style={{ flexDirection: "column" }}>
-          <FileEditPreview
-            hunks={currentFile.hunks}
-            paddingLeft={0}
-            splitView={useSplitView}
-            filePath={fileName}
-          />
-        </box>
+        <DiffView
+          diff={currentFile.rawDiff || ""}
+          view={useSplitView ? "split" : "unified"}
+          filetype={filetype}
+          syntaxStyle={syntaxStyle}
+        />
       </scrollbox>
 
       {/* Bottom navigation */}
@@ -273,34 +306,35 @@ function App({ parsedFiles }: AppProps) {
 
 cli
   .command(
-    "[ref]",
-    "Show diff for a git reference (defaults to unstaged changes)",
+    "[base] [head]",
+    "Show diff for git references (defaults to unstaged changes)",
   )
   .option("--staged", "Show staged changes")
   .option("--commit <ref>", "Show changes from a specific commit")
   .option("--watch", "Watch for file changes and refresh diff")
-  .action(async (ref, options) => {
+  .option("--context <lines>", "Number of context lines (default: 3)")
+  .action(async (base, head, options) => {
     try {
+      const contextArg = options.context ? `-U${options.context}` : "";
       const gitCommand = (() => {
-        if (options.staged) return "git diff --cached --no-prefix";
-        if (options.commit) return `git show ${options.commit} --no-prefix`;
-        if (ref) return `git show ${ref} --no-prefix`;
-        return "git add -N . && git diff --no-prefix";
+        if (options.staged) return `git diff --cached --no-prefix ${contextArg}`.trim();
+        if (options.commit) return `git show ${options.commit} --no-prefix ${contextArg}`.trim();
+        // Two refs: compare base...head (three-dot, shows changes since branches diverged)
+        if (base && head) return `git diff ${base}...${head} --no-prefix ${contextArg}`.trim();
+        // Single ref: show that commit's changes
+        if (base) return `git show ${base} --no-prefix ${contextArg}`.trim();
+        return `git add -N . && git diff --no-prefix ${contextArg}`.trim();
       })();
 
-      const [diffModule, { parsePatch }] = await Promise.all([
+      const [diffModule, { parsePatch, formatPatch }] = await Promise.all([
         import("./diff.tsx"),
         import("diff"),
       ]);
 
-      const shouldWatch = options.watch && !ref && !options.commit;
+      const shouldWatch = options.watch && !base && !head && !options.commit;
 
       function AppWithWatch() {
-        const [parsedFiles, setParsedFiles] = React.useState<Array<{
-          oldFileName?: string;
-          newFileName?: string;
-          hunks: any[];
-        }> | null>(null);
+        const [parsedFiles, setParsedFiles] = React.useState<ParsedFile[] | null>(null);
 
         React.useEffect(() => {
           const fetchDiff = async () => {
@@ -334,7 +368,13 @@ cli
                 return aSize - bSize;
               });
 
-              setParsedFiles(sortedFiles);
+              // Add rawDiff for each file
+              const filesWithRawDiff = sortedFiles.map(file => ({
+                ...file,
+                rawDiff: formatPatch(file),
+              }));
+
+              setParsedFiles(filesWithRawDiff);
             } catch (error) {
               setParsedFiles([]);
             }
@@ -431,7 +471,7 @@ cli
     }
 
     try {
-      const [localContent, remoteContent, diffModule, { structuredPatch }] =
+      const [localContent, remoteContent, diffModule, { structuredPatch, formatPatch }] =
         await Promise.all([
           fs.readFileSync(local, "utf-8"),
           fs.readFileSync(remote, "utf-8"),
@@ -453,6 +493,12 @@ cli
         process.exit(0);
       }
 
+      // Add rawDiff for the diff component
+      const patchWithRawDiff = {
+        ...patch,
+        rawDiff: formatPatch(patch),
+      };
+
       const { ErrorBoundary } = diffModule;
 
       const renderer = await createCliRenderer();
@@ -460,7 +506,7 @@ cli
         React.createElement(
           ErrorBoundary,
           null,
-          React.createElement(App, { parsedFiles: [patch] })
+          React.createElement(App, { parsedFiles: [patchWithRawDiff] })
         )
       );
     } catch (error) {
@@ -673,7 +719,7 @@ cli
   });
 
 // Worker URL for uploading HTML previews
-const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://critique.work";
+const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://www.critique.work";
 
 cli
   .command("web [ref]", "Generate web preview of diff")
@@ -682,15 +728,17 @@ cli
   .option("--cols <cols>", "Number of columns for rendering (use ~100 for mobile)", { default: 240 })
   .option("--rows <rows>", "Number of rows for rendering", { default: 2000 })
   .option("--local", "Open local preview instead of uploading")
+  .option("--context <lines>", "Number of context lines (default: 3)")
   .action(async (ref, options) => {
     const pty = await import("@xmorse/bun-pty");
     const { ansiToHtmlDocument } = await import("./ansi-html.ts");
 
+    const contextArg = options.context ? `-U${options.context}` : "";
     const gitCommand = (() => {
-      if (options.staged) return "git diff --cached --no-prefix";
-      if (options.commit) return `git show ${options.commit} --no-prefix`;
-      if (ref) return `git show ${ref} --no-prefix`;
-      return "git add -N . && git diff --no-prefix";
+      if (options.staged) return `git diff --cached --no-prefix ${contextArg}`.trim();
+      if (options.commit) return `git show ${options.commit} --no-prefix ${contextArg}`.trim();
+      if (ref) return `git show ${ref} --no-prefix ${contextArg}`.trim();
+      return `git add -N . && git diff --no-prefix ${contextArg}`.trim();
     })();
 
     const cols = parseInt(options.cols) || 240;
@@ -821,7 +869,7 @@ cli
     const cols = parseInt(options.cols) || 120;
     const rows = parseInt(options.rows) || 40;
 
-    const [diffModule, { parsePatch }] = await Promise.all([
+    const [diffModule, { parsePatch, formatPatch }] = await Promise.all([
       import("./diff.tsx"),
       import("diff"),
     ]);
@@ -845,12 +893,21 @@ cli
       return aSize - bSize;
     });
 
-    if (sortedFiles.length === 0) {
+    // Add rawDiff for each file
+    const filesWithRawDiff = sortedFiles.map(file => ({
+      ...file,
+      rawDiff: formatPatch(file),
+    }));
+
+    if (filesWithRawDiff.length === 0) {
       console.log("No files to display");
       process.exit(0);
     }
 
-    const { FileEditPreview, ErrorBoundary } = diffModule;
+    const { ErrorBoundary, githubDarkSyntaxTheme: webSyntaxTheme, SyntaxStyle: WebSyntaxStyle, detectFiletype: webDetectFiletype } = diffModule;
+
+    // Create syntax style after renderer would be initialized
+    const webDiffSyntaxStyle = WebSyntaxStyle.fromStyles(webSyntaxTheme);
 
     // Override terminal size
     process.stdout.columns = cols;
@@ -881,9 +938,10 @@ cli
     // Static component - no hooks that cause re-renders
     function WebApp() {
       return (
-        <box style={{ flexDirection: "column", height: "100%", padding: 1, backgroundColor: BACKGROUND_COLOR }}>
-          {sortedFiles.map((file, idx) => {
+        <box style={{ flexDirection: "column", height: "100%", backgroundColor: BACKGROUND_COLOR }}>
+          {filesWithRawDiff.map((file, idx) => {
             const fileName = getFileName(file);
+            const filetype = webDetectFiletype(fileName);
             let additions = 0;
             let deletions = 0;
             file.hunks.forEach((hunk: any) => {
@@ -900,11 +958,11 @@ cli
                   <text fg="#00ff00"> +{additions}</text>
                   <text fg="#ff0000">-{deletions}</text>
                 </box>
-                <FileEditPreview
-                  hunks={file.hunks}
-                  paddingLeft={0}
-                  splitView={useSplitView}
-                  filePath={fileName}
+                <DiffView
+                  diff={file.rawDiff || ""}
+                  view={useSplitView ? "split" : "unified"}
+                  filetype={filetype}
+                  syntaxStyle={webDiffSyntaxStyle}
                 />
               </box>
             );

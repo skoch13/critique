@@ -11,7 +11,7 @@ import {
 import * as React from "react";
 import { exec, execSync } from "child_process";
 import { promisify } from "util";
-import { createCliRenderer, MacOSScrollAccel } from "@opentui/core";
+import { createCliRenderer, MacOSScrollAccel, RGBA } from "@opentui/core";
 import fs from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -102,6 +102,14 @@ interface DiffViewProps {
   syntaxStyle: ReturnType<typeof SyntaxStyle.fromStyles>;
 }
 
+// Colors matching the original diff.tsx implementation
+const UNCHANGED_CODE_BG = RGBA.fromInts(15, 15, 15, 255);
+const ADDED_BG_LIGHT = RGBA.fromInts(100, 250, 120, 12);
+const REMOVED_BG_LIGHT = RGBA.fromInts(255, 0, 0, 32);
+const LINE_NUMBER_BG = RGBA.fromInts(5, 5, 5, 255);
+const REMOVED_LINE_NUMBER_BG = RGBA.fromInts(60, 0, 0, 255);
+const ADDED_LINE_NUMBER_BG = RGBA.fromInts(0, 50, 0, 255);
+
 function DiffView({ diff, view, filetype, syntaxStyle }: DiffViewProps) {
   return (
     <diff
@@ -111,18 +119,13 @@ function DiffView({ diff, view, filetype, syntaxStyle }: DiffViewProps) {
       syntaxStyle={syntaxStyle}
       showLineNumbers
       wrapMode="none"
-      addedBg="#1a4d1a33"
-      removedBg="#4d1a1a33"
-      contextBg="transparent"
-      addedContentBg="#1a4d1a33"
-      removedContentBg="#4d1a1a33"
-      contextContentBg="transparent"
-      addedSignColor="#22c55e"
-      removedSignColor="#ef4444"
-      lineNumberFg="#a0a0a0"
-      lineNumberBg="#161b22"
-      addedLineNumberBg="#1a4d1a"
-      removedLineNumberBg="#4d1a1a"
+      addedContentBg={ADDED_BG_LIGHT}
+      removedContentBg={REMOVED_BG_LIGHT}
+      contextContentBg={UNCHANGED_CODE_BG}
+      lineNumberFg="brightBlack"
+      lineNumberBg={LINE_NUMBER_BG}
+      addedLineNumberBg={ADDED_LINE_NUMBER_BG}
+      removedLineNumberBg={REMOVED_LINE_NUMBER_BG}
       selectionBg="#264F78"
       selectionFg="#FFFFFF"
     />

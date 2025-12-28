@@ -166,14 +166,16 @@ body {
   box-sizing: border-box;
 }
 .line {
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-all;
   display: flex;
+  flex-wrap: wrap;
   content-visibility: auto;
   contain-intrinsic-block-size: auto 1lh;
   background-color: ${backgroundColor};
 }
 .line span {
-  white-space: pre;
+  white-space: pre-wrap;
 }
 </style>
 </head>

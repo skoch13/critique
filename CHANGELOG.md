@@ -1,3 +1,8 @@
+# 0.1.7
+
+- Web preview:
+  - Enable text wrapping for long lines (`pre-wrap`, `word-break: break-all`, `flex-wrap: wrap`)
+
 # 0.1.6
 
 - Web preview:

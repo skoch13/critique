@@ -1,3 +1,10 @@
+# 0.1.8
+
+- Web preview:
+  - Enable text wrapping in opentui diff component (`wrapMode="wrap"`)
+  - Revert HTML CSS wrapping (caused broken backgrounds on wrapped lines)
+  - Remove `www.` from preview URLs
+
 # 0.1.7
 
 - Web preview:

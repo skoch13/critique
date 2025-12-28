@@ -229,7 +229,7 @@ function DiffView({ diff, view, filetype, themeName }: DiffViewProps) {
       filetype={filetype}
       syntaxStyle={syntaxStyle}
       showLineNumbers
-      wrapMode="none"
+      wrapMode="wrap"
       addedContentBg={resolvedTheme.diffAddedBg}
       removedContentBg={resolvedTheme.diffRemovedBg}
       contextContentBg={resolvedTheme.backgroundPanel}
@@ -988,7 +988,7 @@ cli
 
 // Worker URL for uploading HTML previews
 const WORKER_URL =
-  process.env.CRITIQUE_WORKER_URL || "https://www.critique.work";
+  process.env.CRITIQUE_WORKER_URL || "https://critique.work";
 
 cli
   .command("web [ref]", "Generate web preview of diff")

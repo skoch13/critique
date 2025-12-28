@@ -225,6 +225,7 @@ function DiffView({ diff, view, filetype, themeName }: DiffViewProps) {
     <diff
       diff={diff}
       view={view}
+      treeSitterClient={undefined}
       filetype={filetype}
       syntaxStyle={syntaxStyle}
       showLineNumbers
@@ -998,8 +999,9 @@ cli
     "Number of columns for rendering (use ~100 for mobile)",
     { default: 240 },
   )
-  .option("--rows <rows>", "Number of rows for rendering", { default: 2000 })
-  .option("--local", "Open local preview instead of uploading")
+  
+  .option("--local", "Save local preview instead of uploading")
+  .option("--open", "Open in browser after generating")
   .option("--context <lines>", "Number of context lines (default: 3)")
   .action(async (ref, options) => {
     const pty = await import("@xmorse/bun-pty");
@@ -1016,7 +1018,6 @@ cli
     })();
 
     const cols = parseInt(options.cols) || 240;
-    const rows = parseInt(options.rows) || 2000;
 
     console.log("Capturing diff output...");
 
@@ -1029,6 +1030,14 @@ cli
       console.log("No changes to display");
       process.exit(0);
     }
+
+    // Calculate required rows from diff content
+    const { parsePatch } = await import("diff");
+    const files = parsePatch(gitDiff);
+    const renderRows = files.reduce((sum, file) => {
+      const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
+      return sum + diffLines + 5; // header + margin per file
+    }, 100); // base padding
 
     // Write diff to temp file
     const diffFile = join(tmpdir(), `critique-web-diff-${Date.now()}.patch`);
@@ -1045,12 +1054,12 @@ cli
         "--cols",
         String(cols),
         "--rows",
-        String(rows),
+        String(renderRows),
       ],
       {
         name: "xterm-256color",
         cols: cols,
-        rows: rows,
+        rows: renderRows,
 
         cwd: process.cwd(),
         env: { ...process.env, TERM: "xterm-256color" } as Record<
@@ -1088,25 +1097,27 @@ cli
     }
 
     // Convert ANSI to HTML document
-    const html = ansiToHtmlDocument(ansiOutput, { cols, rows });
+    const html = ansiToHtmlDocument(ansiOutput, { cols, rows: renderRows });
 
     if (options.local) {
-      // Save locally and open
+      // Save locally
       const htmlFile = join(tmpdir(), `critique-${Date.now()}.html`);
       fs.writeFileSync(htmlFile, html);
       console.log(`Saved to: ${htmlFile}`);
 
-      // Try to open in browser
-      const openCmd =
-        process.platform === "darwin"
-          ? "open"
-          : process.platform === "win32"
-            ? "start"
-            : "xdg-open";
-      try {
-        await execAsync(`${openCmd} "${htmlFile}"`);
-      } catch {
-        console.log("Could not open browser automatically");
+      // Open in browser if requested
+      if (options.open) {
+        const openCmd =
+          process.platform === "darwin"
+            ? "open"
+            : process.platform === "win32"
+              ? "start"
+              : "xdg-open";
+        try {
+          await execAsync(`${openCmd} "${htmlFile}"`);
+        } catch {
+          console.log("Could not open browser automatically");
+        }
       }
       process.exit(0);
     }
@@ -1132,17 +1143,19 @@ cli
       console.log(`\nPreview URL: ${result.url}`);
       console.log(`(expires in 7 days)`);
 
-      // Try to open in browser
-      const openCmd =
-        process.platform === "darwin"
-          ? "open"
-          : process.platform === "win32"
-            ? "start"
-            : "xdg-open";
-      try {
-        await execAsync(`${openCmd} "${result.url}"`);
-      } catch {
-        // Silent fail - user can copy URL
+      // Open in browser if requested
+      if (options.open) {
+        const openCmd =
+          process.platform === "darwin"
+            ? "open"
+            : process.platform === "win32"
+              ? "start"
+              : "xdg-open";
+        try {
+          await execAsync(`${openCmd} "${result.url}"`);
+        } catch {
+          // Silent fail - user can copy URL
+        }
       }
     } catch (error: any) {
       console.error("Failed to upload:", error.message);
@@ -1164,7 +1177,7 @@ cli
   .option("--rows <rows>", "Terminal rows", { default: 1000 })
   .action(async (diffFile: string, options) => {
     const cols = parseInt(options.cols) || 120;
-    const rows = parseInt(options.rows) || 40;
+    const rows = parseInt(options.rows) || 1000;
 
     const { parsePatch, formatPatch } = await import("diff");
 
@@ -1201,7 +1214,7 @@ cli
       process.exit(0);
     }
 
-    // Override terminal size
+    // Override terminal size (rows calculated by caller from diff content)
     process.stdout.columns = cols;
     process.stdout.rows = rows;
 
@@ -1210,20 +1223,23 @@ cli
       useAlternateScreen: false,
     });
 
-    // Track if we've rendered once
-    let hasRendered = false;
+    // Wait for syntax highlighting to complete (it's async)
+    // Allow multiple renders, then exit after highlighting is ready
+    let renderCount = 0;
     const originalRequestRender = renderer.root.requestRender.bind(
       renderer.root,
     );
+    let exitTimeout: ReturnType<typeof setTimeout> | undefined;
     renderer.root.requestRender = function () {
-      if (hasRendered) return; // Skip subsequent renders
-      hasRendered = true;
+      renderCount++;
       originalRequestRender();
-      // Exit after the first render completes
-      setTimeout(() => {
+      // Reset timeout on each render - exit 1s after last render
+      // Tree-sitter highlighting is async and can take time for multiple files
+      if (exitTimeout) clearTimeout(exitTimeout);
+      exitTimeout = setTimeout(() => {
         renderer.destroy();
         process.exit(0);
-      }, 100);
+      }, 1000);
     };
 
     // Use unified diff for narrow viewports (mobile), split view for wider ones

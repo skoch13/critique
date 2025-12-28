@@ -1,4 +1,4 @@
-import { ptyToJson, StyleFlags, type TerminalData, type TerminalLine, type TerminalSpan } from "opentui-ansi-vt"
+import { ptyToJson, StyleFlags, type TerminalData, type TerminalLine, type TerminalSpan } from "ghostty-opentui"
 
 export interface AnsiToHtmlOptions {
   cols?: number
@@ -147,6 +147,8 @@ html {
 }
 html, body {
   height: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   background-color: ${backgroundColor};
   color: #c5c8c6;
   font-family: ${fontFamily};
@@ -156,12 +158,16 @@ html, body {
 #content {
   padding: 16px;
   overflow-x: auto;
+  max-width: 100vw;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 .line {
   white-space: pre;
   display: flex;
   content-visibility: auto;
   contain-intrinsic-block-size: auto 1lh;
+  background-color: ${backgroundColor};
 }
 .line span {
   white-space: pre;
@@ -177,7 +183,7 @@ ${content}
   const cols = ${cols};
   const charRatio = ${charWidthRatio};
   const padding = ${padding};
-  const minFontSize = 8;
+  const minFontSize = 4;
   const maxFontSize = 16;
 
   function adjustFontSize() {

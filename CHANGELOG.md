@@ -1,3 +1,21 @@
+# 0.1.5
+
+- Web preview:
+  - Switch to `ghostty-opentui` for unlimited scrollback (fixes truncation on large diffs)
+  - Dynamically calculate rows from diff content instead of hardcoded limit
+  - Add `--open` flag to open browser (disabled by default)
+  - Center container horizontally with `max-width: 100vw` (fixes iPad overflow)
+  - Set line background color to reduce Safari content-visibility flicker
+  - Reduce min font size from 8px to 4px for better mobile fit
+  - Fix JSX syntax error (`treeSitterClient={undefined}`)
+
+# 0.1.4
+
+- Web preview:
+  - Fix syntax highlighting not appearing in web output
+  - Allow multiple renders before capturing (syntax highlighting is async)
+  - Use debounced exit (300ms after last render) instead of blocking re-renders
+
 # 0.1.3
 
 - Themes:

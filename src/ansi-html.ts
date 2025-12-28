@@ -155,11 +155,14 @@ html, body {
   font-size: ${fontSize};
   line-height: 1.6;
 }
+body {
+  display: flex;
+  justify-content: center;
+}
 #content {
   padding: 16px;
   overflow-x: auto;
   max-width: 100vw;
-  margin: 0 auto;
   box-sizing: border-box;
 }
 .line {

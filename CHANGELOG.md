@@ -1,3 +1,8 @@
+# 0.1.6
+
+- Web preview:
+  - Fix horizontal centering using flexbox on body instead of margin auto
+
 # 0.1.5
 
 - Web preview:

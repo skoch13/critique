@@ -360,11 +360,7 @@ function App({ parsedFiles }: AppProps) {
   const isFullyAdded = additions > 0 && deletions === 0;
   const isFullyDeleted = deletions > 0 && additions === 0;
   const useUnifiedForFile = isFullyAdded || isFullyDeleted;
-  const viewMode = useUnifiedForFile
-    ? "unified"
-    : useSplitView
-      ? "split"
-      : "unified";
+  const viewMode = useUnifiedForFile ? "unified" : (useSplitView ? "split" : "unified");
 
   const dropdownOptions = parsedFiles.map((file, idx) => {
     const name = getFileName(file);
@@ -539,13 +535,13 @@ function App({ parsedFiles }: AppProps) {
         <text fg="#666666"> prev</text>
         <box flexGrow={1} />
         <text fg="#ffffff">q</text>
-        <text fg="#666666"> quit </text>
+        <text fg="#666666"> quit  </text>
         <text fg="#ffffff">ctrl p</text>
         <text fg="#666666"> files </text>
         <text fg="#666666">
           ({validIndex + 1}/{parsedFiles.length})
         </text>
-        <text fg="#666666"> </text>
+        <text fg="#666666">  </text>
         <text fg="#ffffff">t</text>
         <text fg="#666666"> theme</text>
         <box flexGrow={1} />
@@ -1009,7 +1005,8 @@ cli
   });
 
 // Worker URL for uploading HTML previews
-const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://critique.work";
+const WORKER_URL =
+  process.env.CRITIQUE_WORKER_URL || "https://critique.work";
 
 cli
   .command("web [ref]", "Generate web preview of diff")
@@ -1020,7 +1017,7 @@ cli
     "Number of columns for rendering (use ~100 for mobile)",
     { default: 240 },
   )
-
+  
   .option("--local", "Save local preview instead of uploading")
   .option("--open", "Open in browser after generating")
   .option("--context <lines>", "Number of context lines (default: 3)")
@@ -1056,10 +1053,7 @@ cli
     const { parsePatch } = await import("diff");
     const files = parsePatch(gitDiff);
     const renderRows = files.reduce((sum, file) => {
-      const diffLines = file.hunks.reduce(
-        (h, hunk) => h + hunk.lines.length,
-        0,
-      );
+      const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
       return sum + diffLines + 5; // header + margin per file
     }, 100); // base padding
 
@@ -1296,11 +1290,7 @@ cli
             const isFullyAdded = additions > 0 && deletions === 0;
             const isFullyDeleted = deletions > 0 && additions === 0;
             const useUnifiedForFile = isFullyAdded || isFullyDeleted;
-            const viewMode = useUnifiedForFile
-              ? "unified"
-              : useSplitView
-                ? "split"
-                : "unified";
+            const viewMode = useUnifiedForFile ? "unified" : (useSplitView ? "split" : "unified");
 
             return (
               <box

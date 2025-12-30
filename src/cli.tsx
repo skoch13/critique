@@ -20,8 +20,16 @@ import { tmpdir, homedir } from "os";
 import { join } from "path";
 import { create } from "zustand";
 import Dropdown from "./dropdown.tsx";
-import * as watcher from "@parcel/watcher";
 import { debounce } from "./utils.ts";
+
+// Lazy-load watcher only when --watch is used
+let watcherModule: typeof import("@parcel/watcher") | null = null;
+async function getWatcher() {
+  if (!watcherModule) {
+    watcherModule = await import("@parcel/watcher");
+  }
+  return watcherModule;
+}
 import {
   getSyntaxTheme,
   getResolvedTheme,
@@ -569,9 +577,19 @@ cli
         return `git add -N . && git diff --no-prefix ${contextArg}`.trim();
       })();
 
-      const { parsePatch, formatPatch } = await import("diff");
-
       const shouldWatch = options.watch && !base && !head && !options.commit;
+
+      // Parallelize diff module loading with renderer creation
+      const [diffModule, renderer] = await Promise.all([
+        import("diff"),
+        createCliRenderer({
+          onDestroy() {
+            process.exit(0);
+          },
+          exitOnCtrlC: true,
+        }),
+      ]);
+      const { parsePatch, formatPatch } = diffModule;
 
       function AppWithWatch() {
         const [parsedFiles, setParsedFiles] = React.useState<
@@ -636,6 +654,7 @@ cli
 
           fetchDiff();
 
+          // Set up file watching only if --watch flag is used
           if (!shouldWatch) {
             return;
           }
@@ -646,21 +665,26 @@ cli
             fetchDiff();
           }, 200);
 
-          let subscription: watcher.AsyncSubscription | undefined;
+          let subscription:
+            | Awaited<ReturnType<typeof import("@parcel/watcher").subscribe>>
+            | undefined;
 
-          watcher
-            .subscribe(cwd, (err, events) => {
-              if (err) {
-                return;
-              }
+          // Lazy-load watcher module only when watching
+          getWatcher().then((watcher) => {
+            watcher
+              .subscribe(cwd, (err, events) => {
+                if (err) {
+                  return;
+                }
 
-              if (events.length > 0) {
-                debouncedFetch();
-              }
-            })
-            .then((sub) => {
-              subscription = sub;
-            });
+                if (events.length > 0) {
+                  debouncedFetch();
+                }
+              })
+              .then((sub) => {
+                subscription = sub;
+              });
+          });
 
           return () => {
             if (subscription) {
@@ -704,12 +728,6 @@ cli
         return <App parsedFiles={parsedFiles} />;
       }
 
-      const renderer = await createCliRenderer({
-        onDestroy() {
-          process.exit(0);
-        },
-        exitOnCtrlC: true,
-      });
       createRoot(renderer).render(
         React.createElement(
           ErrorBoundary,

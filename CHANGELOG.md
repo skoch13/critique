@@ -7,6 +7,7 @@
 - Web preview:
   - Generate desktop and mobile HTML versions in parallel
   - Add `--mobile-cols` option (default: 100) for mobile column width
+  - Add `--theme` option to specify theme for web preview
   - Worker auto-detects mobile devices via `CF-Device-Type`, `Sec-CH-UA-Mobile`, or User-Agent regex
   - Add `?v=desktop` / `?v=mobile` query params to force a specific version
   - Mobile version uses more rows to accommodate line wrapping

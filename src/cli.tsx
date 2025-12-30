@@ -1026,6 +1026,7 @@ cli
   .option("--local", "Save local preview instead of uploading")
   .option("--open", "Open in browser after generating")
   .option("--context <lines>", "Number of context lines (default: 3)")
+  .option("--theme <name>", "Theme to use for rendering")
   .action(async (ref, options) => {
     const pty = await import("@xmorse/bun-pty");
     const { ansiToHtmlDocument } = await import("./ansi-html.ts");
@@ -1042,6 +1043,9 @@ cli
 
     const desktopCols = parseInt(options.cols) || 240;
     const mobileCols = parseInt(options.mobileCols) || 100;
+    const themeName = options.theme && themeNames.includes(options.theme) 
+      ? options.theme 
+      : defaultThemeName;
 
     console.log("Capturing diff output...");
 
@@ -1080,6 +1084,8 @@ cli
           String(cols),
           "--rows",
           String(renderRows),
+          "--theme",
+          themeName,
         ],
         {
           name: "xterm-256color",
@@ -1114,7 +1120,7 @@ cli
       }
 
       // Get theme colors for HTML output
-      const theme = getResolvedTheme(defaultThemeName);
+      const theme = getResolvedTheme(themeName);
       const backgroundColor = rgbaToHex(theme.background);
       const textColor = rgbaToHex(theme.text);
 
@@ -1215,9 +1221,13 @@ cli
   })
   .option("--cols <cols>", "Terminal columns", { default: 120 })
   .option("--rows <rows>", "Terminal rows", { default: 1000 })
+  .option("--theme <name>", "Theme to use for rendering")
   .action(async (diffFile: string, options) => {
     const cols = parseInt(options.cols) || 120;
     const rows = parseInt(options.rows) || 1000;
+    const themeName = options.theme && themeNames.includes(options.theme)
+      ? options.theme
+      : defaultThemeName;
 
     const { parsePatch, formatPatch } = await import("diff");
 
@@ -1286,7 +1296,7 @@ cli
     const useSplitView = cols >= 150;
 
     // Static component - no hooks that cause re-renders
-    const webTheme = getResolvedTheme(defaultThemeName);
+    const webTheme = getResolvedTheme(themeName);
     const webBg = webTheme.background;
     const webText = rgbaToHex(webTheme.text);
     const webAddedColor = rgbaToHex(webTheme.diffAddedBg);
@@ -1341,7 +1351,7 @@ cli
                   diff={file.rawDiff || ""}
                   view={viewMode}
                   filetype={filetype}
-                  themeName={defaultThemeName}
+                  themeName={themeName}
                 />
               </box>
             );

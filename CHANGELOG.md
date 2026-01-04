@@ -1,3 +1,11 @@
+# 0.1.10
+
+- Default command:
+  - Add `--filter <pattern>` option to filter files by glob pattern (e.g. `critique --filter 'src/**/*.ts'`)
+- Web command:
+  - Add support for comparing two refs: `critique web <base> <head>`
+  - Add `--filter <pattern>` option to filter files by glob pattern
+
 # 0.1.9
 
 - Performance:

@@ -562,20 +562,22 @@ cli
   .option("--commit <ref>", "Show changes from a specific commit")
   .option("--watch", "Watch for file changes and refresh diff")
   .option("--context <lines>", "Number of context lines (default: 3)")
+  .option("--filter <pattern>", "Filter files by glob pattern (e.g. 'src/**/*.ts')")
   .action(async (base, head, options) => {
     try {
       const contextArg = options.context ? `-U${options.context}` : "";
+      const filterArg = options.filter ? `-- "${options.filter}"` : "";
       const gitCommand = (() => {
         if (options.staged)
-          return `git diff --cached --no-prefix ${contextArg}`.trim();
+          return `git diff --cached --no-prefix ${contextArg} ${filterArg}`.trim();
         if (options.commit)
-          return `git show ${options.commit} --no-prefix ${contextArg}`.trim();
+          return `git show ${options.commit} --no-prefix ${contextArg} ${filterArg}`.trim();
         // Two refs: compare base...head (three-dot, shows changes since branches diverged, like GitHub PRs)
         if (base && head)
-          return `git diff ${base}...${head} --no-prefix ${contextArg}`.trim();
+          return `git diff ${base}...${head} --no-prefix ${contextArg} ${filterArg}`.trim();
         // Single ref: show that commit's changes
-        if (base) return `git show ${base} --no-prefix ${contextArg}`.trim();
-        return `git add -N . && git diff --no-prefix ${contextArg}`.trim();
+        if (base) return `git show ${base} --no-prefix ${contextArg} ${filterArg}`.trim();
+        return `git add -N . && git diff --no-prefix ${contextArg} ${filterArg}`.trim();
       })();
 
       const shouldWatch = options.watch && !base && !head && !options.commit;
@@ -1010,7 +1012,7 @@ const WORKER_URL =
   process.env.CRITIQUE_WORKER_URL || "https://critique.work";
 
 cli
-  .command("web [ref]", "Generate web preview of diff")
+  .command("web [base] [head]", "Generate web preview of diff")
   .option("--staged", "Show staged changes")
   .option("--commit <ref>", "Show changes from a specific commit")
   .option(
@@ -1027,18 +1029,24 @@ cli
   .option("--open", "Open in browser after generating")
   .option("--context <lines>", "Number of context lines (default: 3)")
   .option("--theme <name>", "Theme to use for rendering")
-  .action(async (ref, options) => {
+  .option("--filter <pattern>", "Filter files by glob pattern (e.g. 'src/**/*.ts')")
+  .action(async (base, head, options) => {
     const pty = await import("@xmorse/bun-pty");
     const { ansiToHtmlDocument } = await import("./ansi-html.ts");
 
     const contextArg = options.context ? `-U${options.context}` : "";
+    const filterArg = options.filter ? `-- "${options.filter}"` : "";
     const gitCommand = (() => {
       if (options.staged)
-        return `git diff --cached --no-prefix ${contextArg}`.trim();
+        return `git diff --cached --no-prefix ${contextArg} ${filterArg}`.trim();
       if (options.commit)
-        return `git show ${options.commit} --no-prefix ${contextArg}`.trim();
-      if (ref) return `git show ${ref} --no-prefix ${contextArg}`.trim();
-      return `git add -N . && git diff --no-prefix ${contextArg}`.trim();
+        return `git show ${options.commit} --no-prefix ${contextArg} ${filterArg}`.trim();
+      // Two refs: compare base...head (three-dot, shows changes since branches diverged, like GitHub PRs)
+      if (base && head)
+        return `git diff ${base}...${head} --no-prefix ${contextArg} ${filterArg}`.trim();
+      // Single ref: show that commit's changes
+      if (base) return `git show ${base} --no-prefix ${contextArg} ${filterArg}`.trim();
+      return `git add -N . && git diff --no-prefix ${contextArg} ${filterArg}`.trim();
     })();
 
     const desktopCols = parseInt(options.cols) || 240;

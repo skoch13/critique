@@ -8,7 +8,12 @@ ALWAYS!
 
 ## bun
 
-NEVER run bun run index.tsx. You cannot directly run the tui app. it will hang. instead ask me to do so.
+NEVER run the interactive TUI (e.g. `bun run src/cli.tsx` without arguments). It will hang. Instead ask the user to run it.
+
+The `web` command is safe to run - it generates HTML and exits:
+```bash
+bun run src/cli.tsx web
+```
 
 NEVER use require. just import at the top of the file with esm
 

@@ -156,7 +156,10 @@ html, body {
   color: ${textColor};
   font-family: ${fontFamily};
   font-size: ${fontSize};
-  line-height: 1.6;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 body {
   display: flex;
@@ -172,8 +175,10 @@ body {
   white-space: pre;
   display: flex;
   content-visibility: auto;
-  contain-intrinsic-block-size: auto 1lh;
+  contain-intrinsic-block-size: auto 1.5em;
   background-color: ${backgroundColor};
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .line span {
   white-space: pre;
@@ -195,7 +200,10 @@ ${content}
   function adjustFontSize() {
     const viewportWidth = window.innerWidth;
     const calculatedSize = (viewportWidth - padding) / (cols * charRatio);
-    const fontSize = Math.max(minFontSize, Math.min(maxFontSize, calculatedSize));
+    // Round to nearest even integer to prevent subpixel rendering issues
+    // (with line-height: 1.5, even font-size always yields integer line-height)
+    const clamped = Math.max(minFontSize, Math.min(maxFontSize, calculatedSize));
+    const fontSize = Math.round(clamped / 2) * 2;
     document.body.style.fontSize = fontSize + 'px';
   }
 

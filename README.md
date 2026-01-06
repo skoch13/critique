@@ -27,9 +27,15 @@ critique
 # View staged changes
 critique --staged
 
+# View the last commit (works whether pushed or unpushed)
+critique HEAD
+
 # View a specific commit
 critique --commit HEAD~1
 critique abc1234
+
+# View combined changes from last N commits
+critique HEAD~3 HEAD    # shows all changes from 3 commits ago to now
 
 # Compare two branches (PR-style, shows what head added since diverging from base)
 critique main feature-branch    # what feature-branch added vs main
@@ -37,6 +43,10 @@ critique main HEAD              # what current branch added vs main
 
 # Watch mode - auto-refresh on file changes
 critique --watch
+
+# Filter files by glob pattern (can be used multiple times)
+critique --filter "src/**/*.ts"
+critique --filter "src/**/*.ts" --filter "lib/**/*.js"
 ```
 
 ### Navigation
@@ -85,8 +95,14 @@ critique web
 # View staged changes
 critique web --staged
 
+# View the last commit (works whether pushed or unpushed)
+critique web HEAD
+
 # View a specific commit
 critique web --commit HEAD~1
+
+# View combined changes from last N commits
+critique web HEAD~3 HEAD
 
 # Generate local HTML file instead of uploading
 critique web --local
@@ -112,6 +128,7 @@ critique web --cols 100 --rows 2000
 | `--cols <n>` | Terminal width for rendering | `240` |
 | `--rows <n>` | Terminal height for rendering | `2000` |
 | `--local` | Save HTML locally instead of uploading | - |
+| `--filter <pattern>` | Filter files by glob (can be used multiple times) | - |
 
 **Tips:**
 

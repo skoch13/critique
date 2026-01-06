@@ -562,11 +562,12 @@ cli
   .option("--commit <ref>", "Show changes from a specific commit")
   .option("--watch", "Watch for file changes and refresh diff")
   .option("--context <lines>", "Number of context lines (default: 3)")
-  .option("--filter <pattern>", "Filter files by glob pattern (e.g. 'src/**/*.ts')")
+  .option("--filter <pattern>", "Filter files by glob pattern (can be used multiple times)")
   .action(async (base, head, options) => {
     try {
       const contextArg = options.context ? `-U${options.context}` : "";
-      const filterArg = options.filter ? `-- "${options.filter}"` : "";
+      const filters = options.filter ? (Array.isArray(options.filter) ? options.filter : [options.filter]) : [];
+      const filterArg = filters.length > 0 ? `-- ${filters.map((f: string) => `"${f}"`).join(" ")}` : "";
       const gitCommand = (() => {
         if (options.staged)
           return `git diff --cached --no-prefix ${contextArg} ${filterArg}`.trim();
@@ -1029,13 +1030,14 @@ cli
   .option("--open", "Open in browser after generating")
   .option("--context <lines>", "Number of context lines (default: 3)")
   .option("--theme <name>", "Theme to use for rendering")
-  .option("--filter <pattern>", "Filter files by glob pattern (e.g. 'src/**/*.ts')")
+  .option("--filter <pattern>", "Filter files by glob pattern (can be used multiple times)")
   .action(async (base, head, options) => {
     const pty = await import("@xmorse/bun-pty");
     const { ansiToHtmlDocument } = await import("./ansi-html.ts");
 
     const contextArg = options.context ? `-U${options.context}` : "";
-    const filterArg = options.filter ? `-- "${options.filter}"` : "";
+    const filters = options.filter ? (Array.isArray(options.filter) ? options.filter : [options.filter]) : [];
+    const filterArg = filters.length > 0 ? `-- ${filters.map((f: string) => `"${f}"`).join(" ")}` : "";
     const gitCommand = (() => {
       if (options.staged)
         return `git diff --cached --no-prefix ${contextArg} ${filterArg}`.trim();

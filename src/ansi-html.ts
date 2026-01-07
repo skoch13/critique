@@ -13,6 +13,8 @@ export interface AnsiToHtmlOptions {
   fontSize?: string
   /** Trim empty lines from the end */
   trimEmptyLines?: boolean
+  /** Enable auto light/dark mode based on system preference */
+  autoTheme?: boolean
 }
 
 /**
@@ -183,6 +185,11 @@ body {
 .line span {
   white-space: pre;
 }
+${options.autoTheme ? `@media (prefers-color-scheme: light) {
+  html {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}` : ''}
 </style>
 </head>
 <body>

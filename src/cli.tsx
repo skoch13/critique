@@ -1053,9 +1053,8 @@ cli
 
     const desktopCols = parseInt(options.cols) || 240;
     const mobileCols = parseInt(options.mobileCols) || 100;
-    const themeName = options.theme && themeNames.includes(options.theme) 
-      ? options.theme 
-      : defaultThemeName;
+    const customTheme = options.theme && themeNames.includes(options.theme);
+    const themeName = customTheme ? options.theme : defaultThemeName;
 
     console.log("Capturing diff output...");
 
@@ -1134,7 +1133,7 @@ cli
       const backgroundColor = rgbaToHex(theme.background);
       const textColor = rgbaToHex(theme.text);
 
-      return ansiToHtmlDocument(ansiOutput, { cols, rows: renderRows, backgroundColor, textColor });
+      return ansiToHtmlDocument(ansiOutput, { cols, rows: renderRows, backgroundColor, textColor, autoTheme: !customTheme });
     }
 
     // Generate desktop and mobile versions in parallel

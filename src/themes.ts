@@ -237,7 +237,7 @@ export function getSyntaxTheme(
 
 export const themeNames = Object.keys(THEME_FILES).sort();
 
-export const defaultThemeName = "github-light";
+export const defaultThemeName = "github";
 
 // Helper to convert RGBA to hex string
 export function rgbaToHex(rgba: RGBA): string {

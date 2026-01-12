@@ -1,3 +1,9 @@
+# 0.1.13
+
+- Docs:
+  - Enhance web preview section in README
+  - Add `/v/` short URL alias documentation
+
 # 0.1.12
 
 - Web preview:

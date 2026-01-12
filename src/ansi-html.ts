@@ -204,6 +204,17 @@ ${content}
   const minFontSize = 4;
   const maxFontSize = 16;
 
+  // Redirect mobile devices to ?v=mobile for optimized view
+  // Only redirect if not already on a forced version
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('v')) {
+    const isMobile = /Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|Opera M(obi|ini)|Windows Phone|webOS/i.test(navigator.userAgent);
+    if (isMobile) {
+      params.set('v', 'mobile');
+      window.location.replace(window.location.pathname + '?' + params.toString());
+    }
+  }
+
   function adjustFontSize() {
     const viewportWidth = window.innerWidth;
     const calculatedSize = (viewportWidth - padding) / (cols * charRatio);

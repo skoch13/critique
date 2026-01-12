@@ -90,7 +90,8 @@ app.post("/upload", async (c) => {
 
 // View HTML content with streaming
 // GET /view/:id
-// Query params: ?v=desktop or ?v=mobile to force a version
+// Query params: ?v=desktop or ?v=mobile to select version
+// Server redirects mobile devices to ?v=mobile, client JS also handles redirect
 app.get("/view/:id", async (c) => {
   const id = c.req.param("id")
 
@@ -98,12 +99,21 @@ app.get("/view/:id", async (c) => {
     return c.text("Invalid ID", 400)
   }
 
-  // Check for forced version via query param
-  const forcedVersion = c.req.query("v")
-  const isMobile = forcedVersion === "mobile" || (forcedVersion !== "desktop" && isMobileDevice(c))
+  // Check for version query param
+  const version = c.req.query("v")
+  
+  // If no version specified and mobile device detected, redirect to ?v=mobile
+  // This is a fallback - client JS also handles this redirect
+  if (!version && isMobileDevice(c)) {
+    const url = new URL(c.req.url)
+    url.searchParams.set("v", "mobile")
+    return c.redirect(url.toString(), 302)
+  }
 
-  // Try to get the appropriate version
+  // Serve the appropriate version based on query param
+  const isMobile = version === "mobile"
   let html: string | null = null
+  
   if (isMobile) {
     // Try mobile version first, fall back to desktop
     html = await c.env.CRITIQUE_KV.get(`${id}-mobile`)
@@ -120,11 +130,9 @@ app.get("/view/:id", async (c) => {
 
   // Stream the HTML content for faster initial load
   return stream(c, async (s) => {
-    // Set content type header
     c.header("Content-Type", "text/html; charset=utf-8")
-    // Vary by User-Agent and Sec-CH-UA-Mobile for proper caching
-    c.header("Vary", "User-Agent, Sec-CH-UA-Mobile")
-    c.header("Cache-Control", "public, max-age=3600")
+    // Cache is now safe - URL determines content, no Vary needed
+    c.header("Cache-Control", "public, max-age=86400")
 
     // Stream in chunks for better performance
     const chunkSize = 16 * 1024 // 16KB chunks

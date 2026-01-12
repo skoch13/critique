@@ -1,3 +1,11 @@
+# 0.1.12
+
+- Web preview:
+  - Add client-side mobile detection with redirect to `?v=mobile`
+  - Simplify worker: redirect mobile devices instead of content negotiation
+  - Remove `Vary` header - URL now determines content, better caching
+  - Increase cache max-age to 24h (was 1h)
+
 # 0.1.11
 
 - All commands:

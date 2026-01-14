@@ -1,4 +1,4 @@
-// ACP client for connecting to opencode agent
+// ACP client for connecting to AI agents (opencode or claude)
 
 import {
   ClientSideConnection,
@@ -8,17 +8,25 @@ import {
 } from "@agentclientprotocol/sdk"
 import type { SessionInfo, SessionContent } from "./types.ts"
 import { logger } from "../logger.ts"
+import fs from "fs"
+import path from "path"
+import os from "os"
+
+export type AgentType = "opencode" | "claude"
 
 /**
- * Client for communicating with opencode via ACP protocol
+ * Client for communicating with AI agents via ACP protocol
+ * Supports both OpenCode and Claude Code
  */
-export class OpencodeAcpClient {
+export class AcpClient {
   private proc: ReturnType<typeof Bun.spawn> | null = null
   private client: ClientSideConnection | null = null
   private sessionUpdates: Map<string, SessionNotification[]> = new Map()
   private onUpdateCallback: ((notification: SessionNotification) => void) | null = null
+  private agent: AgentType
 
-  constructor() {
+  constructor(agent: AgentType = "opencode") {
+    this.agent = agent
     this.connect = this.connect.bind(this)
     this.listSessions = this.listSessions.bind(this)
     this.loadSessionContent = this.loadSessionContent.bind(this)
@@ -27,15 +35,19 @@ export class OpencodeAcpClient {
   }
 
   /**
-   * Spawn opencode ACP server and establish connection
+   * Spawn ACP server and establish connection
    * @param onUpdate - Optional callback for session update notifications
    */
   async connect(onUpdate?: (notification: SessionNotification) => void): Promise<void> {
     this.onUpdateCallback = onUpdate || null
-    logger.info("Spawning opencode ACP server...")
+    logger.info(`Spawning ${this.agent} ACP server...`)
 
-    // Spawn opencode in ACP mode
-    this.proc = Bun.spawn(["bunx", "opencode", "acp"], {
+    // Spawn the appropriate ACP server
+    const command = this.agent === "opencode"
+      ? ["bunx", "opencode", "acp"]
+      : ["bunx", "@zed-industries/claude-code-acp"]
+
+    this.proc = Bun.spawn(command, {
       stdin: "pipe",
       stdout: "pipe",
       stderr: "inherit",
@@ -119,10 +131,20 @@ export class OpencodeAcpClient {
 
   /**
    * List sessions for the given working directory
-   * Uses CLI command for opencode since ACP doesn't support listSessions yet
+   * Uses CLI command for opencode, parses JSONL files for claude
    */
   async listSessions(cwd: string): Promise<SessionInfo[]> {
-    // Use CLI command to list sessions (opencode ACP doesn't support this yet)
+    if (this.agent === "opencode") {
+      return this.listOpencodeSessions(cwd)
+    } else {
+      return this.listClaudeSessions(cwd)
+    }
+  }
+
+  /**
+   * List OpenCode sessions using CLI command
+   */
+  private async listOpencodeSessions(cwd: string): Promise<SessionInfo[]> {
     const result = Bun.spawnSync(["opencode", "session", "list", "--format", "json"], {
       cwd,
       stdout: "pipe",
@@ -152,22 +174,81 @@ export class OpencodeAcpClient {
           title: s.title || undefined,
           updatedAt: s.updated,
         }))
-    } catch {
+    } catch (e) {
+      logger.debug("Failed to parse opencode sessions", { error: e })
+      return []
+    }
+  }
+
+  /**
+   * List Claude Code sessions by parsing JSONL files
+   * Sessions are stored in ~/.claude/projects/<path-encoded>/
+   */
+  private async listClaudeSessions(cwd: string): Promise<SessionInfo[]> {
+    // Claude stores sessions in ~/.claude/projects/ with path encoded (/ -> -)
+    const claudeDir = path.join(os.homedir(), ".claude", "projects")
+    const encodedPath = cwd.replace(/\//g, "-")
+    const projectDir = path.join(claudeDir, encodedPath)
+
+    if (!fs.existsSync(projectDir)) {
       return []
     }
 
-    /* ACP implementation for CLIs that support unstable_listSessions:
-    if (this.client) {
-      const response = await this.client.unstable_listSessions({ cwd })
-      return response.sessions.map((s: AcpSessionInfo) => ({
-        sessionId: s.sessionId,
-        cwd: s.cwd,
-        title: s.title ?? undefined,
-        updatedAt: s.updatedAt ?? undefined,
-      }))
+    const sessions: SessionInfo[] = []
+
+    try {
+      const files = fs.readdirSync(projectDir)
+      const jsonlFiles = files.filter(f => f.endsWith(".jsonl") && !f.startsWith("agent-"))
+
+      for (const file of jsonlFiles) {
+        const filePath = path.join(projectDir, file)
+        const content = fs.readFileSync(filePath, "utf-8")
+        const lines = content.trim().split("\n").filter(Boolean)
+
+        if (lines.length === 0) continue
+
+        try {
+          // Parse first line to get session info
+          const firstEntry = JSON.parse(lines[0]!)
+          const sessionId = firstEntry.sessionId || file.replace(".jsonl", "")
+
+          // Find first user message for title
+          let title: string | undefined
+          for (const line of lines) {
+            try {
+              const entry = JSON.parse(line)
+              if (entry.type === "user" && entry.message?.content) {
+                const content = entry.message.content
+                title = typeof content === "string"
+                  ? content.slice(0, 100)
+                  : content[0]?.text?.slice(0, 100)
+                break
+              }
+            } catch (e) {
+              logger.debug("Failed to parse session line", { file, error: e })
+            }
+          }
+
+          // Get file modification time as updatedAt
+          const stat = fs.statSync(filePath)
+
+          sessions.push({
+            sessionId,
+            cwd,
+            title,
+            updatedAt: stat.mtimeMs,
+          })
+        } catch (e) {
+          logger.debug("Failed to parse session file", { file, error: e })
+        }
+      }
+    } catch (e) {
+      logger.debug("Failed to list claude sessions", { error: e })
+      return []
     }
-    return []
-    */
+
+    // Sort by updatedAt descending (most recent first)
+    return sessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
   }
 
   /**
@@ -410,12 +491,17 @@ Write the review to ${outputPath}. Cover ALL hunks. Use diagrams liberally.`
 
 /**
  * Create and connect an ACP client
+ * @param agent - Which agent to use (opencode or claude)
  * @param onUpdate - Optional callback for session update notifications
  */
 export async function createAcpClient(
+  agent: AgentType = "opencode",
   onUpdate?: (notification: SessionNotification) => void,
-): Promise<OpencodeAcpClient> {
-  const client = new OpencodeAcpClient()
+): Promise<AcpClient> {
+  const client = new AcpClient(agent)
   await client.connect(onUpdate)
   return client
 }
+
+// Keep backward compatibility alias
+export { AcpClient as OpencodeAcpClient }

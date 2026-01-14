@@ -76,11 +76,14 @@ git difftool HEAD~1
 
 ### AI-Powered Review
 
-Get AI-powered code review of your changes using [OpenCode](https://opencode.ai) as the backend agent.
+Get AI-powered code review of your changes using [OpenCode](https://opencode.ai) or [Claude Code](https://www.anthropic.com/claude-code) as the backend agent.
 
 ```bash
-# Review unstaged changes
+# Review unstaged changes (uses OpenCode by default)
 critique review
+
+# Use Claude Code instead
+critique review --agent claude
 
 # Review staged changes
 critique review --staged
@@ -92,7 +95,7 @@ critique review --commit abc1234
 # Review commit range (like a PR)
 critique review main HEAD
 
-# Include session context from OpenCode
+# Include session context
 critique review --session <session-id>
 
 # Generate web preview instead of TUI
@@ -104,9 +107,10 @@ critique review --web --open
 
 | Flag | Description |
 |------|-------------|
+| `--agent <name>` | AI agent to use: `opencode` (default) or `claude` |
 | `--staged` | Review staged changes |
 | `--commit <ref>` | Review changes from a specific commit |
-| `--session <id>` | Include OpenCode session(s) as context (can be repeated) |
+| `--session <id>` | Include session(s) as context (can be repeated) |
 | `--web` | Generate web preview instead of TUI |
 | `--open` | Open web preview in browser (with --web) |
 | `--filter <pattern>` | Filter files by glob pattern |

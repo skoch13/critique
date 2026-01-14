@@ -1,6 +1,14 @@
+# 0.1.18
+
+- Replace `@xmorse/bun-pty` with `bun-pty` (official package)
+- Remove unused dependencies: `react-error-boundary`, `node-pty`
+
 # 0.1.17
 
 - Rename `explain` command to `review`
+- Add Claude Code support:
+  - `critique review --agent claude` to use Claude Code instead of OpenCode
+  - Session listing works for both agents
 - `web` command:
   - Use Fira Code font from Google Fonts for better box drawing character rendering
 - Update `ghostty-opentui` to v1.3.12

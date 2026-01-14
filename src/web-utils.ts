@@ -32,7 +32,7 @@ export async function captureToHtml(
   renderCommand: string[],
   options: CaptureOptions
 ): Promise<string> {
-  const pty = await import("@xmorse/bun-pty")
+  const pty = await import("bun-pty")
   const { ansiToHtmlDocument } = await import("./ansi-html.ts")
 
   let ansiOutput = ""

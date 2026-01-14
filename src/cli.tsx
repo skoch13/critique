@@ -132,7 +132,7 @@ async function runReviewMode(
   }
 
   console.log(`Found ${hunks.length} hunks to review`);
-  console.log("Connecting to opencode ACP...");
+  console.log(`Connecting to ${agent} ACP...`);
 
   // Create temp file for YAML output
   const yamlPath = join(tmpdir(), `critique-review-${Date.now()}.yaml`);
@@ -241,7 +241,7 @@ async function runReviewMode(
   };
 
   try {
-    acpClient = await createAcpClient((notification) => {
+    acpClient = await createAcpClient(agent as "opencode" | "claude", (notification) => {
       if (reviewSessionId && notification.sessionId === reviewSessionId) {
         printNotification(notification);
       }
@@ -356,7 +356,7 @@ async function runReviewMode(
         logger.error("Review session error", error);
         console.error("Review generation failed:", error);
         if (acpClient) await acpClient.close();
-        try { fs.unlinkSync(yamlPath); } catch {}
+        try { fs.unlinkSync(yamlPath); } catch (e) { logger.debug("Failed to cleanup yaml file", { error: e }); }
         process.exit(1);
       }
 
@@ -1030,8 +1030,8 @@ cli
   .option("--open", "Open web preview in browser (with --web)")
   .action(async (base, head, options) => {
     try {
-      if (options.agent !== "opencode") {
-        console.error(`Unknown agent: ${options.agent}. Supported: opencode`);
+      if (options.agent !== "opencode" && options.agent !== "claude") {
+        console.error(`Unknown agent: ${options.agent}. Supported: opencode, claude`);
         process.exit(1);
       }
 

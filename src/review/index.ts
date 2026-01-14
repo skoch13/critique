@@ -16,7 +16,7 @@ export {
   getUncoveredPortions,
   formatUncoveredMessage,
 } from "./hunk-parser.ts"
-export { OpencodeAcpClient, createAcpClient } from "./acp-client.ts"
+export { AcpClient, OpencodeAcpClient, createAcpClient, type AgentType } from "./acp-client.ts"
 export { compressSession, sessionsToContextXml } from "./session-context.ts"
 export { watchReviewYaml, readReviewYaml, waitForFirstValidGroup } from "./yaml-watcher.ts"
 export { StreamDisplay } from "./stream-display.tsx"

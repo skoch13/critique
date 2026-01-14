@@ -216,27 +216,27 @@ describe("ReviewAppView", () => {
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
-               ## Import changes                                                                        █ 
-                                                                                                        █ 
-               Added logger import to support new logging functionality.                                █ 
-                                                                                                        █ 
-        #3 src/index.ts +1-0                                                                            █ 
-        1   import { main } from './utils'                                                              █ 
-        2 + import { logger } from './logger'                                                           █ 
-                                                                                                        █ 
-                                                                                                        █ 
-               ## Input validation and logging                                                          █ 
-                                                                                                        █ 
-               These changes add input validation to the helper function and integrate logging          █ 
-               in the main function.                                                                    █ 
-                                                                                                        █ 
-        #1 src/utils.ts +3-1                                                                            █ 
-        10   function helper() {                         10   function helper() {                       █ 
-        11 -   return null                               11 +   // Add validation                       █ 
-                                                         12 +   if (!input) return null                 █ 
-                                                         13 +   return process(input)                   █ 
-        12   }                                           14   }                                         █ 
-                                                                                                        ▀ 
+               ## Import changes                                                                          
+                                                                                                          
+               Added logger import to support new logging functionality.                                  
+                                                                                                          
+        #3 src/index.ts +1-0                                                                              
+        1   import { main } from './utils'                                                                
+        2 + import { logger } from './logger'                                                             
+                                                                                                          
+                                                                                                          
+               ## Input validation and logging                                                            
+                                                                                                          
+               These changes add input validation to the helper function and integrate logging            
+               in the main function.                                                                      
+                                                                                                          
+        #1 src/utils.ts +3-1                                                                              
+        10   function helper() {                         10   function helper() {                         
+        11 -   return null                               11 +   // Add validation                         
+                                                         12 +   if (!input) return null                   
+                                                         13 +   return process(input)                     
+        12   }                                           14   }                                           
+                                                                                                          
         #2 src/utils.ts +2-0                                                                              
         27   export function main() {                                                                     
         28 +   const result = helper()                                                                    
@@ -348,29 +348,29 @@ describe("ReviewAppView", () => {
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                                            
-                                   ## Import changes                                                                                            █ 
-                                                                                                                                                █ 
-                                   Added logger import to support new logging functionality.                                                    █ 
-                                                                                                                                                █ 
-        #3 src/index.ts +1-0                                                                                                                    █ 
-        1   import { main } from './utils'                                                                                                      █ 
-        2 + import { logger } from './logger'                                                                                                   █ 
-                                                                                                                                                █ 
-                                                                                                                                                █ 
-                                   ## Input validation and logging                                                                              █ 
-                                                                                                                                                █ 
-                                   These changes add input validation to the helper function and integrate logging                              █ 
-                                   in the main function.                                                                                        █ 
-                                                                                                                                                █ 
-        #1 src/utils.ts +3-1                                                                                                                    █ 
-        10   function helper() {                                             10   function helper() {                                           █ 
-        11 -   return null                                                   11 +   // Add validation                                           █ 
-                                                                             12 +   if (!input) return null                                     █ 
-                                                                             13 +   return process(input)                                       █ 
-        12   }                                                               14   }                                                             █ 
-                                                                                                                                                █ 
-        #2 src/utils.ts +2-0                                                                                                                    █ 
-        27   export function main() {                                                                                                           █ 
+                                   ## Import changes                                                                                              
+                                                                                                                                                  
+                                   Added logger import to support new logging functionality.                                                      
+                                                                                                                                                  
+        #3 src/index.ts +1-0                                                                                                                      
+        1   import { main } from './utils'                                                                                                        
+        2 + import { logger } from './logger'                                                                                                     
+                                                                                                                                                  
+                                                                                                                                                  
+                                   ## Input validation and logging                                                                                
+                                                                                                                                                  
+                                   These changes add input validation to the helper function and integrate logging                                
+                                   in the main function.                                                                                          
+                                                                                                                                                  
+        #1 src/utils.ts +3-1                                                                                                                      
+        10   function helper() {                                             10   function helper() {                                             
+        11 -   return null                                                   11 +   // Add validation                                             
+                                                                             12 +   if (!input) return null                                       
+                                                                             13 +   return process(input)                                         
+        12   }                                                               14   }                                                               
+                                                                                                                                                  
+        #2 src/utils.ts +2-0                                                                                                                      
+        27   export function main() {                                                                                                             
         28 +   const result = helper()                                                                                                            
         29 +   console.log(result)                                                                                                                
         30     return result                                                                                                                      
@@ -421,39 +421,39 @@ describe("ReviewAppView", () => {
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                                            
-                                   ## Custom Error Classes                                                                                      █ 
-                                                                                                                                                █ 
-                                   Introduces a new error class for better error handling:                                                      █ 
-                                                                                                                                                █ 
-                                   - **NotFoundError**: Used when a requested resource doesn't exist                                            █ 
-                                                                                                                                                █ 
-                                   This enables more specific catch blocks and better error messages.                                           █ 
-                                                                                                                                                █ 
-        #1 src/errors/index.ts +6-0                                                                                                             █ 
-        1 + export class NotFoundError extends Error {                                                                                          █ 
-        2 +   constructor(message: string) {                                                                                                    █ 
-        3 +     super(message)                                                                                                                  █ 
-        4 +     this.name = 'NotFoundError'                                                                                                     █ 
-        5 +   }                                                                                                                                 █ 
-        6 + }                                                                                                                                   █ 
-                                                                                                                                                █ 
-                                                                                                                                                █ 
-                                   ## User API Improvements                                                                                     █ 
-                                                                                                                                                █ 
-                                   ### Error Handling                                                                                           █ 
-                                   The getUser function now properly handles missing users by throwing a                                        █ 
-                                   NotFoundError.                                                                                               █ 
-                                                                                                                                                █ 
-                                   ### Security                                                                                                 █ 
-                                   User data is now sanitized before being returned to prevent leaking sensitive                                █ 
-                                   fields.                                                                                                      █ 
-                                                                                                                                                █ 
-        #2 src/api/users.ts +5-2                                                                                                                █ 
-        15   export async function getUser(id: string) {                     15   export async function getUser(id: string) {                   █ 
-        16 -   const user = await db.users.find(id)                          16 +   const user = await db.users.find(id)                        █ 
-        17 -   return user                                                   17 +   if (!user) {                                                █ 
-                                                                             18 +     throw new NotFoundError(\`User \${id} not found\`)           █ 
-                                                                             19 +   }                                                           █ 
+                                   ## Custom Error Classes                                                                                        
+                                                                                                                                                  
+                                   Introduces a new error class for better error handling:                                                        
+                                                                                                                                                  
+                                   - **NotFoundError**: Used when a requested resource doesn't exist                                              
+                                                                                                                                                  
+                                   This enables more specific catch blocks and better error messages.                                             
+                                                                                                                                                  
+        #1 src/errors/index.ts +6-0                                                                                                               
+        1 + export class NotFoundError extends Error {                                                                                            
+        2 +   constructor(message: string) {                                                                                                      
+        3 +     super(message)                                                                                                                    
+        4 +     this.name = 'NotFoundError'                                                                                                       
+        5 +   }                                                                                                                                   
+        6 + }                                                                                                                                     
+                                                                                                                                                  
+                                                                                                                                                  
+                                   ## User API Improvements                                                                                       
+                                                                                                                                                  
+                                   ### Error Handling                                                                                             
+                                   The getUser function now properly handles missing users by throwing a                                          
+                                   NotFoundError.                                                                                                 
+                                                                                                                                                  
+                                   ### Security                                                                                                   
+                                   User data is now sanitized before being returned to prevent leaking sensitive                                  
+                                   fields.                                                                                                        
+                                                                                                                                                  
+        #2 src/api/users.ts +5-2                                                                                                                  
+        15   export async function getUser(id: string) {                     15   export async function getUser(id: string) {                     
+        16 -   const user = await db.users.find(id)                          16 +   const user = await db.users.find(id)                          
+        17 -   return user                                                   17 +   if (!user) {                                                  
+                                                                             18 +     throw new NotFoundError(\`User \${id} not found\`)             
+                                                                             19 +   }                                                             
                                                                              20 +   return sanitizeUser(user)                                     
         18   }                                                               21   }                                                               
                                                                                                                                                   
@@ -523,17 +523,17 @@ Added validation at handler start.`,
     // Should only show lines 1-7 of the hunk, not the full thing
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
-               ## Input Validation                                                                      █ 
-                                                                                                        █ 
-               Added validation at handler start.                                                       █ 
-                                                                                                        █ 
-        #1 src/api/handlers.ts +5-1                                                                     █ 
-        10   export async function handleRequest(req:    10   export async function handleRequest(req:  █ 
-             Request) {                                       Request) {                                █ 
-        11 -   const data = req.body                     11 +   // Input validation                     █ 
-                                                         12 +   if (!req.body) {                        █ 
-                                                         13 +     throw new ValidationError('Request    █ 
-                                                              body is required')                        ▀ 
+               ## Input Validation                                                                        
+                                                                                                          
+               Added validation at handler start.                                                         
+                                                                                                          
+        #1 src/api/handlers.ts +5-1                                                                       
+        10   export async function handleRequest(req:    10   export async function handleRequest(req:    
+             Request) {                                       Request) {                                  
+        11 -   const data = req.body                     11 +   // Input validation                       
+                                                         12 +   if (!req.body) {                          
+                                                         13 +     throw new ValidationError('Request      
+                                                              body is required')                          
                                                          14 +   }                                         
                                                          15 +   const data = validateInput(req.body)      
                                                                                                           
@@ -572,29 +572,29 @@ Added validation at handler start.`,
     // Should show two sections: validation (lines 1-7) then processing (lines 8-16)
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                        
-                         ## Input Validation                                                                                █ 
-                                                                                                                            █ 
-                         Added proper input validation at the start of the handler:                                         █ 
-                         - Check for missing request body                                                                   █ 
-                         - Validate input before processing                                                                 █ 
-                                                                                                                            █ 
-        #1 src/api/handlers.ts +5-1                                                                                         █ 
-        10   export async function handleRequest(req: Request) {   10   export async function handleRequest(req: Request) { █ 
-        11 -   const data = req.body                               11 +   // Input validation                               █ 
-                                                                   12 +   if (!req.body) {                                  █ 
-                                                                   13 +     throw new ValidationError('Request body is      █ 
-                                                                        required')                                          █ 
-                                                                   14 +   }                                                 █ 
-                                                                   15 +   const data = validateInput(req.body)              █ 
-                                                                                                                            █ 
-                                                                                                                            █ 
-                         ## Async Processing and Logging                                                                    █ 
-                                                                                                                            █ 
-                         Improved the processing logic:                                                                     █ 
-                         - Made process call async for better performance                                                   █ 
-                         - Added request logging for debugging                                                              █ 
-                                                                                                                            █ 
-        #1 src/api/handlers.ts +4-1                                                                                         █ 
+                         ## Input Validation                                                                                  
+                                                                                                                              
+                         Added proper input validation at the start of the handler:                                           
+                         - Check for missing request body                                                                     
+                         - Validate input before processing                                                                   
+                                                                                                                              
+        #1 src/api/handlers.ts +5-1                                                                                           
+        10   export async function handleRequest(req: Request) {   10   export async function handleRequest(req: Request) {   
+        11 -   const data = req.body                               11 +   // Input validation                                 
+                                                                   12 +   if (!req.body) {                                    
+                                                                   13 +     throw new ValidationError('Request body is        
+                                                                        required')                                            
+                                                                   14 +   }                                                   
+                                                                   15 +   const data = validateInput(req.body)                
+                                                                                                                              
+                                                                                                                              
+                         ## Async Processing and Logging                                                                      
+                                                                                                                              
+                         Improved the processing logic:                                                                       
+                         - Made process call async for better performance                                                     
+                         - Added request logging for debugging                                                                
+                                                                                                                              
+        #1 src/api/handlers.ts +4-1                                                                                           
         12                                                         16                                                         
         13     // Process the request                              17     // Process the request                              
         14 -   const result = process(data)                        18 +   const result = await processAsync(data)             
@@ -646,22 +646,22 @@ Added validation at handler start.`,
     // Should show: full hunk #3, then partial of largeHunk (lines 1-7)
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
-               ## Import changes                                                                        █ 
-                                                                                                        █ 
-               Added logger import.                                                                     █ 
-                                                                                                        █ 
-        #3 src/index.ts +1-0                                                                            █ 
-        1   import { main } from './utils'                                                              █ 
-        2 + import { logger } from './logger'                                                           █ 
-                                                                                                        █ 
-                                                                                                        █ 
-               ## Validation                                                                            █ 
-                                                                                                        █ 
-               Input validation logic.                                                                  █ 
-                                                                                                        █ 
-        #1 src/api/handlers.ts +5-1                                                                     █ 
-        10   export async function handleRequest(req:    10   export async function handleRequest(req:  █ 
-             Request) {                                       Request) {                                ▀ 
+               ## Import changes                                                                          
+                                                                                                          
+               Added logger import.                                                                       
+                                                                                                          
+        #3 src/index.ts +1-0                                                                              
+        1   import { main } from './utils'                                                                
+        2 + import { logger } from './logger'                                                             
+                                                                                                          
+                                                                                                          
+               ## Validation                                                                              
+                                                                                                          
+               Input validation logic.                                                                    
+                                                                                                          
+        #1 src/api/handlers.ts +5-1                                                                       
+        10   export async function handleRequest(req:    10   export async function handleRequest(req:    
+             Request) {                                       Request) {                                  
         11 -   const data = req.body                     11 +   // Input validation                       
                                                          12 +   if (!req.body) {                          
                                                          13 +     throw new ValidationError('Request      
@@ -713,17 +713,17 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
     // Should show full hunk #1
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
-               ## Full hunk via hunkId                                                                  █ 
-                                                                                                        █ 
-               This uses hunkId instead of hunkIds but shows full hunk.                                 █ 
-                                                                                                        █ 
-        #1 src/utils.ts +3-1                                                                            █ 
-        10   function helper() {                         10   function helper() {                       █ 
-        11 -   return null                               11 +   // Add validation                       █ 
-                                                         12 +   if (!input) return null                 █ 
-                                                         13 +   return process(input)                   █ 
-        12   }                                           14   }                                         █ 
-                                                                                                        ▀ 
+               ## Full hunk via hunkId                                                                    
+                                                                                                          
+               This uses hunkId instead of hunkIds but shows full hunk.                                   
+                                                                                                          
+        #1 src/utils.ts +3-1                                                                              
+        10   function helper() {                         10   function helper() {                         
+        11 -   return null                               11 +   // Add validation                         
+                                                         12 +   if (!input) return null                   
+                                                         13 +   return process(input)                     
+        12   }                                           14   }                                           
+                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           

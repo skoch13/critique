@@ -139,7 +139,7 @@ async function runReviewMode(
   fs.writeFileSync(yamlPath, "");
 
   // Connect to ACP
-  let acpClient: Awaited<ReturnType<typeof createAcpClient>> | null = null;
+  let acpClient: ReturnType<typeof createAcpClient> | null = null;
   let reviewSessionId: string | null = null;
 
   // Console streaming state
@@ -167,11 +167,11 @@ async function runReviewMode(
     const render = () => {
       const dots = ".".repeat(dotPhase).padEnd(3, " ");
       process.stdout.write("\x1b[1A\x1b[2K");
-      console.log(pc.default.gray(`┣ ${dots}generating`));
+      console.log(pc.default.gray(`┣ ${dots}`));
       dotPhase = (dotPhase + 1) % 4;
     };
 
-    console.log(pc.default.gray("┣    generating"));
+    console.log(pc.default.gray("┣    "));
     generatingShown = true;
     dotPhase = 1;
 
@@ -241,13 +241,16 @@ async function runReviewMode(
   };
 
   try {
-    acpClient = await createAcpClient(agent as "opencode" | "claude", (notification) => {
+    // Create client and start connection in background (non-blocking)
+    // This lets us list sessions while ACP server is starting
+    acpClient = createAcpClient(agent as "opencode" | "claude", (notification) => {
       if (reviewSessionId && notification.sessionId === reviewSessionId) {
         printNotification(notification);
       }
-    });
+    }, true); // startConnectionNow = true
 
     const cwd = process.cwd();
+    // listSessions doesn't need ACP connection, so this runs immediately
     const sessions = await acpClient.listSessions(cwd);
 
     // Build session context

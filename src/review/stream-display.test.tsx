@@ -69,7 +69,7 @@ describe("StreamDisplay", () => {
       "┣ thinking                                                  
                                                                   
                                                                   
-                                                                 █
+                                                                  
                                                                   
       "
     `)
@@ -96,9 +96,9 @@ describe("StreamDisplay", () => {
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "⬥                                                           
-        **Hello** world!                                          
                                                                   
                                                                  █
+                                                                 ▀
                                                                   
       "
     `)
@@ -126,7 +126,7 @@ describe("StreamDisplay", () => {
       "┣ read file.ts                                              
                                                                   
                                                                   
-                                                                 █
+                                                                  
                                                                   
       "
     `)
@@ -156,7 +156,7 @@ describe("StreamDisplay", () => {
       "◼︎ edit  file.yaml (+40-35)                                  
                                                                   
                                                                   
-                                                                 █
+                                                                  
                                                                   
       "
     `)
@@ -177,12 +177,12 @@ describe("StreamDisplay", () => {
     expect(frame).toMatchInlineSnapshot(`
       "┣ thinking                                                  
       ⬥                                                           
-        Hello! I'm ready to help you review code.                 
                                                                   
-                                                                  
+                                                                 █
                                                                  █
                                                                  █
                                                                  ▀
+                                                                  
                                                                   
                                                                   
       "
@@ -206,14 +206,14 @@ describe("StreamDisplay", () => {
       ┣ package.json                                              
       ┣ thinking                                                  
       ⬥                                                           
-        **Name:** \`critique\`                                      
-        **Version:** \`0.1.14\`                                     
-                                                                  
                                                                   
                                                                  █
                                                                  █
                                                                  █
-                                                                 ▀
+                                                                  
+                                                                  
+                                                                  
+                                                                  
                                                                   
                                                                   
                                                                   

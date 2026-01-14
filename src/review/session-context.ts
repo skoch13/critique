@@ -5,11 +5,38 @@ import type { CompressedSession, SessionContent } from "./types.ts"
 
 /**
  * Compress a session's notifications into a summary string
+ * Accumulates consecutive chunks (thinking, messages) before adding to summary
  */
 export function compressSession(content: SessionContent): CompressedSession {
   const { sessionId, notifications } = content
   const summaryParts: string[] = []
   let title: string | undefined
+
+  // Accumulate consecutive chunks of the same type
+  let currentThinking = ""
+  let currentMessage = ""
+  let currentUserMessage = ""
+
+  const flushThinking = () => {
+    if (currentThinking.trim().length > 50) {
+      summaryParts.push(`Thinking: ${currentThinking.trim().slice(0, 300)}...`)
+    }
+    currentThinking = ""
+  }
+
+  const flushMessage = () => {
+    if (currentMessage.trim().length > 50) {
+      summaryParts.push(`Assistant: ${currentMessage.trim().slice(0, 200)}...`)
+    }
+    currentMessage = ""
+  }
+
+  const flushUserMessage = () => {
+    if (currentUserMessage.trim()) {
+      summaryParts.push(`User: ${currentUserMessage.trim().slice(0, 200)}...`)
+    }
+    currentUserMessage = ""
+  }
 
   for (const notification of notifications) {
     const update = notification.update
@@ -19,24 +46,43 @@ export function compressSession(content: SessionContent): CompressedSession {
       title = update.title
     }
 
-    // Extract user messages
+    // Accumulate user message chunks
     if (update.sessionUpdate === "user_message_chunk") {
+      flushThinking()
+      flushMessage()
       const content = update.content
       if (content.type === "text") {
-        summaryParts.push(`User: ${content.text.slice(0, 200)}...`)
+        currentUserMessage += content.text
       }
+      continue
     }
 
-    // Extract assistant messages
+    // Accumulate assistant message chunks
     if (update.sessionUpdate === "agent_message_chunk") {
+      flushThinking()
+      flushUserMessage()
       const content = update.content
-      if (content.type === "text" && content.text.trim()) {
-        // Only include substantial messages
-        if (content.text.length > 50) {
-          summaryParts.push(`Assistant: ${content.text.slice(0, 200)}...`)
-        }
+      if (content.type === "text") {
+        currentMessage += content.text
       }
+      continue
     }
+
+    // Accumulate thinking chunks - important for understanding reasoning
+    if (update.sessionUpdate === "agent_thought_chunk") {
+      flushMessage()
+      flushUserMessage()
+      const content = (update as { content?: { text?: string } }).content
+      if (content?.text) {
+        currentThinking += content.text
+      }
+      continue
+    }
+
+    // Non-chunk updates: flush accumulated content first
+    flushThinking()
+    flushMessage()
+    flushUserMessage()
 
     // Extract tool calls (most important for understanding what was done)
     if (update.sessionUpdate === "tool_call") {
@@ -59,6 +105,11 @@ export function compressSession(content: SessionContent): CompressedSession {
       }
     }
   }
+
+  // Flush any remaining accumulated content
+  flushThinking()
+  flushMessage()
+  flushUserMessage()
 
   // Limit summary length
   const maxSummaryLength = 2000

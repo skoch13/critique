@@ -14,7 +14,7 @@ const events: SessionNotification[] = []
 
 console.log("Spawning opencode ACP server...")
 
-const proc = Bun.spawn(["bunx", "opencode", "acp"], {
+const proc = Bun.spawn([ "opencode", "acp"], {
   stdin: "pipe",
   stdout: "pipe",
   stderr: "inherit",

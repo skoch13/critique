@@ -24,10 +24,12 @@ export class AcpClient {
   private sessionUpdates: Map<string, SessionNotification[]> = new Map()
   private onUpdateCallback: ((notification: SessionNotification) => void) | null = null
   private agent: AgentType
+  private connectionPromise: Promise<void> | null = null
 
   constructor(agent: AgentType = "opencode") {
     this.agent = agent
     this.connect = this.connect.bind(this)
+    this.ensureConnected = this.ensureConnected.bind(this)
     this.listSessions = this.listSessions.bind(this)
     this.loadSessionContent = this.loadSessionContent.bind(this)
     this.createReviewSession = this.createReviewSession.bind(this)
@@ -35,16 +37,39 @@ export class AcpClient {
   }
 
   /**
+   * Start ACP connection in background (non-blocking)
+   * Call this early to warm up the connection while doing other work
+   * @param onUpdate - Optional callback for session update notifications
+   */
+  startConnection(onUpdate?: (notification: SessionNotification) => void): void {
+    if (this.connectionPromise) return // Already started
+    // Defer to next microtask so caller can continue immediately
+    // This ensures Bun.spawn doesn't block the current execution
+    this.connectionPromise = Promise.resolve().then(() => this.connect(onUpdate))
+  }
+
+  /**
+   * Wait for ACP connection to be ready
+   * Starts connection if not already started
+   */
+  private async ensureConnected(): Promise<void> {
+    if (!this.connectionPromise) {
+      this.connectionPromise = this.connect(this.onUpdateCallback || undefined)
+    }
+    await this.connectionPromise
+  }
+
+  /**
    * Spawn ACP server and establish connection
    * @param onUpdate - Optional callback for session update notifications
    */
-  async connect(onUpdate?: (notification: SessionNotification) => void): Promise<void> {
+  private async connect(onUpdate?: (notification: SessionNotification) => void): Promise<void> {
     this.onUpdateCallback = onUpdate || null
     logger.info(`Spawning ${this.agent} ACP server...`)
 
     // Spawn the appropriate ACP server
     const command = this.agent === "opencode"
-      ? ["bunx", "opencode", "acp"]
+      ? ["opencode", "acp"]
       : ["bunx", "@zed-industries/claude-code-acp"]
 
     this.proc = Bun.spawn(command, {
@@ -142,44 +167,82 @@ export class AcpClient {
   }
 
   /**
-   * List OpenCode sessions using CLI command
+   * List OpenCode sessions by reading directly from storage
+   * Storage location: ~/.local/share/opencode/storage/
    */
   private async listOpencodeSessions(cwd: string): Promise<SessionInfo[]> {
-    const result = Bun.spawnSync(["opencode", "session", "list", "--format", "json"], {
-      cwd,
-      stdout: "pipe",
-      stderr: "pipe",
-    })
+    const storageDir = path.join(os.homedir(), ".local", "share", "opencode", "storage")
+    const projectsDir = path.join(storageDir, "project")
+    const sessionsDir = path.join(storageDir, "session")
 
-    if (result.exitCode !== 0) {
+    if (!fs.existsSync(projectsDir)) {
       return []
     }
 
+    // Find ALL project IDs for the given cwd (there can be multiple)
+    const projectIds: string[] = []
     try {
-      const sessions = JSON.parse(result.stdout.toString()) as Array<{
-        id: string
-        title: string
-        updated: number
-        created: number
-        projectId: string
-        directory: string
-        _meta?: { [key: string]: unknown } | null
-      }>
-
-      // Filter sessions to only those matching the cwd
-      return sessions
-        .filter((s) => s.directory === cwd)
-        .map((s) => ({
-          sessionId: s.id,
-          cwd: s.directory,
-          title: s.title || undefined,
-          updatedAt: s.updated,
-          _meta: s._meta,
-        }))
+      const projectFiles = fs.readdirSync(projectsDir).filter(f => f.endsWith(".json"))
+      for (const file of projectFiles) {
+        try {
+          const content = fs.readFileSync(path.join(projectsDir, file), "utf-8")
+          const project = JSON.parse(content) as { id: string; worktree: string }
+          if (project.worktree === cwd) {
+            projectIds.push(project.id)
+          }
+        } catch {
+          // Skip invalid project files
+        }
+      }
     } catch (e) {
-      logger.debug("Failed to parse opencode sessions", { error: e })
+      logger.debug("Failed to scan opencode projects", { error: e })
       return []
     }
+
+    if (projectIds.length === 0) {
+      return []
+    }
+
+    // Read sessions from ALL matching projects
+    const sessions: SessionInfo[] = []
+    for (const projectId of projectIds) {
+      const projectSessionsDir = path.join(sessionsDir, projectId)
+      if (!fs.existsSync(projectSessionsDir)) {
+        continue
+      }
+
+      try {
+        const sessionFiles = fs.readdirSync(projectSessionsDir).filter(f => f.endsWith(".json"))
+        for (const file of sessionFiles) {
+          try {
+            const content = fs.readFileSync(path.join(projectSessionsDir, file), "utf-8")
+            const session = JSON.parse(content) as {
+              id: string
+              title?: string
+              directory: string
+              time: { created: number; updated: number }
+              _meta?: { [key: string]: unknown } | null
+            }
+            sessions.push({
+              sessionId: session.id,
+              cwd: session.directory,
+              title: session.title,
+              updatedAt: session.time.updated,
+              _meta: session._meta,
+            })
+          } catch {
+            // Skip invalid session files
+          }
+        }
+      } catch (e) {
+        logger.debug("Failed to read opencode sessions for project", { projectId, error: e })
+      }
+    }
+
+    // Filter to exact cwd match and sort by updatedAt descending
+    return sessions
+      .filter(s => s.cwd === cwd)
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
   }
 
   /**
@@ -257,8 +320,9 @@ export class AcpClient {
    * Load a session and return its content
    */
   async loadSessionContent(sessionId: string, cwd: string): Promise<SessionContent> {
+    await this.ensureConnected()
     if (!this.client) {
-      throw new Error("Client not connected")
+      throw new Error("Client connection failed")
     }
 
     // Clear any existing updates for this session
@@ -292,8 +356,9 @@ export class AcpClient {
     outputPath: string,
     onSessionCreated?: (sessionId: string) => void,
   ): Promise<string> {
+    await this.ensureConnected()
     if (!this.client) {
-      throw new Error("Client not connected")
+      throw new Error("Client connection failed")
     }
 
     logger.info("Creating new ACP session...", { cwd, outputPath })
@@ -537,16 +602,21 @@ Write the review to ${outputPath}. Cover all hunks (lockfiles and auto-generated
 }
 
 /**
- * Create and connect an ACP client
+ * Create an ACP client and optionally start connection in background
+ * Connection is lazy - will connect on first method that needs it
  * @param agent - Which agent to use (opencode or claude)
  * @param onUpdate - Optional callback for session update notifications
+ * @param startConnectionNow - If true, starts connection immediately in background
  */
-export async function createAcpClient(
+export function createAcpClient(
   agent: AgentType = "opencode",
   onUpdate?: (notification: SessionNotification) => void,
-): Promise<AcpClient> {
+  startConnectionNow = false,
+): AcpClient {
   const client = new AcpClient(agent)
-  await client.connect(onUpdate)
+  if (startConnectionNow) {
+    client.startConnection(onUpdate)
+  }
   return client
 }
 

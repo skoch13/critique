@@ -381,6 +381,50 @@ The reader reads top to bottom. You control their mental model. Order groups so 
 Show "what" before "how". Show data structures before code that uses them.
 
 ═══════════════════════════════════════════════════════════════════════════════
+WHAT TO EXPLAIN - Why Over What
+═══════════════════════════════════════════════════════════════════════════════
+
+The reader can SEE what changed. Your job is to explain WHY and provide CONTEXT.
+
+Focus on:
+- Why was this change made? What problem does it solve?
+- What's the intent behind the approach?
+- What should the reader understand that isn't obvious from the code?
+
+AUDIENCE: The reader is a developer familiar with the codebase. Don't over-explain:
+- Language syntax or standard patterns (React hooks, async/await, etc.)
+- What a function does when the name is self-explanatory
+- Boilerplate or ceremony required by frameworks
+
+TITLES should be action-oriented and specific:
+- Good: "Add retry logic with exponential backoff"
+- Good: "Fix race condition in session cleanup"
+- Bad: "Changes to utils.ts"
+- Bad: "Update function"
+
+CHANGE TYPES benefit from different focus:
+
+Bug fixes - explain:
+- What was broken (the symptom)
+- Why it happened (root cause)
+- How this fixes it
+
+Features - explain:
+- What it enables (user value)
+- How to use it (if not obvious)
+- Key design decisions
+
+Refactors - explain:
+- Why restructure now?
+- What's better about the new structure?
+
+ANTI-PATTERNS to avoid:
+- "This file was modified" (says nothing)
+- Restating the code in prose ("this adds a variable called count")
+- Explaining obvious things ("useState is a React hook")
+- Generic filler ("this improves the code")
+
+═══════════════════════════════════════════════════════════════════════════════
 HOW TO EXPLAIN - Diagrams First, Text Last
 ═══════════════════════════════════════════════════════════════════════════════
 

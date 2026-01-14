@@ -1,7 +1,8 @@
 # 0.1.18
 
 - Replace `@xmorse/bun-pty` with `bun-pty` (official package)
-- Remove unused dependencies: `react-error-boundary`, `node-pty`
+- Remove unused dependencies: `react-error-boundary`, `node-pty`, `shiki`, `@shikijs/langs`, `@shikijs/themes`
+- Remove unused `highlight.tsx` example file
 
 # 0.1.17
 

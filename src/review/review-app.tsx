@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"
-import { MacOSScrollAccel, SyntaxStyle } from "@opentui/core"
+import { MacOSScrollAccel, SyntaxStyle, BoxRenderable } from "@opentui/core"
+import type { Token } from "marked"
 import { getResolvedTheme, getSyntaxTheme, defaultThemeName, themeNames, rgbaToHex } from "../themes.ts"
 import { detectFiletype, countChanges, getViewMode } from "../diff-utils.ts"
 import { DiffView } from "../components/diff-view.tsx"
@@ -146,6 +147,7 @@ export function ReviewApp({
             themeName={activeTheme}
             width={width}
             showFooter={false}
+            renderer={renderer}
           />
         </scrollbox>
       </box>
@@ -159,6 +161,7 @@ export function ReviewApp({
       isGenerating={isGenerating}
       themeName={activeTheme}
       width={width}
+      renderer={renderer}
     />
   )
 }
@@ -193,6 +196,7 @@ export interface ReviewAppViewProps {
   themeName?: string
   width: number
   showFooter?: boolean // defaults to true, set false for web rendering
+  renderer?: any // Optional renderer for variable-width markdown
 }
 
 /**
@@ -206,6 +210,7 @@ export function ReviewAppView({
   themeName = defaultThemeName,
   width,
   showFooter = true,
+  renderer,
 }: ReviewAppViewProps) {
   const [scrollAcceleration] = React.useState(() => new ScrollAcceleration())
 
@@ -312,6 +317,7 @@ export function ReviewAppView({
                   content={group.markdownDescription}
                   themeName={themeName}
                   width={width}
+                  renderer={renderer}
                 />
 
                 {/* Hunks */}
@@ -416,18 +422,58 @@ interface MarkdownBlockProps {
   content: string
   themeName: string
   width: number
+  renderer?: any // Optional renderer for variable-width feature
 }
 
-function MarkdownBlock({ content, themeName, width }: MarkdownBlockProps) {
+function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockProps) {
   const syntaxTheme = getSyntaxTheme(themeName)
   const syntaxStyle = React.useMemo(
     () => SyntaxStyle.fromStyles(syntaxTheme),
     [syntaxTheme],
   )
 
-  // Max width 80, centered
-  const maxWidth = 80
-  const contentWidth = Math.min(width - 4, maxWidth)
+  // Max width for prose, code blocks and tables can use full width
+  const maxProseWidth = 80
+  const fullWidth = Math.max(width - 4, maxProseWidth)
+
+  // Custom renderNode to wrap all elements in centered boxes
+  // Prose elements are constrained to maxProseWidth, code/tables use full width
+  // Only enabled when renderer is available
+  const renderNode = React.useMemo(() => {
+    if (!renderer) return undefined
+
+    let nodeCounter = 0
+    return (token: Token, context: { defaultRender: () => any }) => {
+      const defaultRenderable = context.defaultRender()
+      if (!defaultRenderable) return null
+
+      // Prose: constrained to maxProseWidth, centered
+      if (["heading", "paragraph", "list", "blockquote"].includes(token.type)) {
+        const wrapper = new BoxRenderable(renderer, {
+          id: `prose-wrapper-${nodeCounter++}`,
+          maxWidth: maxProseWidth,
+          width: "100%",
+          alignSelf: "center",
+        })
+        wrapper.add(defaultRenderable)
+        return wrapper
+      }
+
+      // Code blocks and tables: full width, centered
+      if (["code", "table"].includes(token.type)) {
+        // Remove width: "100%" (set by defaultRender) so it sizes to content
+        defaultRenderable.width = undefined
+        defaultRenderable.alignSelf = "center"
+        return defaultRenderable
+      }
+
+      // Other elements (hr, space, etc.) use default rendering
+      return undefined
+    }
+  }, [renderer, maxProseWidth])
+
+  // Use full width when renderer available (variable-width mode), else constrained
+  const contentWidth = renderer ? fullWidth : Math.min(width - 4, maxProseWidth)
 
   return (
     <box
@@ -438,10 +484,10 @@ function MarkdownBlock({ content, themeName, width }: MarkdownBlockProps) {
         paddingBottom: 1,
       }}
     >
-      <code
+      <markdown
         content={content}
-        filetype="markdown"
         syntaxStyle={syntaxStyle}
+        renderNode={renderNode}
         style={{
           width: contentWidth,
           paddingLeft: 1,

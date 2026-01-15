@@ -281,7 +281,7 @@ async function runReviewMode(
         selectedSessionIds = sessionIds;
         clack.log.info(`Using ${selectedSessionIds.length} specified session(s) for context`);
       } else {
-        // Show multiselect prompt to pick sessions
+        // Helper to format time ago
         const formatTimeAgo = (timestamp: number) => {
           const seconds = Math.floor((Date.now() - timestamp) / 1000);
           if (seconds < 60) return "just now";
@@ -307,32 +307,49 @@ async function runReviewMode(
           })
           .slice(0, 10);
 
-        if (filteredSessions.length === 0) {
-          clack.log.info("No sessions available for context");
-        }
-
-        const selected = filteredSessions.length > 0
-          ? await clack.multiselect({
-              message: "Select sessions to include as context (space to toggle, enter to confirm)",
-              options: filteredSessions.map((s) => ({
-                value: s.sessionId,
-                label: s.title || `Session ${s.sessionId.slice(0, 8)}`,
-                hint: s.updatedAt ? formatTimeAgo(s.updatedAt) : undefined,
-              })),
-              required: false,
-            })
-          : [];
-
-        if (clack.isCancel(selected)) {
-          clack.cancel("Operation cancelled");
-          process.exit(0);
-        }
-
-        selectedSessionIds = selected as string[];
-        if (selectedSessionIds.length > 0) {
-          clack.log.info(`Selected ${selectedSessionIds.length} session(s) for context`);
+        // Non-TTY mode: log available sessions for agents to use with --session
+        if (!process.stdin.isTTY) {
+          if (filteredSessions.length > 0) {
+            clack.log.info("Available sessions for context:");
+            for (const s of filteredSessions) {
+              const timeAgo = s.updatedAt ? formatTimeAgo(s.updatedAt) : "";
+              const title = s.title || `Session ${s.sessionId.slice(0, 8)}`;
+              clack.log.info(`  ${s.sessionId}  ${title}  ${timeAgo}`);
+            }
+            clack.log.info("To include relevant sessions, re-run with: --session <id> (can be repeated)");
+          } else {
+            clack.log.info("No sessions available for context");
+          }
+          clack.log.info("Proceeding without session context");
         } else {
-          clack.log.info("No sessions selected, proceeding without context");
+          // TTY mode: show interactive multiselect prompt
+          if (filteredSessions.length === 0) {
+            clack.log.info("No sessions available for context");
+          }
+
+          const selected = filteredSessions.length > 0
+            ? await clack.multiselect({
+                message: "Select sessions to include as context (space to toggle, enter to confirm)",
+                options: filteredSessions.map((s) => ({
+                  value: s.sessionId,
+                  label: s.title || `Session ${s.sessionId.slice(0, 8)}`,
+                  hint: s.updatedAt ? formatTimeAgo(s.updatedAt) : undefined,
+                })),
+                required: false,
+              })
+            : [];
+
+          if (clack.isCancel(selected)) {
+            clack.cancel("Operation cancelled");
+            process.exit(0);
+          }
+
+          selectedSessionIds = selected as string[];
+          if (selectedSessionIds.length > 0) {
+            clack.log.info(`Selected ${selectedSessionIds.length} session(s) for context`);
+          } else {
+            clack.log.info("No sessions selected, proceeding without context");
+          }
         }
       }
 

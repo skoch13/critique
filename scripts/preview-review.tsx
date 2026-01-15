@@ -99,7 +99,35 @@ The user API endpoints have been enhanced with:
 2. **Input validation** - Validates update data before persisting
 3. **Data sanitization** - User data is sanitized before returning
 
-This improves both security and developer experience when working with the API.`,
+This improves both security and developer experience when working with the API.
+
+### Architecture Diagram
+
+The new request flow with error handling:
+
+\`\`\`
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Client    │────▶│   Router    │────▶│  Handler    │────▶│  Database   │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+                           │                   │                   │
+                           │                   │                   │
+                           ▼                   ▼                   ▼
+                    ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+                    │  Validate   │     │   Check     │     │   Query     │
+                    │   Route     │     │   Auth      │     │   Execute   │
+                    └─────────────┘     └─────────────┘     └─────────────┘
+                           │                   │                   │
+                           │         ┌─────────┴─────────┐         │
+                           │         ▼                   ▼         │
+                           │   ┌───────────┐     ┌───────────┐     │
+                           │   │ NotFound  │     │ Validation│     │
+                           │   │  Error    │     │   Error   │     │
+                           │   └───────────┘     └───────────┘     │
+                           │                                       │
+                           └───────────────────────────────────────┘
+\`\`\`
+
+This ensures all errors are caught and handled appropriately.`,
     },
     {
       hunkIds: [3],
@@ -107,11 +135,23 @@ This improves both security and developer experience when working with the API.`
 
 Database configuration now reads from environment variables with sensible defaults:
 
-| Setting | Env Var | Default |
-|---------|---------|---------|
-| Host | \`DB_HOST\` | localhost |
-| Port | \`DB_PORT\` | 5432 |
-| SSL | auto | production only |
+| Setting | Env Var | Default | Description |
+|---------|---------|---------|-------------|
+| Host | \`DB_HOST\` | localhost | Database server hostname |
+| Port | \`DB_PORT\` | 5432 | Database server port |
+| SSL | auto | production only | Enable SSL/TLS encryption |
+| Pool Size | \`DB_POOL_SIZE\` | 10 | Maximum connections in pool |
+| Timeout | \`DB_TIMEOUT\` | 30000 | Connection timeout in ms |
+| Retry | \`DB_RETRY_COUNT\` | 3 | Number of connection retries |
+
+### Complete Configuration Matrix
+
+| Environment | DB_HOST | DB_PORT | SSL | Pool | Timeout | Retry |
+|-------------|---------|---------|-----|------|---------|-------|
+| Development | localhost | 5432 | off | 5 | 5000 | 1 |
+| Staging | staging-db.internal | 5432 | on | 10 | 15000 | 2 |
+| Production | prod-db.cluster | 5432 | on | 50 | 30000 | 3 |
+| CI/CD | localhost | 5433 | off | 2 | 3000 | 0 |
 
 This enables proper configuration for different deployment environments.`,
     },
@@ -122,7 +162,33 @@ This enables proper configuration for different deployment environments.`,
 Added test case for the new error handling behavior, ensuring that:
 
 - Missing users throw \`NotFoundError\`
-- The error message is descriptive`,
+- The error message is descriptive
+
+### Test Flow Diagram
+
+\`\`\`
+                                    ┌──────────────────────────────────────────────────────────────────┐
+                                    │                         Test Suite                               │
+                                    └──────────────────────────────────────────────────────────────────┘
+                                                              │
+                         ┌────────────────────────────────────┼────────────────────────────────────┐
+                         │                                    │                                    │
+                         ▼                                    ▼                                    ▼
+              ┌─────────────────────┐           ┌─────────────────────┐           ┌─────────────────────┐
+              │   Unit Tests        │           │  Integration Tests  │           │    E2E Tests        │
+              │   (getUser)         │           │   (API endpoints)   │           │   (Full flow)       │
+              └─────────────────────┘           └─────────────────────┘           └─────────────────────┘
+                         │                                    │                                    │
+            ┌────────────┼────────────┐          ┌───────────┼───────────┐           ┌────────────┼────────────┐
+            │            │            │          │           │           │           │            │            │
+            ▼            ▼            ▼          ▼           ▼           ▼           ▼            ▼            ▼
+       ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+       │ Found   │ │NotFound │ │ Validate│ │  GET    │ │  POST   │ │  PUT    │ │ Login   │ │ Create  │ │ Delete  │
+       │ User    │ │ Error   │ │ Input   │ │ /users  │ │ /users  │ │ /users  │ │ Flow    │ │ Flow    │ │ Flow    │
+       └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
+\`\`\`
+
+All tests pass and coverage is at 95%.`,
     },
   ],
 }

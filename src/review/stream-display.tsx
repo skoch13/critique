@@ -18,7 +18,7 @@ export interface StreamDisplayProps {
  * 
  * Display format:
  * ┣ thinking
- * ⬥ markdown content (full, with syntax highlighting)
+ * ⬥ markdown content (full, with <markdown> component)
  * ┣ read file.ts
  * ◼︎ edit  file.yaml (+40-35)
  */
@@ -120,9 +120,8 @@ function StreamLineView({ line, themeName, syntaxStyle, width }: StreamLineViewP
           <text fg={COLORS.text}>{SYMBOLS.text}</text>
         </box>
         <box style={{ flexDirection: "column", paddingLeft: 2 }}>
-          <code
+          <markdown
             content={line.text}
-            filetype="markdown"
             syntaxStyle={syntaxStyle}
             style={{
               width: Math.max(10, width - 4),

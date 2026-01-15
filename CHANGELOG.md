@@ -1,3 +1,16 @@
+# 0.1.22
+
+- Use `<markdown>` component instead of `<code filetype="markdown">` for rendering markdown content:
+  - `review` command: MarkdownBlock component
+  - `stream-display`: Message blocks
+- Update opentui to PR #433 with MarkdownRenderable support
+- Variable-width markdown rendering in `review` command:
+  - Prose (headings, paragraphs, lists) constrained to 80 chars, centered
+  - Code blocks and tables expand to full available width, centered
+  - Uses `renderNode` callback to customize block rendering
+  - Added test for wide code blocks and tables
+- Add example diagrams and tables to `scripts/preview-review.tsx`
+
 # 0.1.21
 
 - `review` command:

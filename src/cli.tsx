@@ -2,6 +2,7 @@
 import { cac } from "cac";
 import {
   createRoot,
+  flushSync,
   useKeyboard,
   useOnResize,
   useRenderer,
@@ -13,6 +14,8 @@ import { promisify } from "util";
 import {
   createCliRenderer,
   MacOSScrollAccel,
+  ScrollBoxRenderable,
+  BoxRenderable,
 } from "@opentui/core";
 import fs from "fs";
 import { tmpdir } from "os";
@@ -51,7 +54,6 @@ import {
 import {
   useAppStore,
   persistedState,
-  savePersistedState,
 } from "./store.ts";
 
 // Web options for review mode
@@ -542,6 +544,111 @@ async function runReviewMode(
   }
 }
 
+// Web mode handler
+interface WebModeOptions {
+  staged?: boolean;
+  commit?: string;
+  context?: string;
+  filter?: string;
+  title?: string;
+  open?: boolean;
+  cols?: number;
+  mobileCols?: number;
+  theme?: string;
+  '--'?: string[];
+}
+
+async function runWebMode(
+  base: string | undefined,
+  head: string | undefined,
+  options: WebModeOptions
+) {
+  const {
+    captureResponsiveHtml,
+    uploadHtml,
+    openInBrowser,
+    writeTempFile,
+    cleanupTempFile,
+  } = await import("./web-utils.ts");
+
+  const gitCommand = buildGitCommand({
+    staged: options.staged,
+    commit: options.commit,
+    base,
+    head,
+    context: options.context,
+    filter: options.filter,
+    positionalFilters: options['--'],
+  });
+
+  const desktopCols = options.cols || 240;
+  const mobileCols = options.mobileCols || 100;
+  const themeName = options.theme && themeNames.includes(options.theme)
+    ? options.theme
+    : persistedState.themeName ?? defaultThemeName;
+
+  console.log("Capturing diff output...");
+
+  // Get the git diff first
+  const { stdout: gitDiff } = await execAsync(gitCommand, {
+    encoding: "utf-8",
+  });
+
+  if (!gitDiff.trim()) {
+    console.log("No changes to display");
+    process.exit(0);
+  }
+
+  // Calculate required rows from diff content
+  const { parsePatch } = await import("diff");
+  const files = parsePatch(gitDiff);
+  const baseRows = files.reduce((sum, file) => {
+    const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
+    return sum + diffLines + 5; // header + margin per file
+  }, 100); // base padding
+
+  // Write diff to temp file
+  const diffFile = writeTempFile(gitDiff, "critique-web-diff", ".patch");
+
+  // Build render command
+  const renderCommand = [
+    process.argv[1]!, // path to cli.tsx
+    "web-render",
+    diffFile,
+    "--theme",
+    themeName,
+  ];
+
+  console.log("Converting to HTML...");
+
+  try {
+    const { htmlDesktop, htmlMobile } = await captureResponsiveHtml(
+      renderCommand,
+      { desktopCols, mobileCols, baseRows, themeName, title: options.title }
+    );
+
+    // Clean up temp file
+    cleanupTempFile(diffFile);
+
+    console.log("Uploading...");
+
+    const result = await uploadHtml(htmlDesktop, htmlMobile);
+    console.log(`\nPreview URL: ${result.url}`);
+    console.log(`(expires in 7 days)`);
+
+    if (options.open) {
+      await openInBrowser(result.url);
+    }
+    
+    process.exit(0);
+  } catch (error: unknown) {
+    cleanupTempFile(diffFile);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Failed to generate web preview:", message);
+    process.exit(1);
+  }
+}
+
 // Error boundary component
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -627,18 +734,20 @@ function App({ parsedFiles }: AppProps) {
   const { width: initialWidth } = useTerminalDimensions();
   const [width, setWidth] = React.useState(initialWidth);
   const [scrollAcceleration] = React.useState(() => new ScrollAcceleration());
-  const currentFileIndex = useAppStore((s) => s.currentFileIndex);
   const themeName = useAppStore((s) => s.themeName);
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [showThemePicker, setShowThemePicker] = React.useState(false);
   const [previewTheme, setPreviewTheme] = React.useState<string | null>(null);
+
+  // Refs for scroll-to-file functionality
+  const scrollboxRef = React.useRef<ScrollBoxRenderable | null>(null);
+  const fileRefs = React.useRef<Map<number, BoxRenderable>>(new Map());
 
   useOnResize(
     React.useCallback((newWidth: number) => {
       setWidth(newWidth);
     }, []),
   );
-  const useSplitView = width >= 100;
 
   const renderer = useRenderer();
 
@@ -671,33 +780,15 @@ function App({ parsedFiles }: AppProps) {
       renderer.console.toggle();
     }
     if (key.option) {
-      console.log(key);
       if (key.eventType === "release") {
         scrollAcceleration.multiplier = 1;
       } else {
         scrollAcceleration.multiplier = 10;
       }
     }
-    if (key.name === "left") {
-      useAppStore.setState((state) => ({
-        currentFileIndex: Math.max(0, state.currentFileIndex - 1),
-      }));
-    }
-    if (key.name === "right") {
-      useAppStore.setState((state) => ({
-        currentFileIndex: Math.min(
-          parsedFiles.length - 1,
-          state.currentFileIndex + 1,
-        ),
-      }));
-    }
   });
 
-  // Ensure current index is valid
-  const validIndex = Math.min(currentFileIndex, parsedFiles.length - 1);
-  const currentFile = parsedFiles[validIndex];
-
-  if (!currentFile) {
+  if (parsedFiles.length === 0) {
     return (
       <box
         style={{
@@ -710,17 +801,12 @@ function App({ parsedFiles }: AppProps) {
     );
   }
 
-  const fileName = getFileName(currentFile);
-  const filetype = detectFiletype(fileName);
-
   // Use preview theme if hovering, otherwise use selected theme
   const activeTheme = previewTheme ?? themeName;
   const resolvedTheme = getResolvedTheme(activeTheme);
   const bgColor = resolvedTheme.background;
-
-  // Calculate additions and deletions
-  const { additions, deletions } = countChanges(currentFile.hunks);
-  const viewMode = getViewMode(additions, deletions, width);
+  const textColor = rgbaToHex(resolvedTheme.text);
+  const mutedColor = rgbaToHex(resolvedTheme.textMuted);
 
   const dropdownOptions = parsedFiles.map((file, idx) => {
     const name = getFileName(file);
@@ -733,7 +819,16 @@ function App({ parsedFiles }: AppProps) {
 
   const handleFileSelect = (value: string) => {
     const index = parseInt(value, 10);
-    useAppStore.setState({ currentFileIndex: index });
+    
+    // Scroll to file (scrollbox is always mounted)
+    const scrollbox = scrollboxRef.current;
+    const fileRef = fileRefs.current.get(index);
+    if (scrollbox && fileRef) {
+      const contentY = scrollbox.content?.y ?? 0;
+      const targetY = fileRef.y - contentY;
+      scrollbox.scrollTo(Math.max(0, targetY));
+    }
+    
     setShowDropdown(false);
   };
 
@@ -752,16 +847,62 @@ function App({ parsedFiles }: AppProps) {
     setPreviewTheme(value);
   };
 
-  if (showThemePicker) {
-    return (
-      <box
-        style={{
-          flexDirection: "column",
-          height: "100%",
-          padding: 1,
-          backgroundColor: bgColor,
-        }}
-      >
+  // Render all files content (used in both theme picker preview and main view)
+  const renderAllFiles = () => (
+    <box style={{ flexDirection: "column" }}>
+      {parsedFiles.map((file, idx) => {
+        const fileName = getFileName(file);
+        const filetype = detectFiletype(fileName);
+        const { additions, deletions } = countChanges(file.hunks);
+        const viewMode = getViewMode(additions, deletions, width);
+
+        return (
+          <box
+            key={idx}
+            ref={(r: BoxRenderable | null) => {
+              if (r) fileRefs.current.set(idx, r);
+            }}
+            style={{ flexDirection: "column", marginBottom: 2 }}
+          >
+            {/* File header */}
+            <box
+              style={{
+                paddingBottom: 1,
+                paddingLeft: 1,
+                paddingRight: 1,
+                flexShrink: 0,
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <text fg={textColor}>{fileName.trim()}</text>
+              <text fg="#2d8a47"> +{additions}</text>
+              <text fg="#c53b53">-{deletions}</text>
+            </box>
+            <DiffView
+              diff={file.rawDiff || ""}
+              view={viewMode}
+              filetype={filetype}
+              themeName={activeTheme}
+            />
+          </box>
+        );
+      })}
+    </box>
+  );
+
+  // Always render the same structure - scrollbox is never remounted
+  return (
+    <box
+      style={{
+        flexDirection: "column",
+        height: "100%",
+        padding: 1,
+        backgroundColor: bgColor,
+      }}
+    >
+      {/* Dropdown overlay - conditionally shown */}
+      {showThemePicker && (
         <box style={{ flexShrink: 0, maxHeight: 15 }}>
           <Dropdown
             tooltip="Select theme"
@@ -774,90 +915,24 @@ function App({ parsedFiles }: AppProps) {
             theme={resolvedTheme}
           />
         </box>
-        <scrollbox
-          style={{
-            flexGrow: 1,
-            rootOptions: {
-              backgroundColor: bgColor,
-              border: false,
-            },
-            contentOptions: {
-              minHeight: 0,
-            },
-          }}
-        >
-          <DiffView
-            diff={currentFile.rawDiff || ""}
-            view={viewMode}
-            filetype={filetype}
-            themeName={activeTheme}
-          />
-        </scrollbox>
-      </box>
-    );
-  }
-
-  if (showDropdown) {
-    return (
-      <box
-        style={{
-          flexDirection: "column",
-          height: "100%",
-          padding: 1,
-          backgroundColor: bgColor,
-        }}
-      >
-        <box
-          style={{
-            flexDirection: "column",
-            justifyContent: "center",
-            flexGrow: 1,
-          }}
-        >
+      )}
+      {showDropdown && (
+        <box style={{ flexShrink: 0, maxHeight: 15 }}>
           <Dropdown
             tooltip="Select file"
             options={dropdownOptions}
-            selectedValues={[String(validIndex)]}
+            selectedValues={[]}
             onChange={handleFileSelect}
             placeholder="Search files..."
+            itemsPerPage={6}
             theme={resolvedTheme}
           />
         </box>
-      </box>
-    );
-  }
+      )}
 
-  return (
-    <box
-      key={String(useSplitView)}
-      style={{
-        flexDirection: "column",
-        height: "100%",
-        padding: 1,
-        backgroundColor: bgColor,
-      }}
-    >
-      {/* Navigation header */}
-      <box
-        style={{
-          paddingBottom: 1,
-          paddingLeft: 1,
-          paddingRight: 1,
-          flexShrink: 0,
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        <text fg="#ffffff">←</text>
-        <box flexGrow={1} />
-        <text onMouseDown={() => setShowDropdown(true)}>{fileName.trim()}</text>
-        <text fg="#00ff00"> +{additions}</text>
-        <text fg="#ff0000">-{deletions}</text>
-        <box flexGrow={1} />
-        <text fg="#ffffff">→</text>
-      </box>
-
+      {/* Scrollbox - always mounted, preserves scroll position */}
       <scrollbox
+        ref={scrollboxRef}
         scrollAcceleration={scrollAcceleration}
         style={{
           flexGrow: 1,
@@ -871,49 +946,38 @@ function App({ parsedFiles }: AppProps) {
           scrollbarOptions: {
             showArrows: false,
             trackOptions: {
-              foregroundColor: "#4a4a4a",
+              foregroundColor: mutedColor,
               backgroundColor: bgColor,
             },
           },
         }}
-        focused
+        focused={!showDropdown && !showThemePicker}
       >
-        <DiffView
-          diff={currentFile.rawDiff || ""}
-          view={viewMode}
-          filetype={filetype}
-          themeName={activeTheme}
-        />
+        {renderAllFiles()}
       </scrollbox>
 
-      {/* Bottom navigation */}
-      <box
-        style={{
-          paddingTop: 1,
-          paddingLeft: 1,
-          paddingRight: 1,
-          flexShrink: 0,
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        <text fg="#ffffff">←</text>
-        <text fg="#666666"> prev</text>
-        <box flexGrow={1} />
-        <text fg="#ffffff">q</text>
-        <text fg="#666666"> quit  </text>
-        <text fg="#ffffff">ctrl p</text>
-        <text fg="#666666"> files </text>
-        <text fg="#666666">
-          ({validIndex + 1}/{parsedFiles.length})
-        </text>
-        <text fg="#666666">  </text>
-        <text fg="#ffffff">t</text>
-        <text fg="#666666"> theme</text>
-        <box flexGrow={1} />
-        <text fg="#666666">next </text>
-        <text fg="#ffffff">→</text>
-      </box>
+      {/* Footer - hidden when dropdown is open */}
+      {!showDropdown && !showThemePicker && (
+        <box
+          style={{
+            paddingTop: 1,
+            paddingLeft: 1,
+            paddingRight: 1,
+            flexShrink: 0,
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <text fg={textColor}>ctrl p</text>
+          <text fg={mutedColor}> files ({parsedFiles.length})  </text>
+          <text fg={textColor}>t</text>
+          <text fg={mutedColor}> theme</text>
+          <box flexGrow={1} />
+          <text fg={mutedColor}>run with </text>
+          <text fg={textColor}>--web</text>
+          <text fg={mutedColor}> to share & collaborate</text>
+        </box>
+      )}
     </box>
   );
 }
@@ -928,7 +992,35 @@ cli
   .option("--watch", "Watch for file changes and refresh diff")
   .option("--context <lines>", "Number of context lines (default: 3)")
   .option("--filter <pattern>", "Filter files by glob pattern (can be used multiple times)")
+  .option("--theme <name>", "Theme to use for rendering")
+  .option("--web [title]", "Generate web preview instead of TUI")
+  .option("--open", "Open in browser (with --web)")
+  .option("--cols <cols>", "Desktop columns for web render", { default: 240 })
+  .option("--mobile-cols <cols>", "Mobile columns for web render", { default: 100 })
   .action(async (base, head, options) => {
+    // Apply theme if specified (zustand subscription auto-persists)
+    if (options.theme && themeNames.includes(options.theme)) {
+      useAppStore.setState({ themeName: options.theme });
+    }
+
+    // If --web flag, delegate to web generation logic
+    if (options.web !== undefined) {
+      const title = typeof options.web === 'string' ? options.web : undefined;
+      await runWebMode(base, head, {
+        staged: options.staged,
+        commit: options.commit,
+        context: options.context,
+        filter: options.filter,
+        title,
+        open: options.open,
+        cols: parseInt(options.cols) || 240,
+        mobileCols: parseInt(options.mobileCols) || 100,
+        theme: options.theme,
+        '--': options['--'],
+      });
+      return;
+    }
+
     try {
       const gitCommand = buildGitCommand({
         staged: options.staged,
@@ -1019,18 +1111,6 @@ cli
             }
           };
         }, []);
-
-        // Ensure currentFileIndex stays valid when files change
-        React.useEffect(() => {
-          if (parsedFiles && parsedFiles.length > 0) {
-            const currentIndex = useAppStore.getState().currentFileIndex;
-            if (currentIndex >= parsedFiles.length) {
-              useAppStore.setState({
-                currentFileIndex: parsedFiles.length - 1,
-              });
-            }
-          }
-        }, [parsedFiles]);
 
         const defaultBg = getResolvedTheme(
           useAppStore.getState().themeName,
@@ -1368,7 +1448,7 @@ cli
   });
 
 cli
-  .command("web [base] [head]", "Generate web preview of diff")
+  .command("web [base] [head]", "DEPRECATED: Use --web flag instead")
   .option("--staged", "Show staged changes")
   .option("--commit <ref>", "Show changes from a specific commit")
   .option(
@@ -1381,113 +1461,24 @@ cli
     "Number of columns for mobile rendering",
     { default: 100 },
   )
-  .option("--local", "Save local preview instead of uploading")
   .option("--open", "Open in browser after generating")
   .option("--context <lines>", "Number of context lines (default: 3)")
   .option("--theme <name>", "Theme to use for rendering")
   .option("--filter <pattern>", "Filter files by glob pattern (can be used multiple times)")
   .option("--title <title>", "HTML document title")
   .action(async (base, head, options) => {
-    const {
-      captureResponsiveHtml,
-      uploadHtml,
-      openInBrowser,
-      writeTempFile,
-      cleanupTempFile,
-    } = await import("./web-utils.ts");
-
-    const gitCommand = buildGitCommand({
+    await runWebMode(base, head, {
       staged: options.staged,
       commit: options.commit,
-      base,
-      head,
       context: options.context,
       filter: options.filter,
-      positionalFilters: options['--'],
+      title: options.title,
+      open: options.open,
+      cols: parseInt(options.cols) || 240,
+      mobileCols: parseInt(options.mobileCols) || 100,
+      theme: options.theme,
+      '--': options['--'],
     });
-
-    const desktopCols = parseInt(options.cols) || 240;
-    const mobileCols = parseInt(options.mobileCols) || 100;
-    const themeName = options.theme && themeNames.includes(options.theme)
-      ? options.theme
-      : defaultThemeName;
-
-    console.log("Capturing diff output...");
-
-    // Get the git diff first
-    const { stdout: gitDiff } = await execAsync(gitCommand, {
-      encoding: "utf-8",
-    });
-
-    if (!gitDiff.trim()) {
-      console.log("No changes to display");
-      process.exit(0);
-    }
-
-    // Calculate required rows from diff content
-    const { parsePatch } = await import("diff");
-    const files = parsePatch(gitDiff);
-    const baseRows = files.reduce((sum, file) => {
-      const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
-      return sum + diffLines + 5; // header + margin per file
-    }, 100); // base padding
-
-    // Write diff to temp file
-    const diffFile = writeTempFile(gitDiff, "critique-web-diff", ".patch");
-
-    // Build render command
-    const renderCommand = [
-      process.argv[1]!, // path to cli.tsx
-      "web-render",
-      diffFile,
-      "--theme",
-      themeName,
-    ];
-
-    console.log("Converting to HTML...");
-
-    try {
-      const { htmlDesktop, htmlMobile } = await captureResponsiveHtml(
-        renderCommand,
-        { desktopCols, mobileCols, baseRows, themeName, title: options.title }
-      );
-
-      // Clean up temp file
-      cleanupTempFile(diffFile);
-
-      if (options.local) {
-        // Save locally
-        const desktopFile = writeTempFile(htmlDesktop, "critique-desktop", ".html");
-        const mobileFile = writeTempFile(htmlMobile, "critique-mobile", ".html");
-        console.log(`Saved desktop to: ${desktopFile}`);
-        console.log(`Saved mobile to: ${mobileFile}`);
-
-        if (options.open) {
-          await openInBrowser(desktopFile);
-        }
-        process.exit(0);
-      }
-
-      console.log("Uploading to worker...");
-
-      const result = await uploadHtml(htmlDesktop, htmlMobile);
-      console.log(`\nPreview URL: ${result.url}`);
-      console.log(`(expires in 7 days)`);
-
-      if (options.open) {
-        await openInBrowser(result.url);
-      }
-    } catch (error: any) {
-      cleanupTempFile(diffFile);
-      console.error("Failed to generate web preview:", error.message);
-
-      // Fallback to local file on upload failure
-      if (!options.local) {
-        const htmlFile = writeTempFile("", "critique-fallback", ".html");
-        console.log(`\nFallback: Saved locally to ${htmlFile}`);
-      }
-      process.exit(1);
-    }
   });
 
 // Internal command for web rendering (captures output to PTY)

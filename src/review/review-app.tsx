@@ -356,11 +356,6 @@ export function ReviewAppView({
           {isGenerating && (
             <GeneratingIndicator color={rgbaToHex(resolvedTheme.textMuted)} />
           )}
-          <box flexGrow={1} />
-          <text fg={rgbaToHex(resolvedTheme.text)}>q</text>
-          <text fg={rgbaToHex(resolvedTheme.textMuted)}> quit  </text>
-          <text fg={rgbaToHex(resolvedTheme.text)}>j/k</text>
-          <text fg={rgbaToHex(resolvedTheme.textMuted)}> scroll  </text>
           <text fg={rgbaToHex(resolvedTheme.textMuted)}>
             ({groups.length} section{groups.length !== 1 ? "s" : ""})
           </text>
@@ -368,6 +363,9 @@ export function ReviewAppView({
           <text fg={rgbaToHex(resolvedTheme.text)}>t</text>
           <text fg={rgbaToHex(resolvedTheme.textMuted)}> theme</text>
           <box flexGrow={1} />
+          <text fg={rgbaToHex(resolvedTheme.textMuted)}>run with </text>
+          <text fg={rgbaToHex(resolvedTheme.text)}>--web</text>
+          <text fg={rgbaToHex(resolvedTheme.textMuted)}> to share & collaborate</text>
         </box>
       )}
     </box>

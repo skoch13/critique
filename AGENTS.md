@@ -89,3 +89,26 @@ the main command shows the git diff in a tui. the web command uploads the termin
 the command review helps the user review agents diffs, reordering and splitting diff hunks to create a progressive disclosure document with explanations and diagrams. it also supports using --web to upload the result to critique.work
 
 this command takes a long time to run, because it uses ACP to generate the result using an LLM. so to test styles changes we will usually modify scripts/preview-review.tsx instead, which let you preview how the cli looks like. and passing --web to that script to also preview how the website looks like
+
+<!-- opensrc:start -->
+
+## Source Code Reference
+
+Source code for dependencies is available in `opensrc/` for deeper understanding of implementation details.
+
+See `opensrc/sources.json` for the list of available packages and their versions.
+
+Use this source code when you need to understand how a package works internally, not just its types/interface.
+
+### Fetching Additional Source Code
+
+To fetch source code for a package or repository you need to understand, run:
+
+```bash
+npx opensrc <package>           # npm package (e.g., npx opensrc zod)
+npx opensrc pypi:<package>      # Python package (e.g., npx opensrc pypi:requests)
+npx opensrc crates:<package>    # Rust crate (e.g., npx opensrc crates:serde)
+npx opensrc <owner>/<repo>      # GitHub repo (e.g., npx opensrc vercel/ai)
+```
+
+<!-- opensrc:end -->

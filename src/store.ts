@@ -41,14 +41,10 @@ const persistedState = loadPersistedState()
 export interface AppState {
   // Shared
   themeName: string
-
-  // Main diff view
-  currentFileIndex: number
 }
 
 export const useAppStore = create<AppState>(() => ({
   themeName: persistedState.themeName ?? defaultThemeName,
-  currentFileIndex: 0,
 }))
 
 // Subscribe to persist theme changes

@@ -1,3 +1,17 @@
+# 0.1.24
+
+- Default command:
+  - Add `--web [title]` flag to generate web preview instead of TUI
+  - Add `--open` flag to open in browser (with `--web`)
+  - Add `--theme <name>` flag to set theme (works for both TUI and web)
+  - Add `--cols` and `--mobile-cols` flags for web render dimensions
+  - Show all files in scrollable view instead of one-at-a-time pagination
+  - `ctrl p` dropdown now scrolls to selected file
+  - Add "--web to share & collaborate" tip to footer
+- `review` command:
+  - Add "--web to share & collaborate" tip to footer
+- Deprecate `web` command (use `--web` flag instead)
+
 # 0.1.23
 
 - `review` command:

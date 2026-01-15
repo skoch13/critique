@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, type ReactNode } from "react";
+import React, { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
-import { TextAttributes } from "@opentui/core";
+import { TextAttributes, TextareaRenderable } from "@opentui/core";
 import { type ResolvedTheme, rgbaToHex } from "./themes";
 
 export interface DropdownOption {
@@ -47,7 +47,16 @@ const Dropdown = (props: DropdownProps) => {
   const [selected, setSelected] = useState(0);
   const [offset, setOffset] = useState(0);
   const [searchText, setSearchText] = useState("");
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<TextareaRenderable | null>(null);
+
+  const setInputRef = useCallback((node: TextareaRenderable | null) => {
+    inputRef.current = node;
+  }, []);
+
+  const handleSearchTextChange = () => {
+    const value = inputRef.current?.plainText || "";
+    setSearchText(value);
+  };
 
   const inFocus = true;
 
@@ -155,13 +164,21 @@ const Dropdown = (props: DropdownProps) => {
             <text attributes={TextAttributes.BOLD}>{tooltip}</text>
             <text fg={theme.textMuted}>esc</text>
           </box>
-          <box style={{ paddingTop: 1, paddingBottom: 2 }}>
-            <input
-              ref={inputRef}
-              onInput={(value) => setSearchText(value)}
+          <box style={{ paddingTop: 1, paddingBottom: 1, flexDirection: "row" }}>
+            <text flexShrink={0} fg={theme.primary}>&gt; </text>
+            <textarea
+              ref={setInputRef}
+              height={1}
+              flexGrow={1}
+              wrapMode="none"
+              keyBindings={[
+                { name: "return", action: "submit" },
+                { name: "linefeed", action: "submit" },
+              ]}
+              onContentChange={handleSearchTextChange}
               placeholder={placeholder}
               focused={inFocus}
-              value={searchText}
+              initialValue=""
               focusedBackgroundColor={theme.backgroundPanel}
               cursorColor={theme.primary}
               focusedTextColor={theme.textMuted}

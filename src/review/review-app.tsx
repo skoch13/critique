@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"
-import { MacOSScrollAccel, SyntaxStyle, BoxRenderable } from "@opentui/core"
+import { MacOSScrollAccel, SyntaxStyle, BoxRenderable, CodeRenderable } from "@opentui/core"
 import type { Token } from "marked"
 import { getResolvedTheme, getSyntaxTheme, defaultThemeName, themeNames, rgbaToHex } from "../themes.ts"
 import { detectFiletype, countChanges, getViewMode } from "../diff-utils.ts"
@@ -46,7 +46,7 @@ export function ReviewApp({
   const [reviewData, setReviewData] = React.useState<ReviewYaml | null>(null)
   const [showThemePicker, setShowThemePicker] = React.useState(false)
   const [previewTheme, setPreviewTheme] = React.useState<string | null>(null)
-  
+
   // Get theme from store
   const themeName = useAppStore((s) => s.themeName)
   // Use preview theme if hovering, otherwise use selected theme
@@ -171,16 +171,16 @@ export function ReviewApp({
  */
 function GeneratingIndicator({ color }: { color: string }) {
   const [dotPhase, setDotPhase] = React.useState(0)
-  
+
   React.useEffect(() => {
     const interval = setInterval(() => {
       setDotPhase((p) => (p + 1) % 4)
     }, 300)
     return () => clearInterval(interval)
   }, [])
-  
+
   const dots = ".".repeat(dotPhase).padEnd(3, " ")
-  
+
   return (
     <text fg={color}>generating{dots}  </text>
   )
@@ -401,7 +401,7 @@ function resolveGroupHunks(
         // Convert from 1-based (AI/cat -n format) to 0-based (internal)
         const startLine = group.lineRange[0] - 1
         const endLine = group.lineRange[1] - 1
-        
+
         // Create a sub-hunk for the specified line range
         try {
           const subHunk = createSubHunk(hunk, startLine, endLine)
@@ -434,9 +434,8 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
     [syntaxTheme],
   )
 
-  // Max width for prose, code blocks and tables can use full width
+  // Max width for prose (constrained), code blocks use full terminal width
   const maxProseWidth = Math.min(80, width)
-  const fullWidth = Math.max(width - 4, maxProseWidth)
 
   // Custom renderNode to wrap all elements in centered boxes
   // Prose elements are constrained to maxProseWidth, code/tables use full width
@@ -461,10 +460,32 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
         return wrapper
       }
 
-      // Code blocks and tables: centered but can use full width
-      if (["code", "table"].includes(token.type)) {
+      // Code blocks: create custom CodeRenderable with wrapMode: "none" and overflow: "hidden"
+      if (token.type === "code") {
+        const codeToken = token as { text: string; lang?: string }
         const wrapper = new BoxRenderable(renderer, {
-          id: `wide-wrapper-${nodeCounter++}`,
+          id: `code-wrapper-${nodeCounter++}`,
+          alignSelf: "center",
+          overflow: "hidden",
+        })
+        const codeRenderable = new CodeRenderable(renderer, {
+          id: `code-${nodeCounter++}`,
+          content: codeToken.text,
+          filetype: codeToken.lang || undefined,
+          syntaxStyle,
+          drawUnstyledText: false,
+          wrapMode: "none",
+          overflow: "hidden",
+          // width: "100%",
+        })
+        wrapper.add(codeRenderable)
+        return wrapper
+      }
+
+      // Tables: centered but can use full width
+      if (token.type === "table") {
+        const wrapper = new BoxRenderable(renderer, {
+          id: `table-wrapper-${nodeCounter++}`,
           alignSelf: "center",
         })
         wrapper.add(defaultRenderable)
@@ -474,10 +495,11 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       // Other elements (hr, space, etc.) use default rendering
       return undefined
     }
-  }, [renderer, maxProseWidth])
+  }, [renderer, maxProseWidth, syntaxStyle])
 
-  // Use full width when renderer available (variable-width mode), else constrained
-  const contentWidth = renderer ? fullWidth : Math.min(width - 4, maxProseWidth)
+  // Use very large width when renderer available so code blocks don't wrap
+  // Prose is constrained via renderNode, code blocks can overflow
+  const contentWidth = renderer ? 1000 : Math.min(width - 4, maxProseWidth)
 
   return (
     <box

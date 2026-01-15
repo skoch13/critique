@@ -221,7 +221,8 @@ describe("ReviewAppView", () => {
                  Added logger import to support new logging functionality.                                
                                                                                                           
                                                                                                           
-       3 src/index.ts +1-0                                                                                
+       rc/index.ts +1-0                                                                                   
+                                                                                                          
           import { main } from './utils'                                                                  
         + import { logger } from './logger'                                                               
                                                                                                           
@@ -232,14 +233,16 @@ describe("ReviewAppView", () => {
                  logging in the main function.                                                            
                                                                                                           
                                                                                                           
-        #1 src/utils.ts +3-1                                                                              
+        src/utils.ts +3-1                                                                                 
+                                                                                                          
         10   function helper() {                         10   function helper() {                         
         11 -   return null                               11 +   // Add validation                         
                                                          12 +   if (!input) return null                   
                                                          13 +   return process(input)                     
         12   }                                           14   }                                           
                                                                                                           
-        src/utils.ts +2-0                                                                                 
+       c/utils.ts +2-0                                                                                    
+                                                                                                          
           export function main() {                                                                        
         +   const result = helper()                                                                       
         +   console.log(result)                                                                           
@@ -255,10 +258,7 @@ describe("ReviewAppView", () => {
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                   q quit  j/k scroll  (2 sections)  t theme                              
+        (2 sections)  t theme                                      run with --web to share & collaborate  
                                                                                                           
       "
     `)
@@ -353,7 +353,8 @@ describe("ReviewAppView", () => {
                                      Added logger import to support new logging functionality.                                                    
                                                                                                                                                   
                                                                                                                                                   
-       3 src/index.ts +1-0                                                                                                                        
+       rc/index.ts +1-0                                                                                                                           
+                                                                                                                                                  
           import { main } from './utils'                                                                                                          
         + import { logger } from './logger'                                                                                                       
                                                                                                                                                   
@@ -364,14 +365,16 @@ describe("ReviewAppView", () => {
                                      logging in the main function.                                                                                
                                                                                                                                                   
                                                                                                                                                   
-        #1 src/utils.ts +3-1                                                                                                                      
+        src/utils.ts +3-1                                                                                                                         
+                                                                                                                                                  
         10   function helper() {                                             10   function helper() {                                             
         11 -   return null                                                   11 +   // Add validation                                             
                                                                              12 +   if (!input) return null                                       
                                                                              13 +   return process(input)                                         
         12   }                                                               14   }                                                               
                                                                                                                                                   
-        src/utils.ts +2-0                                                                                                                         
+       c/utils.ts +2-0                                                                                                                            
+                                                                                                                                                  
           export function main() {                                                                                                                
         +   const result = helper()                                                                                                               
         +   console.log(result)                                                                                                                   
@@ -392,10 +395,7 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
-                                                       q quit  j/k scroll  (2 sections)  t theme                                                  
+        (2 sections)  t theme                                                                              run with --web to share & collaborate  
                                                                                                                                                   
       "
     `)
@@ -431,7 +431,8 @@ describe("ReviewAppView", () => {
                                      This enables more specific catch blocks and better error messages.                                           
                                                                                                                                                   
                                                                                                                                                   
-       1 src/errors/index.ts +6-0                                                                                                                 
+       rc/errors/index.ts +6-0                                                                                                                    
+                                                                                                                                                  
         + export class NotFoundError extends Error {                                                                                              
         +   constructor(message: string) {                                                                                                        
         +     super(message)                                                                                                                      
@@ -453,7 +454,8 @@ describe("ReviewAppView", () => {
                                      fields.                                                                                                      
                                                                                                                                                   
                                                                                                                                                   
-        #2 src/api/users.ts +5-2                                                                                                                  
+        src/api/users.ts +5-2                                                                                                                     
+                                                                                                                                                  
         15   export async function getUser(id: string) {                     15   export async function getUser(id: string) {                     
         16 -   const user = await db.users.find(id)                          16 +   const user = await db.users.find(id)                          
         17 -   return user                                                   17 +   if (!user) {                                                  
@@ -473,7 +475,8 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
-        #3 src/config/database.ts +3-2                                                                                                            
+        src/config/database.ts +3-2                                                                                                               
+                                                                                                                                                  
         1   export const dbConfig = {                                        1   export const dbConfig = {                                        
         2 -   host: 'localhost',                                             2 +   host: process.env.DB_HOST || 'localhost',                      
         3 -   port: 5432,                                                    3 +   port: parseInt(process.env.DB_PORT || '5432'),                 
@@ -485,10 +488,7 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
-                                                       q quit  j/k scroll  (3 sections)  t theme                                                  
+        (3 sections)  t theme                                                                              run with --web to share & collaborate  
                                                                                                                                                   
       "
     `)
@@ -528,7 +528,8 @@ Added validation at handler start.`,
                  Added validation at handler start.                                                       
                                                                                                           
                                                                                                           
-        #1 src/api/handlers.ts +5-1                                                                       
+        src/api/handlers.ts +5-1                                                                          
+                                                                                                          
         10   export async function handleRequest(req:    10   export async function handleRequest(req:    
              Request) {                                       Request) {                                  
         11 -   const data = req.body                     11 +   // Input validation                       
@@ -544,8 +545,7 @@ Added validation at handler start.`,
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                    q quit  j/k scroll  (1 section)  t theme                              
+        (1 section)  t theme                                       run with --web to share & collaborate  
                                                                                                           
       "
     `)
@@ -581,7 +581,8 @@ Added validation at handler start.`,
                                                                                                                               
                                                                                                                               
                                                                                                                               
-        #1 src/api/handlers.ts +5-1                                                                                           
+        src/api/handlers.ts +5-1                                                                                              
+                                                                                                                              
         10   export async function handleRequest(req: Request) {   10   export async function handleRequest(req: Request) {   
         11 -   const data = req.body                               11 +   // Input validation                                 
                                                                    12 +   if (!req.body) {                                    
@@ -600,7 +601,8 @@ Added validation at handler start.`,
                                                                                                                               
                                                                                                                               
                                                                                                                               
-        #1 src/api/handlers.ts +4-1                                                                                           
+        src/api/handlers.ts +4-1                                                                                              
+                                                                                                                              
         12                                                         16                                                         
         13     // Process the request                              17     // Process the request                              
         14 -   const result = process(data)                        18 +   const result = await processAsync(data)             
@@ -617,9 +619,7 @@ Added validation at handler start.`,
                                                                                                                               
                                                                                                                               
                                                                                                                               
-                                                                                                                              
-                                                                                                                              
-                                             q quit  j/k scroll  (2 sections)  t theme                                        
+        (2 sections)  t theme                                                          run with --web to share & collaborate  
                                                                                                                               
       "
     `)
@@ -651,7 +651,8 @@ Added validation at handler start.`,
                  Added logger import.                                                                     
                                                                                                           
                                                                                                           
-       3 src/index.ts +1-0                                                                                
+       rc/index.ts +1-0                                                                                   
+                                                                                                          
           import { main } from './utils'                                                                  
         + import { logger } from './logger'                                                               
                                                                                                           
@@ -661,7 +662,8 @@ Added validation at handler start.`,
                  Input validation logic.                                                                  
                                                                                                           
                                                                                                           
-        #1 src/api/handlers.ts +5-1                                                                       
+        src/api/handlers.ts +5-1                                                                          
+                                                                                                          
         10   export async function handleRequest(req:    10   export async function handleRequest(req:    
              Request) {                                       Request) {                                  
         11 -   const data = req.body                     11 +   // Input validation                       
@@ -676,9 +678,7 @@ Added validation at handler start.`,
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                                                                                          
-                                   q quit  j/k scroll  (2 sections)  t theme                              
+        (2 sections)  t theme                                      run with --web to share & collaborate  
                                                                                                           
       "
     `)
@@ -718,7 +718,8 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
                  This uses hunkId instead of hunkIds but shows full hunk.                                 
                                                                                                           
                                                                                                           
-        #1 src/utils.ts +3-1                                                                              
+        src/utils.ts +3-1                                                                                 
+                                                                                                          
         10   function helper() {                         10   function helper() {                         
         11 -   return null                               11 +   // Add validation                         
                                                          12 +   if (!input) return null                   
@@ -734,8 +735,7 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                    q quit  j/k scroll  (1 section)  t theme                              
+        (1 section)  t theme                                       run with --web to share & collaborate  
                                                                                                           
       "
     `)
@@ -805,12 +805,12 @@ The prose above stays narrow.`,
                            │Host     │DB_HOST               │localhost      │Database host    │                             █ 
                            │─────────│──────────────────────│───────────────│─────────────────│                             █ 
                            │Port     │DB_PORT               │5432           │Database port    │                             █ 
-                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
-                           │SSL      │DB_SSL                │false          │Enable SSL       │                             █ 
-                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
-                           │Pool     │DB_POOL_SIZE          │10             │Connection pool  │                             █ 
-                           └─────────┴──────────────────────┴───────────────┴─────────────────┘                             █ 
-                                                                                                                            ▀ 
+                           │─────────│──────────────────────│───────────────│─────────────────│                               
+                           │SSL      │DB_SSL                │false          │Enable SSL       │                               
+                           │─────────│──────────────────────│───────────────│─────────────────│                               
+                           │Pool     │DB_POOL_SIZE          │10             │Connection pool  │                               
+                           └─────────┴──────────────────────┴───────────────┴─────────────────┘                               
+                                                                                                                              
                            And a diagram:                                                                                     
                                                                                                                               
                            ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                                            
@@ -820,15 +820,206 @@ The prose above stays narrow.`,
                            The prose above stays narrow.                                                                      
                                                                                                                               
                                                                                                                               
-       1 src/config.ts +3-0                                                                                                   
+       rc/config.ts +3-0                                                                                                      
+                                                                                                                              
         + export const config = {                                                                                             
         +   host: 'localhost',                                                                                                
         + }                                                                                                                   
                                                                                                                               
                                                                                                                               
+        (1 section)  t theme                                                           run with --web to share & collaborate  
                                                                                                                               
-                                              q quit  j/k scroll  (1 section)  t theme                                        
-                                                                                                                              
+      "
+    `)
+  })
+
+  it("should render code blocks with wrapMode none - wide content extends beyond viewport", async () => {
+    // Test that code blocks use wrapMode: "none" so content doesn't soft-wrap
+    // Note: In a terminal, content wider than the viewport will wrap at the buffer edge,
+    // but the CodeRenderable itself won't break lines mid-word/mid-line.
+    // This test verifies the code block renders and the first visible portion is correct.
+    const narrowHunk = createHunk(1, "src/config.ts", 0, 1, 1, [
+      "+export const x = 1",
+    ])
+
+    const narrowReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: `## Architecture Diagram
+
+Here's how it works:
+
+\`\`\`
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Client    │────▶│   Server    │────▶│  Database   │
+└─────────────┘     └─────────────┘     └─────────────┘
+\`\`\`
+
+The diagram above should not wrap.`,
+      }],
+    }
+
+    // Render with narrow width - diagram is ~65 chars wide
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[narrowHunk]}
+        reviewData={narrowReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={80}
+      />,
+      {
+        width: 80,
+        height: 25,
+      },
+    )
+
+    await testSetup.renderOnce()
+    const frame = testSetup.captureCharFrame()
+    
+    // With 80-char width, the 65-char diagram should fit without wrapping
+    expect(frame).toContain("┌─────────────┐     ┌─────────────┐     ┌─────────────┐")
+    expect(frame).toContain("│   Client    │────▶│   Server    │────▶│  Database   │")
+    expect(frame).toContain("└─────────────┘     └─────────────┘     └─────────────┘")
+  })
+
+  it("should WRAP 4-box diagram at 70 cols WITHOUT renderer", async () => {
+    // Without renderer, default markdown wrapMode: "word" causes wrapping
+    const diagramHunk = createHunk(1, "src/config.ts", 0, 1, 1, [
+      "+export const x = 1",
+    ])
+
+    const diagramReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: `## Architecture
+
+\`\`\`
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Client    │────▶│   Router    │────▶│  Handler    │────▶│  Database   │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+\`\`\`
+`,
+      }],
+    }
+
+    // Render WITHOUT renderer - uses default markdown rendering
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[diagramHunk]}
+        reviewData={diagramReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={70}
+      />,
+      { width: 70, height: 25 },
+    )
+
+    await testSetup.renderOnce()
+    expect(testSetup.captureCharFrame()).toMatchInlineSnapshot(`
+      "                                                                      
+         Architecture                                                       
+                                                                            
+         ┌─────────────┐     ┌─────────────┐     ┌─────────────┐            
+           ┌─────────────┐                                                  
+         │   Client    │────▶│   Router    │────▶│  Handler    │────▶│      
+           Database   │                                                     
+         └─────────────┘     └─────────────┘     └─────────────┘            
+           └─────────────┘                                                  
+                                                                            
+                                                                            
+       rc/config.ts +1-0                                                    
+                                                                            
+        + export const x = 1                                                
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+        (1 section)  t theme         run with --web to share & collaborate  
+                                                                            
+      "
+    `)
+  })
+
+  it("should TRUNCATE 4-box diagram at 70 cols WITH renderer", async () => {
+    // 4-box diagram is 79 chars wide, at 70 cols it truncates (not wraps)
+    // This proves wrapMode: "none" is working
+    const diagramHunk = createHunk(1, "src/config.ts", 0, 1, 1, [
+      "+export const x = 1",
+    ])
+
+    const diagramReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: `## Architecture
+
+\`\`\`
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Client    │────▶│   Router    │────▶│  Handler    │────▶│  Database   │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+\`\`\`
+`,
+      }],
+    }
+
+    // First render to get renderer
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[diagramHunk]}
+        reviewData={diagramReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={70}
+      />,
+      { width: 70, height: 25 },
+    )
+    const rendererCtx = testSetup.renderer
+
+    // Re-render with renderer
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[diagramHunk]}
+        reviewData={diagramReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={70}
+        renderer={rendererCtx}
+      />,
+      { width: 70, height: 25 },
+    )
+
+    await testSetup.renderOnce()
+    expect(testSetup.captureCharFrame()).toMatchInlineSnapshot(`
+      "                                                                      
+       rchitecture                                                          
+                                                                            
+       ───────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────  
+        Client    │────▶│   Router    │────▶│  Handler    │────▶│  Databas  
+       ───────────┘     └─────────────┘     └─────────────┘     └─────────  
+                                                                            
+                                                                            
+       rc/config.ts +1-0                                                    
+                                                                            
+        + export const x = 1                                                
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+                                                                            
+        (1 section)  t theme         run with --web to share & collaborate  
+                                                                            
       "
     `)
   })
@@ -909,7 +1100,8 @@ Long configuration lines that should wrap properly.`,
                  Long configuration lines that should wrap properly.                                      
                                                                                                           
                                                                                                           
-        #1 src/config.ts +3-2                                                                             
+        src/config.ts +3-2                                                                                
+                                                                                                          
         10   export const                                10   export const                                
              VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU      VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU 
              LTIPLE_COLUMNS = {                               LTIPLE_COLUMNS = {                          
@@ -930,8 +1122,7 @@ Long configuration lines that should wrap properly.`,
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                    q quit  j/k scroll  (1 section)  t theme                              
+        (1 section)  t theme                                       run with --web to share & collaborate  
                                                                                                           
       "
     `)
@@ -980,7 +1171,8 @@ Added environment-based URL and auth header.`,
                  Added environment-based URL and auth header.                                             
                                                                                                           
                                                                                                           
-        #1 src/api.ts +1-1                                                                                
+        src/api.ts +1-1                                                                                   
+                                                                                                          
         1 - const response = await fetch('https://api.   1 + const response = await fetch(process.env.    
             example.com/users');                             API_BASE_URL + '/users', { headers: {        
                                                              Authorization: 'Bearer ' + token } });       
@@ -991,8 +1183,7 @@ Added environment-based URL and auth header.`,
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                    q quit  j/k scroll  (1 section)  t theme                              
+        (1 section)  t theme                                       run with --web to share & collaborate  
                                                                                                           
       "
     `)

@@ -447,25 +447,19 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       const defaultRenderable = context.defaultRender()
       if (!defaultRenderable) return null
 
-      // Prose: constrained to maxProseWidth, centered
+      // Prose: constrained to maxProseWidth
       if (["heading", "paragraph", "list", "blockquote"].includes(token.type)) {
         const wrapper = new BoxRenderable(renderer, {
           id: `prose-wrapper-${nodeCounter++}`,
           maxWidth: maxProseWidth,
           width: "100%",
-          alignSelf: "center",
         })
         wrapper.add(defaultRenderable)
         return wrapper
       }
 
-      // Code blocks and tables: full width, centered
-      if (["code", "table"].includes(token.type)) {
-        // Remove width: "100%" (set by defaultRender) so it sizes to content
-        defaultRenderable.width = undefined
-        defaultRenderable.alignSelf = "center"
-        return defaultRenderable
-      }
+      // Code blocks and tables: use default width
+      // No special handling needed - they'll expand to content width
 
       // Other elements (hr, space, etc.) use default rendering
       return undefined
@@ -480,8 +474,9 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       style={{
         flexDirection: "column",
         width: "100%",
-        alignItems: "center",
         paddingBottom: 1,
+        paddingLeft: 1,
+        paddingRight: 1,
       }}
     >
       <markdown
@@ -490,8 +485,6 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
         renderNode={renderNode}
         style={{
           width: contentWidth,
-          paddingLeft: 1,
-          paddingRight: 1,
         }}
       />
     </box>

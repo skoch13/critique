@@ -7,26 +7,6 @@ import { createCliRenderer } from "@opentui/core"
 import { createRoot } from "@opentui/react"
 import * as React from "react"
 import { ReviewApp, ReviewAppView } from "../src/review/review-app.tsx"
-
-// Simple error boundary for capture mode
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error?: Error }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props)
-    this.state = { hasError: false }
-  }
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error }
-  }
-  componentDidCatch(error: Error) {
-    console.error("ErrorBoundary caught:", error)
-  }
-  render() {
-    if (this.state.hasError) {
-      return React.createElement("text", null, `Error: ${this.state.error?.message || "Unknown"}`)
-    }
-    return this.props.children
-  }
-}
 import { createHunk } from "../src/review/hunk-parser.ts"
 import type { ReviewYaml } from "../src/review/types.ts"
 import { captureResponsiveHtml, uploadHtml } from "../src/web-utils.ts"
@@ -42,10 +22,8 @@ const captureMode = args.includes("--capture") // Internal flag for PTY capture
 // Parse --cols and --rows passed by captureResponsiveHtml
 function getArg(name: string): number | undefined {
   const idx = args.indexOf(name)
-  if (idx >= 0 && args[idx + 1]) {
-    return parseInt(args[idx + 1])
-  }
-  return undefined
+  const value = idx >= 0 ? args[idx + 1] : undefined
+  return value ? parseInt(value) : undefined
 }
 const argCols = getArg("--cols")
 const argRows = getArg("--rows")
@@ -293,19 +271,16 @@ ${group.markdownDescription.split('\n').map(line => `      ${line}`).join('\n')}
       }, 1000)
     }
 
-    function PreviewApp() {
-      return React.createElement(ReviewAppView, {
+    createRoot(renderer as any).render(
+      React.createElement(ReviewAppView, {
         hunks: exampleHunks,
         reviewData: exampleReviewData,
         isGenerating: false,
         themeName: "github",
         width: termCols,
         showFooter: false,
+        renderer: renderer as any,
       })
-    }
-
-    createRoot(renderer as any).render(
-      React.createElement(ErrorBoundary, null, React.createElement(PreviewApp))
     )
     return
   }

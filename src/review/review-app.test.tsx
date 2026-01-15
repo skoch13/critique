@@ -220,6 +220,7 @@ describe("ReviewAppView", () => {
                                                                                                           
                  Added logger import to support new logging functionality.                                
                                                                                                           
+                                                                                                          
        3 src/index.ts +1-0                                                                                
           import { main } from './utils'                                                                  
         + import { logger } from './logger'                                                               
@@ -229,6 +230,7 @@ describe("ReviewAppView", () => {
                                                                                                           
                  These changes add input validation to the helper function and integrate                  
                  logging in the main function.                                                            
+                                                                                                          
                                                                                                           
         #1 src/utils.ts +3-1                                                                              
         10   function helper() {                         10   function helper() {                         
@@ -243,8 +245,6 @@ describe("ReviewAppView", () => {
         +   console.log(result)                                                                           
             return result                                                                                 
           }                                                                                               
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -352,6 +352,7 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                      Added logger import to support new logging functionality.                                                    
                                                                                                                                                   
+                                                                                                                                                  
        3 src/index.ts +1-0                                                                                                                        
           import { main } from './utils'                                                                                                          
         + import { logger } from './logger'                                                                                                       
@@ -361,6 +362,7 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                      These changes add input validation to the helper function and integrate                                      
                                      logging in the main function.                                                                                
+                                                                                                                                                  
                                                                                                                                                   
         #1 src/utils.ts +3-1                                                                                                                      
         10   function helper() {                                             10   function helper() {                                             
@@ -375,8 +377,6 @@ describe("ReviewAppView", () => {
         +   console.log(result)                                                                                                                   
             return result                                                                                                                         
           }                                                                                                                                       
-                                                                                                                                                  
-                                                                                                                                                  
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
@@ -430,6 +430,7 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                      This enables more specific catch blocks and better error messages.                                           
                                                                                                                                                   
+                                                                                                                                                  
        1 src/errors/index.ts +6-0                                                                                                                 
         + export class NotFoundError extends Error {                                                                                              
         +   constructor(message: string) {                                                                                                        
@@ -451,6 +452,7 @@ describe("ReviewAppView", () => {
                                      User data is now sanitized before being returned to prevent leaking sensitive                                
                                      fields.                                                                                                      
                                                                                                                                                   
+                                                                                                                                                  
         #2 src/api/users.ts +5-2                                                                                                                  
         15   export async function getUser(id: string) {                     15   export async function getUser(id: string) {                     
         16 -   const user = await db.users.find(id)                          16 +   const user = await db.users.find(id)                          
@@ -470,6 +472,7 @@ describe("ReviewAppView", () => {
                                      - SSL: Automatically enabled in production                                                                   
                                                                                                                                                   
                                                                                                                                                   
+                                                                                                                                                  
         #3 src/config/database.ts +3-2                                                                                                            
         1   export const dbConfig = {                                        1   export const dbConfig = {                                        
         2 -   host: 'localhost',                                             2 +   host: process.env.DB_HOST || 'localhost',                      
@@ -477,9 +480,6 @@ describe("ReviewAppView", () => {
                                                                              4 +   ssl: process.env.NODE_ENV === 'production',                    
         4     database: 'myapp',                                             5     database: 'myapp',                                             
         5   }                                                                6   }                                                                
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
@@ -527,6 +527,7 @@ Added validation at handler start.`,
                                                                                                           
                  Added validation at handler start.                                                       
                                                                                                           
+                                                                                                          
         #1 src/api/handlers.ts +5-1                                                                       
         10   export async function handleRequest(req:    10   export async function handleRequest(req:    
              Request) {                                       Request) {                                  
@@ -536,7 +537,6 @@ Added validation at handler start.`,
                                                               body is required')                          
                                                          14 +   }                                         
                                                          15 +   const data = validateInput(req.body)      
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -580,6 +580,7 @@ Added validation at handler start.`,
                            - Validate input before processing                                                                 
                                                                                                                               
                                                                                                                               
+                                                                                                                              
         #1 src/api/handlers.ts +5-1                                                                                           
         10   export async function handleRequest(req: Request) {   10   export async function handleRequest(req: Request) {   
         11 -   const data = req.body                               11 +   // Input validation                                 
@@ -598,6 +599,7 @@ Added validation at handler start.`,
                            - Added request logging for debugging                                                              
                                                                                                                               
                                                                                                                               
+                                                                                                                              
         #1 src/api/handlers.ts +4-1                                                                                           
         12                                                         16                                                         
         13     // Process the request                              17     // Process the request                              
@@ -608,8 +610,6 @@ Added validation at handler start.`,
         15                                                              id })                                                 
         16     return result                                       22                                                         
                                                                    23     return result                                       
-                                                                                                                              
-                                                                                                                              
                                                                                                                               
                                                                                                                               
                                                                                                                               
@@ -650,6 +650,7 @@ Added validation at handler start.`,
                                                                                                           
                  Added logger import.                                                                     
                                                                                                           
+                                                                                                          
        3 src/index.ts +1-0                                                                                
           import { main } from './utils'                                                                  
         + import { logger } from './logger'                                                               
@@ -658,6 +659,7 @@ Added validation at handler start.`,
                  Validation                                                                               
                                                                                                           
                  Input validation logic.                                                                  
+                                                                                                          
                                                                                                           
         #1 src/api/handlers.ts +5-1                                                                       
         10   export async function handleRequest(req:    10   export async function handleRequest(req:    
@@ -668,8 +670,6 @@ Added validation at handler start.`,
                                                               body is required')                          
                                                          14 +   }                                         
                                                          15 +   const data = validateInput(req.body)      
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -717,13 +717,13 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
                                                                                                           
                  This uses hunkId instead of hunkIds but shows full hunk.                                 
                                                                                                           
+                                                                                                          
         #1 src/utils.ts +3-1                                                                              
         10   function helper() {                         10   function helper() {                         
         11 -   return null                               11 +   // Add validation                         
                                                          12 +   if (!input) return null                   
                                                          13 +   return process(input)                     
         12   }                                           14   }                                           
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -795,22 +795,22 @@ The prose above stays narrow.`,
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                        
-                           Configuration with Wide Content                                                                    
-                                                                                                                              
-                           Here's a configuration table:                                                                      
-                                                                                                                              
-                           ┌─────────┬──────────────────────┬───────────────┬─────────────────┐                               
-                           │Setting  │Environment Variable  │Default Value  │Description      │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │Host     │DB_HOST               │localhost      │Database host    │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │Port     │DB_PORT               │5432           │Database port    │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │SSL      │DB_SSL                │false          │Enable SSL       │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │Pool     │DB_POOL_SIZE          │10             │Connection pool  │                               
-                           └─────────┴──────────────────────┴───────────────┴─────────────────┘                               
-                                                                                                                              
+                           Configuration with Wide Content                                                                  █ 
+                                                                                                                            █ 
+                           Here's a configuration table:                                                                    █ 
+                                                                                                                            █ 
+                           ┌─────────┬──────────────────────┬───────────────┬─────────────────┐                             █ 
+                           │Setting  │Environment Variable  │Default Value  │Description      │                             █ 
+                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
+                           │Host     │DB_HOST               │localhost      │Database host    │                             █ 
+                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
+                           │Port     │DB_PORT               │5432           │Database port    │                             █ 
+                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
+                           │SSL      │DB_SSL                │false          │Enable SSL       │                             █ 
+                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
+                           │Pool     │DB_POOL_SIZE          │10             │Connection pool  │                             █ 
+                           └─────────┴──────────────────────┴───────────────┴─────────────────┘                             █ 
+                                                                                                                            ▀ 
                            And a diagram:                                                                                     
                                                                                                                               
                            ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                                            
@@ -819,6 +819,7 @@ The prose above stays narrow.`,
                                                                                                                               
                            The prose above stays narrow.                                                                      
                                                                                                                               
+                                                                                                                              
        1 src/config.ts +3-0                                                                                                   
         + export const config = {                                                                                             
         +   host: 'localhost',                                                                                                
@@ -826,9 +827,173 @@ The prose above stays narrow.`,
                                                                                                                               
                                                                                                                               
                                                                                                                               
-                                                                                                                              
                                               q quit  j/k scroll  (1 section)  t theme                                        
                                                                                                                               
+      "
+    `)
+  })
+
+  // ============================================================================
+  // LONG LINE WRAPPING TESTS
+  // ============================================================================
+  // 
+  // THE ISSUE:
+  // When diff lines are long enough to wrap in split view, and the left/right
+  // sides wrap to different numbers of visual lines, the alignment breaks.
+  // 
+  // Example of broken alignment (single render):
+  //   1 - const response...   1 + const response...
+  //       example.com/users');    API_BASE_URL...
+  //   2   return response...      Authorization...    <-- line 2 on wrong row!
+  //                           2   return response...
+  //
+  // Example of correct alignment (after second render):
+  //   1 - const response...   1 + const response...
+  //       example.com/users');    API_BASE_URL...
+  //                               Authorization...    <-- padding line added
+  //   2   return response...  2   return response...  <-- line 2 aligned
+  //
+  // ROOT CAUSE (opentui timing bug):
+  // 1. Diff.ts constructor calls buildView() at line 139-141 BEFORE layout
+  // 2. At this point, this.width === 0, so canDoWrapAlignment check fails
+  // 3. buildSplitView() skips alignment padding (line 651: this.width > 0)
+  // 4. After layout, onResize() triggers requestRebuild() via microtask
+  // 5. Second render has correct width, alignment works
+  //
+  // WORKAROUND: Call renderOnce() twice in tests
+  // FIX: opentui should defer buildView() until after first layout
+  // ============================================================================
+
+  it("should render long diff lines that wrap correctly", async () => {
+    const longLineHunk = createHunk(1, "src/config.ts", 0, 10, 10, [
+      " export const VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MULTIPLE_COLUMNS = {",
+      "-  apiEndpoint: 'https://api.example.com/v1/extremely/long/path/to/some/resource/that/needs/many/columns/to/display',",
+      "+  apiEndpoint: process.env.API_URL || 'https://api.example.com/v1/extremely/long/path/to/some/resource/that/needs/many/columns/to/display/and/even/more/text/here',",
+      "-  timeout: 5000,",
+      "+  timeout: parseInt(process.env.TIMEOUT || '10000'),",
+      "+  retryAttempts: parseInt(process.env.RETRY_ATTEMPTS || '3'),",
+      " }",
+    ])
+
+    const longLineReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: `## Configuration Changes
+
+Long configuration lines that should wrap properly.`,
+      }],
+    }
+
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[longLineHunk]}
+        reviewData={longLineReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={100}
+      />,
+      {
+        width: 100,
+        height: 30,
+      },
+    )
+
+    await testSetup.renderOnce()
+    // Second render required for alignment - opentui Diff uses microtask-based rebuild after layout
+    await testSetup.renderOnce()
+    const frame = testSetup.captureCharFrame()
+    expect(frame).toMatchInlineSnapshot(`
+      "                                                                                                    
+                 Configuration Changes                                                                    
+                                                                                                          
+                 Long configuration lines that should wrap properly.                                      
+                                                                                                          
+                                                                                                          
+        #1 src/config.ts +3-2                                                                             
+        10   export const                                10   export const                                
+             VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU      VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU 
+             LTIPLE_COLUMNS = {                               LTIPLE_COLUMNS = {                          
+        11 -   apiEndpoint: 'https://api.example.com/v1/ 11 +   apiEndpoint: process.env.API_URL ||       
+             extremely/long/path/to/some/resource/that/       'https://api.example.com/v1/extremely/long/ 
+             needs/many/columns/to/display',                  path/to/some/resource/that/needs/many/      
+                                                              columns/to/display/and/even/more/text/      
+                                                              here',                                      
+        12 -   timeout: 5000,                            12 +   timeout: parseInt(process.env.TIMEOUT ||  
+                                                              '10000'),                                   
+                                                         13 +   retryAttempts: parseInt(process.env.      
+                                                              RETRY_ATTEMPTS || '3'),                     
+        13   }                                           14   }                                           
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                    q quit  j/k scroll  (1 section)  t theme                              
+                                                                                                          
+      "
+    `)
+  })
+
+  it("should align wrapped lines correctly in narrow split view", async () => {
+    // See "LONG LINE WRAPPING TESTS" comment block above for issue details.
+    // This test uses narrower width (at split threshold=100) to force more wrapping.
+    const longLineHunk = createHunk(1, "src/api.ts", 0, 1, 1, [
+      "-const response = await fetch('https://api.example.com/users');",
+      "+const response = await fetch(process.env.API_BASE_URL + '/users', { headers: { Authorization: 'Bearer ' + token } });",
+      " return response.json();",
+    ])
+
+    const reviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: `## API Endpoint Update
+
+Added environment-based URL and auth header.`,
+      }],
+    }
+
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[longLineHunk]}
+        reviewData={reviewData}
+        isGenerating={false}
+        themeName="github"
+        width={100}
+      />,
+      {
+        width: 100,
+        height: 20,
+      },
+    )
+
+    await testSetup.renderOnce()
+    // Second render to allow for any microtask-based rebuilds (alignment happens asynchronously)
+    await testSetup.renderOnce()
+    const frame = testSetup.captureCharFrame()
+    expect(frame).toMatchInlineSnapshot(`
+      "                                                                                                    
+                 API Endpoint Update                                                                      
+                                                                                                          
+                 Added environment-based URL and auth header.                                             
+                                                                                                          
+                                                                                                          
+        #1 src/api.ts +1-1                                                                                
+        1 - const response = await fetch('https://api.   1 + const response = await fetch(process.env.    
+            example.com/users');                             API_BASE_URL + '/users', { headers: {        
+                                                             Authorization: 'Bearer ' + token } });       
+        2   return response.json();                      2   return response.json();                      
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                    q quit  j/k scroll  (1 section)  t theme                              
+                                                                                                          
       "
     `)
   })

@@ -1,3 +1,9 @@
+# 0.1.26
+
+- `review` command:
+  - Make filename bold in hunk header
+  - Add gap of 1 between filename header and diff
+
 # 0.1.25
 
 - Default command:

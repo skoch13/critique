@@ -523,11 +523,12 @@ export function HunkView({ hunk, themeName, width, isLast }: HunkViewProps) {
           paddingRight: 1,
           flexDirection: "row",
           alignItems: "center",
+          marginBottom: 1,
         }}
       >
         <text fg={rgbaToHex(resolvedTheme.textMuted)}>#{hunk.id}</text>
         <text fg={rgbaToHex(resolvedTheme.textMuted)}> </text>
-        <text fg={rgbaToHex(resolvedTheme.text)}>{hunk.filename}</text>
+        <text fg={rgbaToHex(resolvedTheme.text)}><b>{hunk.filename}</b></text>
         <text fg={rgbaToHex(resolvedTheme.syntaxString)}> +{additions}</text>
         <text fg={rgbaToHex(resolvedTheme.syntaxVariable)}>-{deletions}</text>
       </box>

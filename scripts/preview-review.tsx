@@ -218,9 +218,9 @@ async function main() {
     const { htmlDesktop, htmlMobile } = await captureResponsiveHtml(
       ["run", scriptPath, "--capture"],
       {
-        desktopCols: 140,
-        mobileCols: 60,
-        baseRows: 80,
+        desktopCols: 200,
+        mobileCols: 80,
+        baseRows: 200,
         themeName: "github",
         title: "Review Preview",
       }
@@ -271,16 +271,16 @@ ${group.markdownDescription.split('\n').map(line => `      ${line}`).join('\n')}
       }, 1000)
     }
 
-    createRoot(renderer as any).render(
-      React.createElement(ReviewAppView, {
-        hunks: exampleHunks,
-        reviewData: exampleReviewData,
-        isGenerating: false,
-        themeName: "github",
-        width: termCols,
-        showFooter: false,
-        renderer: renderer as any,
-      })
+    createRoot(renderer).render(
+      <ReviewAppView
+        hunks={exampleHunks}
+        reviewData={exampleReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={termCols}
+        showFooter={false}
+        renderer={renderer}
+      />
     )
     return
   }
@@ -294,13 +294,13 @@ ${group.markdownDescription.split('\n').map(line => `      ${line}`).join('\n')}
     exitOnCtrlC: true,
   })
 
-  const root = createRoot(renderer as any)
+  const root = createRoot(renderer)
   root.render(
-    React.createElement(ReviewApp, {
-      hunks: exampleHunks,
-      yamlPath,
-      isGenerating: false,
-    })
+    <ReviewApp
+      hunks={exampleHunks}
+      yamlPath={yamlPath}
+      isGenerating={false}
+    />
   )
 }
 

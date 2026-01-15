@@ -322,7 +322,7 @@ export function ReviewAppView({
 
                 {/* Hunks */}
                 {groupHunks.map((hunk, idx) => (
-                  <box key={`${hunk.id}-${idx}`}>
+                  <box key={`${hunk.id}-${idx}`} style={{ alignItems: "center" }}>
                     <HunkView
                       hunk={hunk}
                       themeName={themeName}
@@ -447,19 +447,27 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       const defaultRenderable = context.defaultRender()
       if (!defaultRenderable) return null
 
-      // Prose: constrained to maxProseWidth
+      // Prose: constrained to maxProseWidth, centered
       if (["heading", "paragraph", "list", "blockquote"].includes(token.type)) {
         const wrapper = new BoxRenderable(renderer, {
           id: `prose-wrapper-${nodeCounter++}`,
           maxWidth: maxProseWidth,
           width: "100%",
+          alignSelf: "center",
         })
         wrapper.add(defaultRenderable)
         return wrapper
       }
 
-      // Code blocks and tables: use default width
-      // No special handling needed - they'll expand to content width
+      // Code blocks and tables: centered but can use full width
+      if (["code", "table"].includes(token.type)) {
+        const wrapper = new BoxRenderable(renderer, {
+          id: `wide-wrapper-${nodeCounter++}`,
+          alignSelf: "center",
+        })
+        wrapper.add(defaultRenderable)
+        return wrapper
+      }
 
       // Other elements (hr, space, etc.) use default rendering
       return undefined
@@ -474,9 +482,8 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       style={{
         flexDirection: "column",
         width: "100%",
+        alignItems: "center",
         paddingBottom: 1,
-        paddingLeft: 1,
-        paddingRight: 1,
       }}
     >
       <markdown
@@ -485,6 +492,8 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
         renderNode={renderNode}
         style={{
           width: contentWidth,
+          paddingLeft: 1,
+          paddingRight: 1,
         }}
       />
     </box>

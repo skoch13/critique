@@ -157,9 +157,7 @@ html {
   text-size-adjust: 100%;
 }
 html, body {
-  height: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
+  min-height: 100%;
   background-color: ${backgroundColor};
   color: ${textColor};
   font-family: ${fontFamily};
@@ -170,14 +168,12 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 body {
-  display: flex;
-  justify-content: center;
+  overflow: auto;
 }
 #content {
   padding: 16px;
-  overflow-x: auto;
-  max-width: 100vw;
-  box-sizing: border-box;
+  width: fit-content;
+  margin: 0 auto;
 }
 .line {
   white-space: pre;

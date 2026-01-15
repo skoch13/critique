@@ -509,15 +509,9 @@ async function runReviewMode(
     // Helper to render with current isGenerating state
     const renderApp = (isGenerating: boolean) => {
       root.render(
-        React.createElement(
-          ErrorBoundary,
-          null,
-          React.createElement(ReviewApp, {
-            hunks,
-            yamlPath,
-            isGenerating,
-          }),
-        ),
+        <ErrorBoundary>
+          <ReviewApp hunks={hunks} yamlPath={yamlPath} isGenerating={isGenerating} />
+        </ErrorBoundary>
       );
     };
 
@@ -1062,11 +1056,9 @@ cli
       }
 
       createRoot(renderer).render(
-        React.createElement(
-          ErrorBoundary,
-          null,
-          React.createElement(AppWithWatch),
-        ),
+        <ErrorBoundary>
+          <AppWithWatch />
+        </ErrorBoundary>
       );
     } catch (error) {
       console.error("Error getting git diff:", error);
@@ -1151,11 +1143,9 @@ cli
 
       const renderer = await createCliRenderer();
       createRoot(renderer).render(
-        React.createElement(
-          ErrorBoundary,
-          null,
-          React.createElement(App, { parsedFiles: [patchWithRawDiff] }),
-        ),
+        <ErrorBoundary>
+          <App parsedFiles={[patchWithRawDiff]} />
+        </ErrorBoundary>
       );
     } catch (error) {
       console.error("Error displaying diff:", error);
@@ -1609,7 +1599,9 @@ cli
     }
 
     createRoot(renderer).render(
-      React.createElement(ErrorBoundary, null, React.createElement(WebApp)),
+      <ErrorBoundary>
+        <WebApp />
+      </ErrorBoundary>
     );
   });
 
@@ -1663,18 +1655,22 @@ cli
     const { ReviewAppView } = await import("./review/review-app.tsx");
 
     function ReviewWebApp() {
-      return React.createElement(ReviewAppView, {
-        hunks,
-        reviewData,
-        isGenerating: false,
-        themeName,
-        width: cols,
-        showFooter: false, // hide keyboard shortcuts in web mode
-      });
+      return (
+        <ReviewAppView
+          hunks={hunks}
+          reviewData={reviewData}
+          isGenerating={false}
+          themeName={themeName}
+          width={cols}
+          showFooter={false}
+        />
+      );
     }
 
     createRoot(renderer).render(
-      React.createElement(ErrorBoundary, null, React.createElement(ReviewWebApp)),
+      <ErrorBoundary>
+        <ReviewWebApp />
+      </ErrorBoundary>
     );
   });
 

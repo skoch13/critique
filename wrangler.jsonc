@@ -6,6 +6,11 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   
+  // Static assets (fonts, etc.)
+  "assets": {
+    "directory": "./public"
+  },
+
   // KV Namespace binding for storing HTML content
   "kv_namespaces": [
     {

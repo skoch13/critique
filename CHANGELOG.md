@@ -1,3 +1,11 @@
+# 0.1.29
+
+- Web preview:
+  - Switch to JetBrains Mono Nerd Font for better box-drawing character rendering (connected vertical lines in diagrams)
+  - Self-host font as woff2 on critique.work instead of Google Fonts (986KB, converted from 2.4MB TTF)
+- Worker:
+  - Add static asset serving for fonts via `assets.directory` config
+
 # 0.1.28
 
 - Default command:

@@ -1,16 +1,23 @@
 #!/usr/bin/env bun
 // Preview script for ReviewApp component
 // Run with: bun run scripts/preview-review.tsx
+// Web mode: bun run scripts/preview-review.tsx --web
 
 import { createCliRenderer } from "@opentui/core"
 import { createRoot } from "@opentui/react"
 import * as React from "react"
-import { ReviewApp } from "../src/review/review-app.tsx"
+import { ReviewApp, ReviewAppView } from "../src/review/review-app.tsx"
 import { createHunk } from "../src/review/hunk-parser.ts"
 import type { ReviewYaml } from "../src/review/types.ts"
+import { captureResponsiveHtml, uploadHtml, openInBrowser } from "../src/web-utils.ts"
 import fs from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
+
+// Parse command line arguments
+const args = process.argv.slice(2)
+const webMode = args.includes("--web")
+const captureMode = args.includes("--capture") // Internal flag for PTY capture
 
 // Example hunks with realistic diff content
 const exampleHunks = [
@@ -194,6 +201,31 @@ All tests pass and coverage is at 95%.`,
 }
 
 async function main() {
+  // Web mode: capture and upload HTML, then open in browser
+  if (webMode) {
+    console.log("Capturing preview...")
+    
+    const scriptPath = import.meta.path
+    const { htmlDesktop, htmlMobile } = await captureResponsiveHtml(
+      ["run", scriptPath, "--capture"],
+      {
+        desktopCols: 140,
+        mobileCols: 60,
+        baseRows: 80,
+        themeName: "github",
+        title: "Review Preview",
+      }
+    )
+
+    console.log("Uploading...")
+    const result = await uploadHtml(htmlDesktop, htmlMobile)
+    console.log(`\nPreview URL: ${result.url}`)
+    console.log("(expires in 7 days)")
+
+    await openInBrowser(result.url)
+    return
+  }
+
   // Create a temp YAML file with the example data
   const yamlPath = join(tmpdir(), `critique-preview-${Date.now()}.yaml`)
   
@@ -205,20 +237,46 @@ ${group.markdownDescription.split('\n').map(line => `      ${line}`).join('\n')}
 
   fs.writeFileSync(yamlPath, yamlContent)
 
+  // Capture mode: render once and exit (used internally by --web)
+  if (captureMode) {
+    const renderer = await createCliRenderer({
+      useAlternateScreen: false,
+      onDestroy() {
+        try { fs.unlinkSync(yamlPath) } catch {}
+        process.exit(0)
+      },
+    })
+
+    const width = process.stdout.columns || 140
+
+    const root = createRoot(renderer as any)
+    root.render(
+      React.createElement(ReviewAppView, {
+        hunks: exampleHunks,
+        reviewData: exampleReviewData,
+        isGenerating: false,
+        themeName: "github",
+        width,
+        showFooter: false,
+        renderer: renderer as any,
+      })
+    )
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+    renderer.destroy()
+    return
+  }
+
+  // Interactive TUI mode
   const renderer = await createCliRenderer({
     onDestroy() {
-      // Cleanup temp file
-      try {
-        fs.unlinkSync(yamlPath)
-      } catch {
-        // Ignore
-      }
+      try { fs.unlinkSync(yamlPath) } catch {}
       process.exit(0)
     },
     exitOnCtrlC: true,
   })
 
-  const root = createRoot(renderer)
+  const root = createRoot(renderer as any)
   root.render(
     React.createElement(ReviewApp, {
       hunks: exampleHunks,

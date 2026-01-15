@@ -1,3 +1,8 @@
+# 0.1.23
+
+- `review` command:
+  - Add `gap` prop to `ReviewAppView` to control spacing between markdown descriptions and hunks (default: 2)
+
 # 0.1.22
 
 - Use `<markdown>` component instead of `<code filetype="markdown">` for rendering markdown content:

@@ -21,6 +21,8 @@ https://pkg.pr.new/anomalyco/opentui/@opentui/core@<hash>
 https://pkg.pr.new/anomalyco/opentui/@opentui/react@<hash>
 ```
 
+YOU MUST use the commit hash long 40 characters! not the pr number! ALWAYS
+
 ## bun
 
 NEVER run the interactive TUI (e.g. `bun run src/cli.tsx` without arguments). It will hang. Instead ask the user to run it.

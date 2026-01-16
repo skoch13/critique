@@ -1,3 +1,10 @@
+# 0.1.31
+
+- Diff view:
+  - Add word-level highlighting for changed lines (shows exactly which words were added/removed)
+- Dependencies:
+  - Update opentui to `77f314bf` with word-highlights support
+
 # 0.1.30
 
 - Dependencies:

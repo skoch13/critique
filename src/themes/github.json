@@ -6,6 +6,7 @@
     "darkBgElement": "#161b22",
     "darkFg": "#e6edf3",
     "darkFgMuted": "#8b949e",
+    "darkConceal": "#484f58",
     "darkBorder": "#30363d",
     "darkBorderSubtle": "#21262d",
     "darkKeyword": "#ff7b72",
@@ -24,6 +25,7 @@
     "lightBgPanel": "#f0f3f6",
     "lightFg": "#24292f",
     "lightFgMuted": "#57606a",
+    "lightConceal": "#8c959f",
     "lightKeyword": "#cf222e",
     "lightString": "#0a3069",
     "lightConstant": "#0550ae",
@@ -236,6 +238,10 @@
     "syntaxPunctuation": {
       "dark": "darkFg",
       "light": "lightFg"
+    },
+    "conceal": {
+      "dark": "darkConceal",
+      "light": "lightConceal"
     }
   }
 }

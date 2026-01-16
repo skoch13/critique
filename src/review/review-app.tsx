@@ -2,13 +2,14 @@
 
 import * as React from "react"
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"
-import { MacOSScrollAccel, SyntaxStyle, BoxRenderable, CodeRenderable } from "@opentui/core"
+import { MacOSScrollAccel, SyntaxStyle, BoxRenderable, CodeRenderable, TextRenderable } from "@opentui/core"
 import type { Token } from "marked"
 import { getResolvedTheme, getSyntaxTheme, defaultThemeName, themeNames, rgbaToHex } from "../themes.ts"
 import { detectFiletype, countChanges, getViewMode } from "../diff-utils.ts"
 import { DiffView } from "../components/diff-view.tsx"
 import { watchReviewYaml } from "./yaml-watcher.ts"
 import { createSubHunk } from "./hunk-parser.ts"
+import { parseDiagram } from "./diagram-parser.ts"
 import { useAppStore } from "../store.ts"
 import Dropdown from "../dropdown.tsx"
 import type { IndexedHunk, ReviewYaml, ReviewGroup } from "./types.ts"
@@ -68,6 +69,12 @@ export function ReviewApp({
 
   // Keyboard navigation
   useKeyboard((key) => {
+    // Ctrl+D toggles debug console
+    if (key.ctrl && key.name === "d") {
+      renderer.console.toggle()
+      return
+    }
+
     if (showThemePicker) {
       if (key.name === "escape") {
         setShowThemePicker(false)
@@ -167,22 +174,43 @@ export function ReviewApp({
 }
 
 /**
- * Animated "generating..." indicator with cycling dots
+ * Spinning braille indicator
  */
-function GeneratingIndicator({ color }: { color: string }) {
-  const [dotPhase, setDotPhase] = React.useState(0)
+function GeneratingIndicatorSpinner({ color }: { color: string }) {
+  const [phase, setPhase] = React.useState(0)
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setDotPhase((p) => (p + 1) % 4)
-    }, 300)
+      setPhase((p) => (p + 1) % 8)
+    }, 100)
     return () => clearInterval(interval)
   }, [])
 
-  const dots = ".".repeat(dotPhase).padEnd(3, " ")
+  // Braille spinner pattern
+  const spinnerChars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧"]
+  const spinner = spinnerChars[phase]
 
+  return <text fg={color}>{spinner}</text>
+}
+
+/**
+ * Centered generating indicator for loading state (when no content yet)
+ */
+function GeneratingIndicator({ color, bgColor }: { color: string; bgColor: string }) {
   return (
-    <text fg={color}>generating{dots}  </text>
+    <box
+      style={{
+        flexGrow: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: bgColor,
+      }}
+    >
+      <box style={{ flexDirection: "column", alignItems: "center" }}>
+        <GeneratingIndicatorSpinner color={color} />
+        <text fg={color}>generating...</text>
+      </box>
+    </box>
   )
 }
 
@@ -251,9 +279,14 @@ export function ReviewAppView({
           backgroundColor: bgColor,
         }}
       >
-        <text fg={rgbaToHex(resolvedTheme.text)}>
-          {isGenerating ? "Generating review..." : "No review groups generated"}
-        </text>
+        {isGenerating ? (
+          <GeneratingIndicator
+            color={rgbaToHex(resolvedTheme.textMuted)}
+            bgColor={bgColor}
+          />
+        ) : (
+          <text fg={rgbaToHex(resolvedTheme.text)}>No review groups generated</text>
+        )}
       </box>
     )
   }
@@ -338,6 +371,15 @@ export function ReviewAppView({
               </box>
             )
           })}
+          {/* Generating indicator - shown below last hunk */}
+          {isGenerating && (
+            <box style={{ alignItems: "center", justifyContent: "center", marginTop: gap, marginBottom: gap }}>
+              <box style={{ flexDirection: "column", alignItems: "center" }}>
+                <GeneratingIndicatorSpinner color={rgbaToHex(resolvedTheme.textMuted)} />
+                <text fg={rgbaToHex(resolvedTheme.textMuted)}>generating...</text>
+              </box>
+            </box>
+          )}
         </box>
       </scrollbox>
 
@@ -353,9 +395,6 @@ export function ReviewAppView({
             alignItems: "center",
           }}
         >
-          {isGenerating && (
-            <GeneratingIndicator color={rgbaToHex(resolvedTheme.textMuted)} />
-          )}
           <text fg={rgbaToHex(resolvedTheme.textMuted)}>
             ({groups.length} section{groups.length !== 1 ? "s" : ""})
           </text>
@@ -433,6 +472,9 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
     () => SyntaxStyle.fromStyles(syntaxTheme),
     [syntaxTheme],
   )
+  const resolvedTheme = getResolvedTheme(themeName)
+  const textColor = rgbaToHex(resolvedTheme.text)
+  const concealColor = rgbaToHex(resolvedTheme.conceal)
 
   // Max width for prose (constrained), code blocks use full terminal width
   const maxProseWidth = Math.min(80, width)
@@ -463,11 +505,55 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       // Code blocks: create custom CodeRenderable with wrapMode: "none" and overflow: "hidden"
       if (token.type === "code") {
         const codeToken = token as { text: string; lang?: string }
+
+
         const wrapper = new BoxRenderable(renderer, {
           id: `code-wrapper-${nodeCounter++}`,
           alignSelf: "center",
           overflow: "hidden",
         })
+
+        // Special handling for diagram language - color structural chars as muted
+        if (codeToken.lang === "diagram") {
+          console.log("[diagram-debug] MATCHED diagram lang, parsing...")
+          const diagramWrapper = new BoxRenderable(renderer, {
+            id: `diagram-${nodeCounter++}`,
+            flexDirection: "column",
+          })
+          const parsedLines = parseDiagram(codeToken.text)
+          for (let i = 0; i < parsedLines.length; i++) {
+            const line = parsedLines[i]
+            // Skip empty lines or add a single space to maintain line height
+            if (line.segments.length === 0) {
+              const emptyLine = new TextRenderable(renderer, {
+                id: `diagram-empty-${nodeCounter++}-${i}`,
+                content: " ",
+                fg: concealColor,
+              })
+              diagramWrapper.add(emptyLine)
+              continue
+            }
+            // Create a row box for each line
+            const lineBox = new BoxRenderable(renderer, {
+              id: `diagram-line-${nodeCounter++}-${i}`,
+              flexDirection: "row",
+            })
+            // Add each segment as a separate text renderable with appropriate color
+            for (let j = 0; j < line.segments.length; j++) {
+              const segment = line.segments[j]
+              const segmentRenderable = new TextRenderable(renderer, {
+                id: `diagram-seg-${nodeCounter++}-${i}-${j}`,
+                content: segment.text,
+                fg: segment.type === "muted" ? concealColor : textColor,
+              })
+              lineBox.add(segmentRenderable)
+            }
+            diagramWrapper.add(lineBox)
+          }
+          wrapper.add(diagramWrapper)
+          return wrapper
+        }
+
         const codeRenderable = new CodeRenderable(renderer, {
           id: `code-${nodeCounter++}`,
           content: codeToken.text,
@@ -495,7 +581,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       // Other elements (hr, space, etc.) use default rendering
       return undefined
     }
-  }, [renderer, maxProseWidth, syntaxStyle])
+  }, [renderer, maxProseWidth, syntaxStyle, textColor, concealColor])
 
   // Use very large width when renderer available so code blocks don't wrap
   // Prose is constrained via renderNode, code blocks can overflow

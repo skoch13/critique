@@ -8,10 +8,10 @@ ALWAYS!
 
 ### using unreleased opentui versions
 
-to use a pkg.pr.new preview URL for opentui, get the last commit hash (first 7 chars) from PR https://github.com/anomalyco/opentui/pull/536:
+to use a pkg.pr.new preview URL for opentui, get the last commit hash (40 chars always) from PR https://github.com/anomalyco/opentui/pull/536:
 
 ```bash
-gh pr view 536 -R anomalyco/opentui --json commits --jq '.commits[-1].oid[:7]'
+gh pr view 536 -R anomalyco/opentui --json commits --jq '.commits[-1].oid[:40]'
 ```
 
 then use it in package.json:

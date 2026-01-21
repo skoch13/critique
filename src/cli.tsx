@@ -67,8 +67,6 @@ interface ReviewModeOptions {
   sessionIds?: string[];
   webOptions?: ReviewWebOptions;
   model?: string;
-  skipSessionSelect?: boolean; // Skip ACP session select (for resume)
-  existingReviewId?: string; // Use this ID instead of ACP session ID (for resume - overwrites existing file)
 }
 
 // Review mode handler
@@ -77,7 +75,7 @@ async function runReviewMode(
   agent: string,
   options: ReviewModeOptions = {}
 ) {
-  const { sessionIds, webOptions, model, skipSessionSelect, existingReviewId } = options;
+  const { sessionIds, webOptions, model } = options;
   const { tmpdir } = await import("os");
   const { join } = await import("path");
   const pc = await import("picocolors");
@@ -322,7 +320,7 @@ async function runReviewMode(
     let sessionsContext = "";
     let selectedSessionIds: string[] = [];
 
-    if (sessions.length > 0 && !skipSessionSelect) {
+    if (sessions.length > 0) {
       // If session IDs provided via --session, use those
       if (sessionIds && sessionIds.length > 0) {
         selectedSessionIds = sessionIds;
@@ -439,18 +437,15 @@ async function runReviewMode(
         reviewSessionId = sessionId;
         logger.info("Review session started", { sessionId });
         
-        // Initialize pending review
-        // Use existingReviewId if resuming (overwrites same file), otherwise use ACP session ID
+        // Initialize pending review with ACP session ID
         const now = Date.now();
         pendingReview = {
-          id: existingReviewId || sessionId,
+          id: sessionId,
           createdAt: now,
           updatedAt: now,
           status: "in_progress",
           cwd,
-          gitCommand,
           agent: agent as "opencode" | "claude",
-          model,
           title: "Untitled review",
           hunks,
           reviewYaml: { hunks: [] },
@@ -663,7 +658,6 @@ async function runResumeMode(options: ResumeModeOptions) {
   const {
     listReviews,
     loadReview,
-    deleteReview,
     formatTimeAgo,
     truncatePath,
   } = await import("./review/index.ts");
@@ -714,21 +708,98 @@ async function runResumeMode(options: ResumeModeOptions) {
     process.exit(1);
   }
 
-  // If review is in_progress, restart the generation
+  // If review is in_progress, try to resume the ACP session
   if (review.status === "in_progress") {
-    clack.log.info(`Restarting interrupted review: ${review.title}`);
-    clack.outro("");
+    clack.log.info(`Resuming interrupted review: ${review.title}`);
     
-    // Restart the review with the same parameters
-    // Use same review ID so the file gets overwritten (not duplicated)
-    const webOptions = options.web ? { web: true, open: options.open } : undefined;
-    await runReviewMode(review.gitCommand, review.agent, {
-      webOptions,
-      model: review.model,
-      skipSessionSelect: true,
-      existingReviewId: review.id,
-    });
-    return;
+    const { createAcpClient, readReviewYaml, saveReview } = await import("./review/index.ts");
+    const { tmpdir } = await import("os");
+    const { join } = await import("path");
+    
+    // Create temp file for YAML output (continue from stored content)
+    const yamlPath = join(tmpdir(), `critique-review-${Date.now()}.yaml`);
+    // Write existing YAML content to temp file so AI can continue from there
+    const existingYaml = review.reviewYaml.hunks.length > 0
+      ? `title: ${JSON.stringify(review.reviewYaml.title || review.title)}\nhunks:\n` +
+        review.reviewYaml.hunks.map((h) => {
+          const lines: string[] = [];
+          if (h.hunkIds) lines.push(`- hunkIds: [${h.hunkIds.join(", ")}]`);
+          else if (h.hunkId !== undefined) {
+            lines.push(`- hunkId: ${h.hunkId}`);
+            if (h.lineRange) lines.push(`  lineRange: [${h.lineRange[0]}, ${h.lineRange[1]}]`);
+          }
+          lines.push(`  markdownDescription: |`);
+          lines.push(...h.markdownDescription.split("\n").map((l) => `    ${l}`));
+          return lines.join("\n");
+        }).join("\n")
+      : "";
+    fs.writeFileSync(yamlPath, existingYaml);
+    
+    // Connect to ACP and try to resume
+    const acpClient = createAcpClient(review.agent);
+    acpClient.startConnection();
+    
+    const resumeSpinner = clack.spinner();
+    resumeSpinner.start("Resuming ACP session...");
+    
+    const resumed = await acpClient.resumeSession(review.id, review.cwd);
+    
+    if (!resumed) {
+      resumeSpinner.stop("Session expired");
+      clack.log.warn("ACP session no longer available. Showing partial progress.");
+      await acpClient.close();
+      fs.unlinkSync(yamlPath);
+      // Fall through to display the partial content
+    } else {
+      resumeSpinner.stop("Session resumed");
+      clack.outro("");
+      
+      // Track for saving on exit
+      let reviewSaved = false;
+      const savePendingReview = (status: "in_progress" | "completed") => {
+        if (reviewSaved) return;
+        const reviewYaml = readReviewYaml(yamlPath);
+        if (reviewYaml && reviewYaml.hunks.length > 0) {
+          saveReview({
+            ...review,
+            status,
+            updatedAt: Date.now(),
+            title: reviewYaml.title || review.title,
+            reviewYaml,
+          });
+          reviewSaved = true;
+          logger.info("Review saved", { status });
+        }
+      };
+      
+      // Start TUI with isGenerating: true
+      const renderer = await createCliRenderer({
+        onDestroy() {
+          savePendingReview("in_progress");
+          acpClient.close();
+          try { fs.unlinkSync(yamlPath); } catch {}
+          process.exit(0);
+        },
+        exitOnCtrlC: true,
+      });
+      
+      const root = createRoot(renderer);
+      root.render(
+        <ErrorBoundary>
+          <ReviewApp
+            hunks={review.hunks}
+            yamlPath={yamlPath}
+            isGenerating={true}
+            initialReviewData={review.reviewYaml}
+          />
+        </ErrorBoundary>
+      );
+      
+      // Wait for session to complete (it's already running from resume)
+      // The ACP client will receive updates and we watch the YAML file
+      // For now, just keep the TUI running - it will update from YAML file changes
+      return;
+    }
   }
 
   clack.log.info(`Loading: ${review.title}`);

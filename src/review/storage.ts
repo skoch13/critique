@@ -19,7 +19,7 @@ export type ReviewStatus = "in_progress" | "completed"
 
 /**
  * A stored review session
- * ID is the ACP session ID for potential future reconnection
+ * ID is the ACP session ID - used for session/resume
  */
 export interface StoredReview {
   id: string // ACP session ID
@@ -27,9 +27,7 @@ export interface StoredReview {
   updatedAt: number
   status: ReviewStatus
   cwd: string
-  gitCommand: string
   agent: "opencode" | "claude"
-  model?: string
   title: string
   hunks: IndexedHunk[]
   reviewYaml: ReviewYaml

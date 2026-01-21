@@ -425,6 +425,35 @@ export class AcpClient {
   }
 
   /**
+   * Resume an existing ACP session
+   * Uses session/resume to reconnect to an interrupted session
+   * @returns true if resume succeeded, false if session not found/expired
+   */
+  async resumeSession(
+    sessionId: string,
+    cwd: string,
+  ): Promise<boolean> {
+    await this.ensureConnected()
+
+    if (!this.client) {
+      throw new Error("ACP client not connected")
+    }
+
+    try {
+      logger.info("Attempting to resume ACP session...", { sessionId })
+      await this.client.unstable_resumeSession({
+        sessionId,
+        cwd,
+      })
+      logger.info("ACP session resumed successfully")
+      return true
+    } catch (error) {
+      logger.warn("Failed to resume ACP session", { sessionId, error })
+      return false
+    }
+  }
+
+  /**
    * Get collected session updates
    */
   getSessionUpdates(sessionId: string): SessionNotification[] {

@@ -136,9 +136,6 @@ export function ansiToHtmlDocument(input: string | Buffer, options: AnsiToHtmlOp
 
   const content = ansiToHtml(input, options)
 
-  // Padding: 16px on each side = 32px total
-  const padding = 32
-
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -160,30 +157,31 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-:root {
-  --cols: ${cols};
-  --padding: ${padding}px;
-  --char-ratio: 0.6;
-  --min-font: 4px;
-  --max-font: 14px;
-}
 html, body {
   min-height: 100%;
   background-color: ${backgroundColor};
   color: ${textColor};
   font-family: ${fontFamily};
-  font-size: clamp(var(--min-font), calc((100vw - var(--padding)) / (var(--cols) * var(--char-ratio))), var(--max-font));
+  /*
+   * Font size scales to fit ${cols} columns within viewport.
+   * Formula: (viewport - padding) / (cols * char-ratio)
+   * 
+   * The 0.6 char-ratio is the approximate width of 1ch relative to font-size
+   * in monospace fonts. Most monospace fonts (JetBrains Mono, Fira Code, 
+   * Monaco, Consolas) have a ch/font-size ratio between 0.55-0.6.
+   * We use 0.6 as a safe upper bound to prevent overflow.
+   */
+  font-size: clamp(4px, calc((100vw - 32px) / (${cols} * 0.6)), 14px);
   line-height: 1.7;
 }
 body {
+  padding: 16px;
   overflow-x: clip;
   overflow-y: auto;
   max-width: 100vw;
 }
 #content {
-  padding: 16px;
   width: fit-content;
-  max-width: calc(100vw - var(--padding));
   margin: 0 auto;
 }
 .line {

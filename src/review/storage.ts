@@ -77,10 +77,11 @@ export function saveReview(review: StoredReview): void {
 }
 
 /**
- * List all reviews, sorted by updatedAt descending (most recent first)
+ * List reviews, sorted by updatedAt descending (most recent first)
  * Returns metadata only (no full content) for performance
+ * @param cwd - If provided, only return reviews from this directory or its children
  */
-export function listReviews(): ReviewMetadata[] {
+export function listReviews(cwd?: string): ReviewMetadata[] {
   ensureReviewsDir()
   
   const files = fs.readdirSync(REVIEWS_DIR)
@@ -93,6 +94,11 @@ export function listReviews(): ReviewMetadata[] {
       const filepath = join(REVIEWS_DIR, filename)
       const content = fs.readFileSync(filepath, "utf-8")
       const data = JSON.parse(content) as StoredReview
+      
+      // Filter by cwd if provided: include reviews from cwd or its children
+      if (cwd && !data.cwd.startsWith(cwd)) {
+        continue
+      }
       
       reviews.push({
         id: data.id,

@@ -667,12 +667,12 @@ async function runResumeMode(options: ResumeModeOptions) {
 
   let reviewId = options.reviewId;
 
-  // If no ID provided, show select
+  // If no ID provided, show select (filtered to current cwd and children)
   if (!reviewId) {
-    const reviews = listReviews();
+    const reviews = listReviews(process.cwd());
 
     if (reviews.length === 0) {
-      clack.log.warn("No saved reviews found");
+      clack.log.warn("No saved reviews found for this directory");
       clack.outro("");
       process.exit(0);
     }

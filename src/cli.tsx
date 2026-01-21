@@ -62,13 +62,20 @@ interface ReviewWebOptions {
   open?: boolean;
 }
 
+// Review mode options
+interface ReviewModeOptions {
+  sessionIds?: string[];
+  webOptions?: ReviewWebOptions;
+  model?: string;
+}
+
 // Review mode handler
 async function runReviewMode(
   gitCommand: string,
   agent: string,
-  sessionIds?: string[],
-  webOptions?: ReviewWebOptions
+  options: ReviewModeOptions = {}
 ) {
+  const { sessionIds, webOptions, model } = options;
   const { tmpdir } = await import("os");
   const { join } = await import("path");
   const pc = await import("picocolors");
@@ -384,7 +391,7 @@ async function runReviewMode(
     analysisSpinner.start("Analyzing diff...");
 
     // Start the review session (don't await - let it run in background)
-    logger.info("Creating review session", { yamlPath });
+    logger.info("Creating review session", { yamlPath, model });
     const sessionPromise = acpClient.createReviewSession(
       cwd,
       hunksContext,
@@ -394,6 +401,7 @@ async function runReviewMode(
         reviewSessionId = sessionId;
         logger.info("Review session started", { sessionId });
       },
+      { model },
     );
 
     // Web mode: wait for full generation, then render to HTML
@@ -409,11 +417,18 @@ async function runReviewMode(
         log.success("Analysis complete");
         logger.info("Review generation completed, generating web preview");
       } catch (error) {
-        const log = ensureAnalysisLog();
+        // Stop any active spinners
+        if (analysisSpinner) {
+          analysisSpinner.stop("Failed");
+          analysisSpinner = null;
+        }
         updateToolSpinner(0);
-        log.error("Analysis failed");
+        
         logger.error("Review session error", error);
-        clack.log.error(`Review generation failed: ${error}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        clack.log.error(errorMessage);
+        clack.outro("");
+        
         if (acpClient) await acpClient.close();
         try { fs.unlinkSync(yamlPath); } catch (e) { logger.debug("Failed to cleanup yaml file", { error: e }); }
         process.exit(1);
@@ -483,7 +498,16 @@ async function runReviewMode(
     }
 
     // TUI mode: wait for first valid group, then start interactive UI
-    await waitForFirstValidGroup(yamlPath);
+    // Race against session errors (e.g., invalid model) to fail fast
+    await Promise.race([
+      waitForFirstValidGroup(yamlPath),
+      // If session fails early (e.g., invalid model), reject immediately
+      sessionPromise.then(
+        () => new Promise(() => {}), // Never resolve if successful (let waitForFirstValidGroup win)
+        (error) => Promise.reject(error), // Reject immediately on error
+      ),
+    ]);
+    
     const log = ensureAnalysisLog();
     if (currentMessage) {
       log.message(pc.default.dim(currentMessage.split("\n")[0]));
@@ -534,11 +558,19 @@ async function runReviewMode(
       });
   } catch (error) {
     logger.error("Review mode error", error);
-    const log = ensureAnalysisLog();
+    
+    // Stop any active spinners
+    if (analysisSpinner) {
+      analysisSpinner.stop("Failed");
+      analysisSpinner = null;
+    }
     updateToolSpinner(0);
-    log.error("Analysis failed");
-    clack.log.error(`Review mode error: ${error}`);
+    
+    // Show the error - extract message for cleaner display
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    clack.log.error(errorMessage);
     clack.outro("");
+    
     if (acpClient) {
       await acpClient.close();
     }
@@ -1181,6 +1213,7 @@ cli
 cli
   .command("review [base] [head]", "AI-powered diff review")
   .option("--agent <name>", "AI agent to use (default: opencode)", { default: "opencode" })
+  .option("--model <id>", "Model to use for review (e.g., anthropic/claude-sonnet-4-20250514 for opencode, claude-sonnet-4-20250514 for claude)")
   .option("--staged", "Review staged changes")
   .option("--commit <ref>", "Review changes from a specific commit")
   .option("--context <lines>", "Number of context lines (default: 3)")
@@ -1211,7 +1244,11 @@ cli
         : undefined;
 
       const webOptions = options.web ? { web: true, open: options.open } : undefined;
-      await runReviewMode(gitCommand, options.agent, sessionIds, webOptions);
+      await runReviewMode(gitCommand, options.agent, {
+        sessionIds,
+        webOptions,
+        model: options.model,
+      });
     } catch (error) {
       console.error("Error running review:", error);
       process.exit(1);

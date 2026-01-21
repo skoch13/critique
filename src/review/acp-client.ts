@@ -5,6 +5,7 @@ import {
   ndJsonStream,
   type SessionNotification,
   type SessionInfo as AcpSessionInfo,
+
 } from "@agentclientprotocol/sdk"
 import type { SessionInfo, SessionContent } from "./types.ts"
 import { logger } from "../logger.ts"
@@ -348,6 +349,7 @@ export class AcpClient {
    * Create a new session and send the review prompt
    * Returns the sessionId immediately, completes when prompt finishes
    * Note: Use connect(onUpdate) to receive streaming notifications
+   * @param options.model - Optional model ID to use (format depends on agent: "anthropic/claude-sonnet-4-..." for opencode, "claude-sonnet-4-..." for claude)
    */
   async createReviewSession(
     cwd: string,
@@ -355,21 +357,48 @@ export class AcpClient {
     sessionsContext: string,
     outputPath: string,
     onSessionCreated?: (sessionId: string) => void,
+    options?: { model?: string },
   ): Promise<string> {
     await this.ensureConnected()
     if (!this.client) {
       throw new Error("Client connection failed")
     }
 
-    logger.info("Creating new ACP session...", { cwd, outputPath })
+    logger.info("Creating new ACP session...", { cwd, outputPath, model: options?.model })
 
     // Create new session with _meta to mark it as a critique session
-    const { sessionId } = await this.client.newSession({
+    const response = await this.client.newSession({
       cwd,
       mcpServers: [],
       _meta: { critique: true },
     })
+    const { sessionId } = response
     logger.info("Session created", { sessionId })
+
+    // Set model if specified
+    if (options?.model) {
+      const availableModels = response.models?.availableModels ?? []
+      const modelExists = availableModels.some(m => m.modelId === options.model)
+
+      if (!modelExists) {
+        const modelList = availableModels.map(m => `  ${m.modelId}`).join("\n")
+        const agentHint = this.agent === "opencode"
+          ? "provider/model-id (e.g., anthropic/claude-sonnet-4-20250514)"
+          : "model-id (e.g., claude-sonnet-4-20250514)"
+        throw new Error(
+          `Model "${options.model}" not found.\n\n` +
+          `Available models:\n${modelList || "  (none)"}\n\n` +
+          `Format for ${this.agent}: ${agentHint}`
+        )
+      }
+
+      logger.info("Setting model...", { model: options.model })
+      await this.client.unstable_setSessionModel({
+        sessionId,
+        modelId: options.model,
+      })
+      logger.info("Model set successfully")
+    }
 
     // Notify caller of sessionId so they can start filtering notifications
     if (onSessionCreated) {

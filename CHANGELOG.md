@@ -1,3 +1,12 @@
+# 0.1.37
+
+- `review` command:
+  - Add `--model <id>` option to specify which model to use for review
+  - Model format depends on agent:
+    - OpenCode: `provider/model-id` (e.g., `anthropic/claude-sonnet-4-20250514`)
+    - Claude Code: `model-id` (e.g., `claude-sonnet-4-20250514`)
+  - Shows available models with helpful error message if invalid model specified
+
 # 0.1.36
 
 - `review` command:

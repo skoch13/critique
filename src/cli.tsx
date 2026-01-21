@@ -68,7 +68,7 @@ interface ReviewModeOptions {
   webOptions?: ReviewWebOptions;
   model?: string;
   skipSessionSelect?: boolean; // Skip ACP session select (for resume)
-  oldReviewIdToDelete?: string; // Delete this review ID on successful completion (for resume)
+  existingReviewId?: string; // Use this ID instead of ACP session ID (for resume - overwrites existing file)
 }
 
 // Review mode handler
@@ -77,7 +77,7 @@ async function runReviewMode(
   agent: string,
   options: ReviewModeOptions = {}
 ) {
-  const { sessionIds, webOptions, model, skipSessionSelect, oldReviewIdToDelete } = options;
+  const { sessionIds, webOptions, model, skipSessionSelect, existingReviewId } = options;
   const { tmpdir } = await import("os");
   const { join } = await import("path");
   const pc = await import("picocolors");
@@ -111,7 +111,6 @@ async function runReviewMode(
     waitForFirstValidGroup,
     readReviewYaml,
     saveReview,
-    deleteReview,
   } = await import("./review/index.ts");
   const { ReviewApp } = await import("./review/review-app.tsx");
   type StoredReview = import("./review/index.ts").StoredReview;
@@ -440,10 +439,11 @@ async function runReviewMode(
         reviewSessionId = sessionId;
         logger.info("Review session started", { sessionId });
         
-        // Initialize pending review with ACP session ID
+        // Initialize pending review
+        // Use existingReviewId if resuming (overwrites same file), otherwise use ACP session ID
         const now = Date.now();
         pendingReview = {
-          id: sessionId,
+          id: existingReviewId || sessionId,
           createdAt: now,
           updatedAt: now,
           status: "in_progress",
@@ -474,12 +474,6 @@ async function runReviewMode(
 
         // Save the review as completed
         savePendingReview("completed");
-        
-        // Delete old review if this was a resume
-        if (oldReviewIdToDelete) {
-          deleteReview(oldReviewIdToDelete);
-          logger.info("Deleted old review after successful resume", { oldId: oldReviewIdToDelete });
-        }
       } catch (error) {
         // Stop any active spinners
         if (analysisSpinner) {
@@ -623,12 +617,6 @@ async function runReviewMode(
 
         // Save the review as completed
         savePendingReview("completed");
-        
-        // Delete old review if this was a resume
-        if (oldReviewIdToDelete) {
-          deleteReview(oldReviewIdToDelete);
-          logger.info("Deleted old review after successful resume", { oldId: oldReviewIdToDelete });
-        }
       })
       .catch((error) => {
         logger.error("Review session error", error);
@@ -732,13 +720,13 @@ async function runResumeMode(options: ResumeModeOptions) {
     clack.outro("");
     
     // Restart the review with the same parameters
-    // Old review will be deleted only after successful completion
+    // Use same review ID so the file gets overwritten (not duplicated)
     const webOptions = options.web ? { web: true, open: options.open } : undefined;
     await runReviewMode(review.gitCommand, review.agent, {
       webOptions,
       model: review.model,
       skipSessionSelect: true,
-      oldReviewIdToDelete: review.id,
+      existingReviewId: review.id,
     });
     return;
   }

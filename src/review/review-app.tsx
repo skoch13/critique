@@ -472,6 +472,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
   const resolvedTheme = getResolvedTheme(themeName)
   const textColor = rgbaToHex(resolvedTheme.text)
   const concealColor = rgbaToHex(resolvedTheme.conceal)
+  const diagramTextColor = rgbaToHex(resolvedTheme.markdownBlockQuote ?? resolvedTheme.text)
 
   // Max width for prose (constrained), code blocks use full terminal width
   const maxProseWidth = Math.min(80, width)
@@ -541,7 +542,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
               const segmentRenderable = new TextRenderable(renderer, {
                 id: `diagram-seg-${nodeCounter++}-${i}-${j}`,
                 content: segment.text,
-                fg: segment.type === "muted" ? concealColor : textColor,
+                fg: segment.type === "muted" ? concealColor : diagramTextColor,
               })
               lineBox.add(segmentRenderable)
             }
@@ -578,7 +579,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       // Other elements (hr, space, etc.) use default rendering
       return undefined
     }
-  }, [renderer, maxProseWidth, syntaxStyle, textColor, concealColor])
+  }, [renderer, maxProseWidth, syntaxStyle, textColor, concealColor, diagramTextColor])
 
   // Use very large width when renderer available so code blocks don't wrap
   // Prose is constrained via renderNode, code blocks can overflow

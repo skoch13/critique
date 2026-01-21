@@ -498,10 +498,10 @@ ALWAYS wrap diagrams in \`\`\`diagram code blocks - never render them as plain t
 
 \`\`\`diagram
 ┌─────────────┐      ┌─────────────┐      ┌────────────┐
-│   Request   │ ───> │   Router    │ ───> │   Handler  │
+│   Request   │ ───▶ │   Router    │ ───▶ │   Handler  │
 └─────────────┘      └──────┬──────┘      └──────┬─────┘
                             │                    │
-                            v                    v
+                            ▼                    ▼
                     ┌─────────────┐      ┌─────────────┐
                     │  Middleware │      │  Response   │
                     └─────────────┘      └─────────────┘
@@ -512,12 +512,12 @@ ALWAYS wrap diagrams in \`\`\`diagram code blocks - never render them as plain t
                     │     Initial      │
                     └────────┬─────────┘
                              │ start()
-                             v
+                             ▼
 ┌───────────┐ fail   ┌──────────────────┐  success  ┌───────────┐
-│   Error   │ <───── │    Processing    │ ────────> │  Complete │
+│   Error   │ ◀───── │    Processing    │ ────────▶ │  Complete │
 └───────────┘        └──────────────────┘           └───────────┘
                              │ cancel()
-                             v
+                             ▼
                      ┌──────────────────┐
                      │    Cancelled     │
                      └──────────────────┘

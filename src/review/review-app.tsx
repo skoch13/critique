@@ -252,7 +252,7 @@ export function ReviewAppView({
   const hunkMap = React.useMemo(() => new Map(hunks.map((h) => [h.id, h])), [hunks])
 
   const resolvedTheme = getResolvedTheme(themeName)
-  const bgColor = resolvedTheme.background
+  const bgColor = rgbaToHex(resolvedTheme.background)
 
   // Loading state - TUI now only starts after YAML is parsed, so this is a fallback
   if (!reviewData) {
@@ -524,7 +524,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
           })
           const parsedLines = parseDiagram(codeToken.text)
           for (let i = 0; i < parsedLines.length; i++) {
-            const line = parsedLines[i]
+            const line = parsedLines[i]!
             // Skip empty lines or add a single space to maintain line height
             if (line.segments.length === 0) {
               const emptyLine = new TextRenderable(renderer, {
@@ -542,7 +542,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
             })
             // Add each segment as a separate text renderable with appropriate color
             for (let j = 0; j < line.segments.length; j++) {
-              const segment = line.segments[j]
+              const segment = line.segments[j]!
               const segmentRenderable = new TextRenderable(renderer, {
                 id: `diagram-seg-${nodeCounter++}-${i}-${j}`,
                 content: segment.text,

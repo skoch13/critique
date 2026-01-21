@@ -1,3 +1,7 @@
+// Cloudflare Worker for hosting HTML diff previews at critique.work.
+// Handles upload, storage (KV), and responsive serving of desktop/mobile HTML versions.
+// Endpoints: POST /upload, GET /v/:id (view), GET /raw/:id (debug).
+
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { stream } from "hono/streaming"

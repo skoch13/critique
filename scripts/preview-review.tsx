@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-// Preview script for ReviewApp component
-// Run with: bun run scripts/preview-review.tsx
-// Web mode: bun run scripts/preview-review.tsx --web
+// Development preview script for testing ReviewApp styles without running AI.
+// Renders example hunks and review data to preview TUI appearance.
+// Run with: bun run scripts/preview-review.tsx (TUI) or --web (HTML upload).
 
 import { createCliRenderer } from "@opentui/core"
 import { createRoot } from "@opentui/react"

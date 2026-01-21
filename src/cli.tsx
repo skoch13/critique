@@ -1,4 +1,8 @@
 #!/usr/bin/env bun
+// CLI entrypoint for the critique diff viewer.
+// Provides TUI diff viewing, AI-powered review generation, and web preview upload.
+// Commands: default (diff), review (AI analysis), web (HTML upload), pick (cherry-pick files).
+
 import { cac } from "cac";
 import {
   createRoot,

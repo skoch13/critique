@@ -1,5 +1,6 @@
-// StreamDisplay - TUI component for showing ACP streaming events
-// Displays agent activity while waiting for YAML to be parsed
+// StreamDisplay - TUI component for showing ACP streaming events.
+// Renders real-time agent activity (thinking, messages, tool calls) during review generation.
+// Shows formatted tool operations with file names and edit statistics.
 
 import * as React from "react"
 import { SyntaxStyle } from "@opentui/core"

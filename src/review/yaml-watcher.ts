@@ -1,4 +1,6 @@
-// Watch and parse streaming YAML output from AI review
+// File watcher for streaming YAML output from AI review generation.
+// Parses partial YAML as the AI writes it, enabling progressive UI updates.
+// Handles incomplete YAML gracefully during generation.
 
 import fs from "fs"
 import YAML from "js-yaml"

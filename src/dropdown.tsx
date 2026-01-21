@@ -1,3 +1,7 @@
+// Searchable dropdown component for file and theme selection in TUI.
+// Supports keyboard navigation, fuzzy search filtering, and mouse interaction.
+// Used by main diff view for file picker and theme picker overlays.
+
 import React, { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
 import { TextAttributes, TextareaRenderable } from "@opentui/core";

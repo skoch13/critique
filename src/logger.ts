@@ -1,4 +1,6 @@
-// Debug logger that writes to console and app.log when DEBUG=true
+// Debug logger that writes to console and app.log when DEBUG=true.
+// Provides log levels (log, info, warn, error, debug) with timestamps.
+// Disabled in production; enable with DEBUG=true or DEBUG=1 environment variable.
 
 import fs from "fs"
 import { join } from "path"

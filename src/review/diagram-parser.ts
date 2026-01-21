@@ -1,5 +1,6 @@
-// Diagram parser - parses ASCII/Unicode diagrams into colored segments
-// Used to highlight structural characters (boxes, arrows, lines) differently from text
+// ASCII/Unicode diagram parser for syntax highlighting in markdown code blocks.
+// Separates structural characters (box-drawing, arrows) from text content
+// to render diagrams with muted structural elements and highlighted labels.
 
 /**
  * A segment of text with a specific color type

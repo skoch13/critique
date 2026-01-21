@@ -1,3 +1,7 @@
+// Monotone theme generator for creating single-hue color schemes.
+// Generates VS Code-compatible themes from a base hue with configurable saturation.
+// Used for creating consistent color palettes across light and dark variants.
+
 type VSCodeTheme = {
   name: string;
   type: "light" | "dark";

@@ -1,5 +1,6 @@
-// Format ACP session notifications for streaming display
-// Shows agent activity while waiting for YAML to be parsed
+// Formatter for ACP session notifications into displayable stream lines.
+// Accumulates consecutive chunks (thinking, messages) and formats tool calls
+// with symbols and colors for the streaming display component.
 
 import type { SessionNotification } from "@agentclientprotocol/sdk"
 

@@ -1,3 +1,7 @@
+// ANSI terminal output to HTML converter for web preview generation.
+// Uses ghostty-opentui to parse PTY output and generates responsive HTML documents
+// with proper font scaling to fit terminal content within viewport width.
+
 import { ptyToJson, StyleFlags, type TerminalData, type TerminalLine, type TerminalSpan } from "ghostty-opentui"
 
 export interface AnsiToHtmlOptions {

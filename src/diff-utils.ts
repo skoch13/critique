@@ -1,4 +1,6 @@
-// Shared utilities for diff processing between CLI commands
+// Shared utilities for git diff processing across CLI commands.
+// Builds git commands, parses diff files, detects filetypes for syntax highlighting,
+// and provides helpers for unified/split view mode selection.
 
 export const IGNORED_FILES = [
   "pnpm-lock.yaml",

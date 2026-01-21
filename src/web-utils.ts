@@ -1,5 +1,6 @@
-// Shared utilities for web preview generation
-// Used by both `web` and `explain --web` commands
+// Web preview generation utilities for uploading diffs to critique.work.
+// Captures PTY output using Bun.Terminal, converts to HTML with responsive layout,
+// and uploads desktop/mobile versions for shareable diff viewing.
 
 import { exec } from "child_process"
 import { promisify } from "util"

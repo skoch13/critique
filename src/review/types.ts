@@ -1,4 +1,6 @@
-// Types for the AI-powered diff review feature
+// Type definitions for the AI-powered diff review feature.
+// Defines IndexedHunk, ReviewYaml, ReviewGroup structures for diff analysis,
+// plus coverage tracking and session context types for ACP integration.
 
 import type { SessionNotification } from "@agentclientprotocol/sdk"
 

@@ -1,4 +1,6 @@
-// ReviewApp - TUI component for AI-powered diff review
+// ReviewApp - Main TUI component for AI-powered diff review.
+// Renders streaming review content with markdown descriptions and diff hunks.
+// Supports live generation updates, theme switching, and resume from saved reviews.
 
 import * as React from "react"
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"

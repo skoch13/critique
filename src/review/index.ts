@@ -1,5 +1,6 @@
-// Review module - AI-powered diff review using ACP
-// Exports for use in CLI
+// AI-powered diff review module using Agent Client Protocol (ACP).
+// Coordinates with OpenCode or Claude Code to generate progressive disclosure reviews.
+// Re-exports all review functionality for use by the CLI.
 
 export {
   parseHunksWithIds,

@@ -1,6 +1,6 @@
-// Storage utilities for persisting review sessions
-// Reviews are stored as JSON files in ~/.critique/reviews/
-// File is written on process exit/completion to prevent concurrent access issues
+// Persistent storage for review sessions in ~/.critique/reviews/.
+// Saves review state on exit/completion, enables resume of interrupted reviews,
+// and provides listing with automatic cleanup of old reviews (max 50).
 
 import fs from "fs"
 import { join } from "path"

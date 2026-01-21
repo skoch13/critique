@@ -1286,4 +1286,228 @@ Added logger import.`,
       "
     `)
   })
+
+  it("should document behavior with unclosed diagram code block (AI-generated malformed markdown)", async () => {
+    // This test documents the behavior when AI generates malformed markdown with an unclosed
+    // diagram code block. The first \`\`\`diagram is never closed before **The Solution:**
+    // appears, causing the parser to treat everything as one code block.
+    //
+    // ROOT CAUSE: The AI generated markdown like this:
+    //   **The Problem:**
+    //   \`\`\`diagram
+    //   ...first diagram...
+    //   **The Solution:**       <-- MISSING closing \`\`\` before this!
+    //   \`\`\`diagram
+    //   ...second diagram...
+    //   \`\`\`
+    //
+    // RESULT: marked parser correctly follows markdown spec - everything from first
+    // \`\`\`diagram to the final \`\`\` becomes ONE code block, including:
+    // - "**The Solution:**" as literal text (not bold)
+    // - "\`\`\`diagram" as literal text (not a new code block)
+    //
+    // FIX: AI should generate proper markdown with closing \`\`\` after each diagram.
+    const bugHunk = createHunk(1, "src/config.ts", 0, 1, 1, [
+      "+export const x = 1",
+    ])
+
+    // MALFORMED markdown - first diagram missing closing backticks
+    const malformedMarkdown = `## ActionPanel captures actions to zustand, ActionsDialog renders them
+
+**The Problem:**
+\`\`\`diagram
+BEFORE: Context lost when rendering in dialog
++-----------------------+          +------------------+
+| ListItem              |  push()  | DialogOverlay    |
+| (has useNavigation,   | -------> | (different React |
+|  useFormContext, etc) |          |  tree, no access |
++-----------------------+          |  to contexts)    |
+                                   +------------------+
+
+**The Solution:**
+\`\`\`diagram
+AFTER: Closures preserve context
++------------------------+  capture   +----------------+
+| ListItem               | ---------> | zustand        |
+| <Offscreen>            |  execute() | capturedActions|
+|   <ActionPanel>        |  closures  +-------+--------+
+|     <Action execute={  |                    |
+|       () => push(...)  | <----- closure     | read
+|     }/>                |   retains context  v
+|   </ActionPanel>       |            +----------------+
+| </Offscreen>           |            | ActionsDialog  |
++------------------------+            | (calls execute)|
+                                      +----------------+
+\`\`\`
+
+\`ActionsDialog\` groups actions by section.`
+
+    const bugReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: malformedMarkdown,
+      }],
+    }
+
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[bugHunk]}
+        reviewData={bugReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={100}
+      />,
+      { width: 100, height: 50 },
+    )
+
+    await testSetup.renderOnce()
+    const frame = testSetup.captureCharFrame()
+    // Documents the incorrect rendering when markdown is malformed:
+    // - "**The Solution:**" appears as literal text inside code block
+    // - "\`\`\`diagram" appears as literal text
+    // - Both diagrams merge into one big code block
+    expect(frame).toMatchInlineSnapshot(`
+      "                                                                                                    
+                 ActionPanel captures actions to zustand, ActionsDialog renders them                      
+                                                                                                          
+                 The Problem:                                                                             
+                                                                                                          
+                 BEFORE: Context lost when rendering in dialog                                            
+                 +-----------------------+          +------------------+                                  
+                 | ListItem              |  push()  | DialogOverlay    |                                  
+                 | (has useNavigation,   | -------> | (different React |                                  
+                 |  useFormContext, etc) |          |  tree, no access |                                  
+                 +-----------------------+          |  to contexts)    |                                  
+                                                    +------------------+                                  
+                                                                                                          
+                 **The Solution:**                                                                        
+                 \`\`\`diagram                                                                               
+                 AFTER: Closures preserve context                                                         
+                 +------------------------+  capture   +----------------+                                 
+                 | ListItem               | ---------> | zustand        |                                 
+                 | <Offscreen>            |  execute() | capturedActions|                                 
+                 |   <ActionPanel>        |  closures  +-------+--------+                                 
+                 |     <Action execute={  |                    |                                          
+                 |       () => push(...)  | <----- closure     | read                                     
+                 |     }/>                |   retains context  v                                          
+                 |   </ActionPanel>       |            +----------------+                                 
+                 | </Offscreen>           |            | ActionsDialog  |                                 
+                 +------------------------+            | (calls execute)|                                 
+                                                       +----------------+                                 
+                                                                                                          
+                 ActionsDialog groups actions by section.                                                 
+                                                                                                          
+                                                                                                          
+       rc/config.ts +1-0                                                                                  
+                                                                                                          
+        + export const x = 1                                                                              
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+        (1 section)  t theme                                       run with --web to share & collaborate  
+                                                                                                          
+      "
+    `)
+  })
+
+  it("should render TWO separate diagrams when markdown is properly formatted", async () => {
+    // This test shows the CORRECT behavior when markdown has proper closing backticks
+    const goodHunk = createHunk(1, "src/config.ts", 0, 1, 1, [
+      "+export const x = 1",
+    ])
+
+    // CORRECT markdown - each diagram properly closed with \`\`\`
+    const correctMarkdown = `## ActionPanel captures actions to zustand
+
+**The Problem:**
+\`\`\`diagram
+BEFORE: Context lost
++-----------+   +-----------+
+| ListItem  |-->| Dialog    |
++-----------+   +-----------+
+\`\`\`
+
+**The Solution:**
+\`\`\`diagram
+AFTER: Closures preserve
++-----------+   +-----------+
+| Offscreen |-->| zustand   |
++-----------+   +-----------+
+\`\`\`
+
+\`ActionsDialog\` groups actions by section.`
+
+    const goodReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: correctMarkdown,
+      }],
+    }
+
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[goodHunk]}
+        reviewData={goodReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={80}
+      />,
+      { width: 80, height: 35 },
+    )
+
+    await testSetup.renderOnce()
+    const frame = testSetup.captureCharFrame()
+    // With proper markdown:
+    // - "**The Problem:**" and "**The Solution:**" should render as bold text
+    // - Each diagram should be a separate code block
+    expect(frame).toMatchInlineSnapshot(`
+      "                                                                                
+         ActionPanel captures actions to zustand                                      
+                                                                                      
+         The Problem:                                                                 
+                                                                                      
+         BEFORE: Context lost                                                         
+         +-----------+   +-----------+                                                
+         | ListItem  |-->| Dialog    |                                                
+         +-----------+   +-----------+                                                
+                                                                                      
+         The Solution:                                                                
+                                                                                      
+         AFTER: Closures preserve                                                     
+         +-----------+   +-----------+                                                
+         | Offscreen |-->| zustand   |                                                
+         +-----------+   +-----------+                                                
+                                                                                      
+         ActionsDialog groups actions by section.                                     
+                                                                                      
+                                                                                      
+       rc/config.ts +1-0                                                              
+                                                                                      
+        + export const x = 1                                                          
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+        (1 section)  t theme                   run with --web to share & collaborate  
+                                                                                      
+      "
+    `)
+  })
 })

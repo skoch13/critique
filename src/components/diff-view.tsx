@@ -1,4 +1,6 @@
-// Shared DiffView component for rendering git diffs with syntax highlighting
+// Shared DiffView component for rendering git diffs with syntax highlighting.
+// Wraps opentui's <diff> element with theme-aware colors and syntax styles.
+// Supports split and unified view modes with line numbers.
 
 import * as React from "react"
 import { SyntaxStyle } from "@opentui/core"

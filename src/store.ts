@@ -1,5 +1,6 @@
-// Global zustand store for critique app
-// Shared between main diff view and review view
+// Global Zustand store for persistent application state.
+// Manages theme selection with automatic persistence to ~/.critique/state.json.
+// Shared between main diff view and review view components.
 
 import { create } from "zustand"
 import fs from "fs"

@@ -1,5 +1,6 @@
-// Syntax highlighting themes for critique
-// Source: https://github.com/sst/opencode/tree/main/packages/opencode/src/cli/cmd/tui/context/theme
+// Syntax highlighting theme system with 30+ themes from OpenCode.
+// Loads JSON theme files lazily on demand, resolves color references,
+// and provides both UI colors and Tree-sitter compatible syntax styles.
 
 import { parseColor, RGBA } from "@opentui/core";
 

@@ -1,3 +1,7 @@
+// Monochrome theme generator for creating grayscale color schemes.
+// Generates VS Code-compatible themes by blending between background and foreground.
+// Supports various contrast levels from subtle to amplified.
+
 type VSCodeTheme = {
   name: string;
   type: "light" | "dark";

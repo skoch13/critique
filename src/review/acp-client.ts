@@ -159,64 +159,61 @@ export class AcpClient {
 
   /**
    * List sessions for the given working directory
-   * Uses ACP unstable_listSessions for opencode, parses JSONL files for claude
+   * Uses ACP unstable_listSessions, falls back to file parsing for Claude
    * @param cwd - Working directory to filter sessions by
    * @param limit - Maximum number of sessions to return (default: 10)
    */
   async listSessions(cwd: string, limit = 10): Promise<SessionInfo[]> {
-    if (this.agent === "opencode") {
-      return this.listOpencodeSessions(cwd, limit)
-    } else {
-      return this.listClaudeSessions(cwd, limit)
-    }
-  }
-
-  /**
-   * List OpenCode sessions using ACP unstable_listSessions
-   * @param cwd - Working directory to filter sessions by
-   * @param limit - Maximum number of sessions to return
-   */
-  private async listOpencodeSessions(cwd: string, limit: number): Promise<SessionInfo[]> {
     await this.ensureConnected()
     if (!this.client) {
       throw new Error("Client connection failed")
     }
 
-    const sessions: SessionInfo[] = []
-    let cursor: string | undefined
+    // Try ACP unstable_listSessions first
+    try {
+      const sessions: SessionInfo[] = []
+      let cursor: string | undefined
 
-    // Paginate until we have enough sessions or no more results
-    while (sessions.length < limit) {
-      const response = await this.client.unstable_listSessions({
-        cwd,
-        cursor,
-      })
-
-      // Convert ACP SessionInfo to our local type
-      for (const acpSession of response.sessions) {
-        if (sessions.length >= limit) break
-
-        sessions.push({
-          sessionId: acpSession.sessionId,
-          cwd: acpSession.cwd,
-          title: acpSession.title ?? undefined,
-          // Convert ISO 8601 string to timestamp (milliseconds)
-          updatedAt: acpSession.updatedAt ? new Date(acpSession.updatedAt).getTime() : undefined,
-          _meta: acpSession._meta,
+      // Paginate until we have enough sessions or no more results
+      while (sessions.length < limit) {
+        const response = await this.client.unstable_listSessions({
+          cwd,
+          cursor,
         })
+
+        // Convert ACP SessionInfo to our local type
+        for (const acpSession of response.sessions) {
+          if (sessions.length >= limit) break
+
+          sessions.push({
+            sessionId: acpSession.sessionId,
+            cwd: acpSession.cwd,
+            title: acpSession.title ?? undefined,
+            // Convert ISO 8601 string to timestamp (milliseconds)
+            updatedAt: acpSession.updatedAt ? new Date(acpSession.updatedAt).getTime() : undefined,
+            _meta: acpSession._meta,
+          })
+        }
+
+        // Check if there are more pages
+        if (!response.nextCursor) break
+        cursor = response.nextCursor
       }
 
-      // Check if there are more pages
-      if (!response.nextCursor) break
-      cursor = response.nextCursor
+      // Sessions should already be sorted by the server, but ensure descending order
+      return sessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+    } catch (error) {
+      // Fall back to file-based listing for agents that don't support listSessions
+      logger.debug("ACP listSessions not supported, falling back to file parsing", { error })
+      if (this.agent === "claude") {
+        return this.listClaudeSessions(cwd, limit)
+      }
+      throw error
     }
-
-    // Sessions should already be sorted by the server, but ensure descending order
-    return sessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
   }
 
   /**
-   * List Claude Code sessions by parsing JSONL files
+   * List Claude Code sessions by parsing JSONL files (fallback)
    * Sessions are stored in ~/.claude/projects/<path-encoded>/
    * @param cwd - Working directory to filter sessions by
    * @param limit - Maximum number of sessions to return

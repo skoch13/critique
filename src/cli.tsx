@@ -338,7 +338,7 @@ async function runReviewMode(
           return `${days}d ago`;
         };
 
-        // Filter out critique-generated sessions and ACP sessions, limit to first 10
+        // Filter out critique-generated sessions and ACP sessions, limit to first 25
         const filteredSessions = sessions
           .filter((s) => {
             // Filter by _meta if the agent supports it
@@ -350,7 +350,7 @@ async function runReviewMode(
             if (title.includes("review a git diff")) return false
             return true
           })
-          .slice(0, 10);
+          .slice(0, 25);
 
         // Non-TTY mode: log available sessions for agents to use with --session
         if (!process.stdin.isTTY) {
@@ -679,7 +679,7 @@ async function runResumeMode(options: ResumeModeOptions) {
 
     const selected = await clack.select({
       message: "Select a review to display",
-      options: reviews.slice(0, 20).map((r) => {
+      options: reviews.slice(0, 25).map((r) => {
         // Show status and time in label to avoid layout shifts (hints only show on focus)
         const status = r.status === "in_progress" ? pc.default.yellow(" (in progress)") : "";
         const time = formatTimeAgo(r.updatedAt);

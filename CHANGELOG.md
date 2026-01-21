@@ -1,3 +1,8 @@
+# 0.1.40
+
+- `review` command:
+  - Increased session/review picker limits from 10/20 to 25 for both ACP sessions and `--resume`
+
 # 0.1.39
 
 - `review` command:

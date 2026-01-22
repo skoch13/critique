@@ -71,6 +71,7 @@ interface ReviewModeOptions {
   sessionIds?: string[];
   webOptions?: ReviewWebOptions;
   model?: string;
+  json?: boolean;
 }
 
 // Review mode handler
@@ -79,16 +80,19 @@ async function runReviewMode(
   agent: string,
   options: ReviewModeOptions = {}
 ) {
-  const { sessionIds, webOptions, model } = options;
+  const { sessionIds, webOptions, model, json } = options;
   const { tmpdir } = await import("os");
   const { join } = await import("path");
   const pc = await import("picocolors");
   const clack = await import("@clack/prompts");
 
+  // When --json is set, redirect clack output to stderr
+  const out = json ? { output: process.stderr } : {};
+
   logger.info("Starting review mode", { gitCommand, agent });
 
   // Intro
-  clack.intro("critique review");
+  clack.intro("critique review", out);
 
   // Get the diff
   const { stdout: gitDiff } = await execAsync(gitCommand, {
@@ -98,8 +102,9 @@ async function runReviewMode(
   logger.info("Got git diff", { length: gitDiff.length });
 
   if (!gitDiff.trim()) {
-    clack.log.warn("No changes to review");
-    clack.outro("");
+    clack.log.warn("No changes to review", out);
+    clack.outro("", out);
+    if (json) console.log(JSON.stringify({ error: "No changes to review" }));
     process.exit(0);
   }
 
@@ -122,12 +127,13 @@ async function runReviewMode(
   logger.info("Parsed hunks", { count: hunks.length });
 
   if (hunks.length === 0) {
-    clack.log.warn("No hunks to review");
-    clack.outro("");
+    clack.log.warn("No hunks to review", out);
+    clack.outro("", out);
+    if (json) console.log(JSON.stringify({ error: "No hunks to review" }));
     process.exit(0);
   }
 
-  clack.log.step(`Found ${hunks.length} hunk${hunks.length === 1 ? "" : "s"} to review`);
+  clack.log.step(`Found ${hunks.length} hunk${hunks.length === 1 ? "" : "s"} to review`, out);
 
   // Create temp file for YAML output
   const yamlPath = join(tmpdir(), `critique-review-${Date.now()}.yaml`);
@@ -184,7 +190,7 @@ async function runReviewMode(
     if (!analysisLog) {
       analysisSpinner?.stop("Analysis started");
       analysisSpinner = null;
-      analysisLog = clack.taskLog({ title: "Analyzing diff..." });
+      analysisLog = clack.taskLog({ title: "Analyzing diff...", ...out });
     }
     return analysisLog;
   };
@@ -199,7 +205,7 @@ async function runReviewMode(
       return;
     }
     if (!toolSpinner) {
-      toolSpinner = clack.spinner();
+      toolSpinner = clack.spinner(out);
       toolSpinner.start(`Running ${count} tool${count === 1 ? "" : "s"}...`);
     } else if (count !== lastToolCount) {
       toolSpinner.message(`Running ${count} tool${count === 1 ? "" : "s"}...`);
@@ -328,7 +334,7 @@ async function runReviewMode(
       // If session IDs provided via --session, use those
       if (sessionIds && sessionIds.length > 0) {
         selectedSessionIds = sessionIds;
-        clack.log.info(`Using ${selectedSessionIds.length} specified session(s) for context`);
+        clack.log.info(`Using ${selectedSessionIds.length} specified session(s) for context`, out);
       } else {
         // Helper to format time ago
         const formatTimeAgo = (timestamp: number) => {
@@ -356,24 +362,24 @@ async function runReviewMode(
           })
           .slice(0, 25);
 
-        // Non-TTY mode: log available sessions for agents to use with --session
-        if (!process.stdin.isTTY) {
+        // Non-TTY mode or --json: log available sessions for agents to use with --session
+        if (!process.stdin.isTTY || json) {
           if (filteredSessions.length > 0) {
-            clack.log.info("Available sessions for context:");
+            clack.log.info("Available sessions for context:", out);
             for (const s of filteredSessions) {
               const timeAgo = s.updatedAt ? formatTimeAgo(s.updatedAt) : "";
               const title = s.title || `Session ${s.sessionId.slice(0, 8)}`;
-              clack.log.info(`  ${s.sessionId}  ${title}  ${timeAgo}`);
+              clack.log.info(`  ${s.sessionId}  ${title}  ${timeAgo}`, out);
             }
-            clack.log.info("To include relevant sessions, re-run with: --session <id> (can be repeated)");
+            clack.log.info("To include relevant sessions, re-run with: --session <id> (can be repeated)", out);
           } else {
-            clack.log.info("No sessions available for context");
+            clack.log.info("No sessions available for context", out);
           }
-          clack.log.info("Proceeding without session context");
+          clack.log.info("Proceeding without session context", out);
         } else {
           // TTY mode: show interactive multiselect prompt
           if (filteredSessions.length === 0) {
-            clack.log.info("No sessions available for context");
+            clack.log.info("No sessions available for context", out);
           }
 
           const selected = filteredSessions.length > 0
@@ -387,26 +393,27 @@ async function runReviewMode(
                   return { value: s.sessionId, label };
                 }),
                 required: false,
+                ...out,
               })
             : [];
 
           if (clack.isCancel(selected)) {
-            clack.cancel("Operation cancelled");
+            clack.cancel("Operation cancelled", out);
             process.exit(0);
           }
 
           selectedSessionIds = selected as string[];
           if (selectedSessionIds.length > 0) {
-            clack.log.info(`Selected ${selectedSessionIds.length} session(s) for context`);
+            clack.log.info(`Selected ${selectedSessionIds.length} session(s) for context`, out);
           } else {
-            clack.log.info("No sessions selected, proceeding without context");
+            clack.log.info("No sessions selected, proceeding without context", out);
           }
         }
       }
 
       // Load selected sessions
       if (selectedSessionIds.length > 0) {
-        const loadSpinner = clack.spinner();
+        const loadSpinner = clack.spinner(out);
         loadSpinner.start(`Loading ${selectedSessionIds.length} session${selectedSessionIds.length === 1 ? "" : "s"}...`);
         
         const compressedSessions: Awaited<ReturnType<typeof compressSession>>[] = [];
@@ -427,7 +434,7 @@ async function runReviewMode(
 
     const hunksContext = hunksToContextXml(hunks);
     
-    analysisSpinner = clack.spinner();
+    analysisSpinner = clack.spinner(out);
     analysisSpinner.start("Analyzing diff...");
 
     // Start the review session (don't await - let it run in background)
@@ -483,13 +490,14 @@ async function runReviewMode(
         
         logger.error("Review session error", error);
         const errorMessage = error instanceof Error ? error.message : String(error);
-        clack.log.error(errorMessage);
-        clack.outro("");
+        clack.log.error(errorMessage, out);
+        clack.outro("", out);
         
         // Save partial progress
         savePendingReview("in_progress");
         if (acpClient) await acpClient.close();
         try { fs.unlinkSync(yamlPath); } catch (e) { logger.debug("Failed to cleanup yaml file", { error: e }); }
+        if (json) console.log(JSON.stringify({ error: errorMessage }));
         process.exit(1);
       }
 
@@ -520,7 +528,7 @@ async function runReviewMode(
         themeName,
       ];
 
-      const webSpinner = clack.spinner();
+      const webSpinner = clack.spinner(out);
       webSpinner.start("Generating web preview...");
       
       try {
@@ -538,9 +546,12 @@ async function runReviewMode(
         const result = await uploadHtml(htmlDesktop, htmlMobile);
         webSpinner.stop("Uploaded");
         
-        clack.log.success(`Preview URL: ${result.url}`);
-        clack.log.info("(expires in 7 days)");
-        clack.outro("");
+        clack.log.success(`Preview URL: ${result.url}`, out);
+        clack.log.info("(expires in 7 days)", out);
+        clack.outro("", out);
+        if (json) {
+          console.log(JSON.stringify({ url: result.url, id: result.id }));
+        }
 
         if (webOptions.open) {
           await openInBrowser(result.url);
@@ -551,8 +562,9 @@ async function runReviewMode(
         cleanupTempFile(hunksFile);
         cleanupTempFile(yamlPath);
         if (acpClient) await acpClient.close();
-        clack.log.error(`Failed to generate web preview: ${error.message}`);
-        clack.outro("");
+        clack.log.error(`Failed to generate web preview: ${error.message}`, out);
+        clack.outro("", out);
+        if (json) console.log(JSON.stringify({ error: error.message }));
         process.exit(1);
       }
     }
@@ -917,6 +929,7 @@ interface WebModeOptions {
   cols?: number;
   mobileCols?: number;
   theme?: string;
+  json?: boolean;
   '--'?: string[];
 }
 
@@ -943,6 +956,9 @@ async function runWebMode(
     cleanupTempFile,
   } = await import("./web-utils.ts");
 
+  // Use stderr for progress when --json is set, stdout otherwise
+  const log = options.json ? console.error.bind(console) : console.log.bind(console);
+
   const gitCommand = buildGitCommand({
     staged: options.staged,
     commit: options.commit,
@@ -960,7 +976,7 @@ async function runWebMode(
     ? options.theme
     : defaultThemeName;
 
-  console.log("Capturing diff output...");
+  log("Capturing diff output...");
 
   // Get the git diff first
   const { stdout: gitDiff } = await execAsync(gitCommand, {
@@ -968,7 +984,10 @@ async function runWebMode(
   });
 
   if (!gitDiff.trim()) {
-    console.log("No changes to display");
+    log("No changes to display");
+    if (options.json) {
+      console.log(JSON.stringify({ error: "No changes to display" }));
+    }
     process.exit(0);
   }
 
@@ -992,7 +1011,7 @@ async function runWebMode(
     themeName,
   ];
 
-  console.log("Converting to HTML...");
+  log("Converting to HTML...");
 
   try {
     const { htmlDesktop, htmlMobile } = await captureResponsiveHtml(
@@ -1003,11 +1022,15 @@ async function runWebMode(
     // Clean up temp file
     cleanupTempFile(diffFile);
 
-    console.log("Uploading...");
+    log("Uploading...");
 
     const result = await uploadHtml(htmlDesktop, htmlMobile);
-    console.log(`\nPreview URL: ${result.url}`);
-    console.log(`(expires in 7 days)`);
+
+    log(`\nPreview URL: ${result.url}`);
+    log(`(expires in 7 days)`);
+    if (options.json) {
+      console.log(JSON.stringify({ url: result.url, id: result.id }));
+    }
 
     if (options.open) {
       await openInBrowser(result.url);
@@ -1018,6 +1041,9 @@ async function runWebMode(
     cleanupTempFile(diffFile);
     const message = error instanceof Error ? error.message : String(error);
     console.error("Failed to generate web preview:", message);
+    if (options.json) {
+      console.log(JSON.stringify({ error: message }));
+    }
     process.exit(1);
   }
 }
@@ -1481,6 +1507,7 @@ cli
   .option("--web [title]", "Generate web preview instead of TUI")
   .option("--image", "Generate images instead of TUI (saved to /tmp)")
   .option("--open", "Open in browser (with --web)")
+  .option("--json", "Output JSON to stdout (with --web)")
   .option("--cols <cols>", "Desktop columns for web render", { default: 240 })
   .option("--mobile-cols <cols>", "Mobile columns for web render", { default: 100 })
   .option("--stdin", "Read diff from stdin (for use as a pager)")
@@ -1529,6 +1556,7 @@ cli
         filter: options.filter,
         title,
         open: options.open,
+        json: options.json,
         cols: parseInt(options.cols) || 240,
         mobileCols: parseInt(options.mobileCols) || 100,
         theme: options.theme,
@@ -1686,6 +1714,7 @@ cli
   .option("--session <id>", "Session ID(s) to include as context (can be repeated)")
   .option("--web", "Generate web preview instead of TUI")
   .option("--open", "Open web preview in browser (with --web)")
+  .option("--json", "Output JSON to stdout (implies --web)")
   .option("--resume [id]", "Resume a previous review (shows select if no ID provided)")
   .action(async (base, head, options) => {
     try {
@@ -1719,11 +1748,14 @@ cli
         ? Array.isArray(options.session) ? options.session : [options.session]
         : undefined;
 
-      const webOptions = options.web ? { web: true, open: options.open } : undefined;
+      // --json implies --web
+      const useWeb = options.web || options.json;
+      const webOptions = useWeb ? { web: true, open: options.open } : undefined;
       await runReviewMode(gitCommand, options.agent, {
         sessionIds,
         webOptions,
         model: options.model,
+        json: options.json,
       });
     } catch (error) {
       console.error("Error running review:", error);

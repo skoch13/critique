@@ -1,3 +1,12 @@
+# 0.1.42
+
+- New `--image` flag for all diff commands:
+  - Generates WebP images of terminal output (saved to /tmp)
+  - Splits long diffs into multiple images (70 lines per image)
+  - Uses takumi for high-performance image rendering
+  - `@takumi-rs/core` and `@takumi-rs/helpers` added as optional dependencies
+  - Library export: `import { renderTerminalToImages } from "critique/src/image.ts"`
+
 # 0.1.41
 
 - `review` command:

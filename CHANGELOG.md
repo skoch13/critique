@@ -1,3 +1,9 @@
+# 0.1.46
+
+- Add directory tree view at top of diff TUIs (default, review, web commands)
+- Switch opentui packages to npm releases (from pkg.pr.new preview URLs)
+- Add missing `marked` dependency
+
 # 0.1.45
 
 - Support git range syntax in single argument: `critique origin/main...HEAD` or `critique main..feature`

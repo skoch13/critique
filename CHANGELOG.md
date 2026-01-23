@@ -1,3 +1,10 @@
+# 0.1.43
+
+- Show full submodule diffs instead of just commit hashes:
+  - Added `--submodule=diff` flag to git commands
+  - Strip submodule header lines (`Submodule name hash1..hash2:`) before parsing
+  - Works with TUI, `--web`, and `review` commands
+
 # 0.1.42
 
 - New `--image` flag for all diff commands:

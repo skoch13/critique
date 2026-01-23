@@ -36,6 +36,7 @@ import {
   getViewMode,
   processFiles,
   detectFiletype,
+  stripSubmoduleHeaders,
   IGNORED_FILES,
   type ParsedFile,
 } from "./diff-utils.ts";
@@ -992,15 +993,18 @@ async function runWebMode(
   }
 
   // Calculate required rows from diff content
+  // Strip submodule headers before parsing - git diff --submodule=diff adds
+  // "Submodule name hash1..hash2:" lines that the diff parser doesn't understand
+  const cleanedDiff = stripSubmoduleHeaders(gitDiff);
   const { parsePatch } = await import("diff");
-  const files = parsePatch(gitDiff);
+  const files = parsePatch(cleanedDiff);
   const baseRows = files.reduce((sum, file) => {
     const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
     return sum + diffLines + 5; // header + margin per file
   }, 100); // base padding
 
-  // Write diff to temp file
-  const diffFile = writeTempFile(gitDiff, "critique-web-diff", ".patch");
+  // Write cleaned diff to temp file (submodule headers already stripped)
+  const diffFile = writeTempFile(cleanedDiff, "critique-web-diff", ".patch");
 
   // Build render command
   const renderCommand = [
@@ -1535,7 +1539,7 @@ cli
       ]);
 
       const parsedFiles = gitDiff.trim()
-        ? processFiles(diffModule.parsePatch(gitDiff), diffModule.formatPatch)
+        ? processFiles(diffModule.parsePatch(stripSubmoduleHeaders(gitDiff)), diffModule.formatPatch)
         : [];
 
       createRoot(renderer).render(
@@ -1620,7 +1624,7 @@ cli
                 return;
               }
 
-              const files = parsePatch(gitDiff);
+              const files = parsePatch(stripSubmoduleHeaders(gitDiff));
               const processedFiles = processFiles(files, formatPatch);
               setParsedFiles(processedFiles);
             } catch (error) {
@@ -2076,7 +2080,8 @@ cli
     const { parsePatch, formatPatch } = await import("diff");
 
     const gitDiff = fs.readFileSync(diffFile, "utf-8");
-    const files = parsePatch(gitDiff);
+    // Strip submodule headers just in case the file came from external source
+    const files = parsePatch(stripSubmoduleHeaders(gitDiff));
     const filesWithRawDiff = processFiles(files, formatPatch);
 
     if (filesWithRawDiff.length === 0) {

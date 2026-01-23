@@ -3,7 +3,7 @@
 // and generates context XML for AI prompts with cat -n style line numbers.
 
 import type { IndexedHunk, HunkCoverage, ReviewCoverage, UncoveredPortion, ReviewGroup } from "./types.ts"
-import { IGNORED_FILES } from "../diff-utils.ts"
+import { IGNORED_FILES, stripSubmoduleHeaders } from "../diff-utils.ts"
 
 /**
  * Additional patterns for auto-generated files that should be skipped in reviews
@@ -55,7 +55,8 @@ function shouldSkipFile(filename: string): boolean {
  */
 export async function parseHunksWithIds(gitDiff: string): Promise<IndexedHunk[]> {
   const { parsePatch, formatPatch } = await import("diff")
-  const files = parsePatch(gitDiff)
+  // Strip submodule headers - git diff --submodule=diff adds lines the parser can't handle
+  const files = parsePatch(stripSubmoduleHeaders(gitDiff))
   const hunks: IndexedHunk[] = []
   let nextId = 1
 

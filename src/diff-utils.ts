@@ -2,6 +2,19 @@
 // Builds git commands, parses diff files, detects filetypes for syntax highlighting,
 // and provides helpers for unified/split view mode selection.
 
+/**
+ * Strip submodule header lines from git diff output.
+ * git diff --submodule=diff adds "Submodule name hash1..hash2:" lines
+ * that the diff parser doesn't understand.
+ */
+export function stripSubmoduleHeaders(diffOutput: string): string {
+  // Match lines like "Submodule errore 1bf6fc8..d746b25:"
+  return diffOutput
+    .split("\n")
+    .filter((line) => !line.match(/^Submodule \S+ [a-f0-9]+\.\.[a-f0-9]+:$/))
+    .join("\n");
+}
+
 export const IGNORED_FILES = [
   "pnpm-lock.yaml",
   "package-lock.json",
@@ -37,6 +50,8 @@ export interface GitCommandOptions {
  */
 export function buildGitCommand(options: GitCommandOptions): string {
   const contextArg = options.context ? `-U${options.context}` : "";
+  // Show full submodule diffs instead of just commit hashes
+  const submoduleArg = "--submodule=diff";
 
   // Combine --filter options with positional args after --
   const filterOptions = options.filter
@@ -52,20 +67,20 @@ export function buildGitCommand(options: GitCommandOptions): string {
       : "";
 
   if (options.staged) {
-    return `git diff --cached --no-prefix ${contextArg} ${filterArg}`.trim();
+    return `git diff --cached --no-prefix ${submoduleArg} ${contextArg} ${filterArg}`.trim();
   }
   if (options.commit) {
-    return `git show ${options.commit} --no-prefix ${contextArg} ${filterArg}`.trim();
+    return `git show ${options.commit} --no-prefix ${submoduleArg} ${contextArg} ${filterArg}`.trim();
   }
   // Two refs: compare base...head (three-dot, shows changes since branches diverged, like GitHub PRs)
   if (options.base && options.head) {
-    return `git diff ${options.base}...${options.head} --no-prefix ${contextArg} ${filterArg}`.trim();
+    return `git diff ${options.base}...${options.head} --no-prefix ${submoduleArg} ${contextArg} ${filterArg}`.trim();
   }
   // Single ref: show that commit's changes
   if (options.base) {
-    return `git show ${options.base} --no-prefix ${contextArg} ${filterArg}`.trim();
+    return `git show ${options.base} --no-prefix ${submoduleArg} ${contextArg} ${filterArg}`.trim();
   }
-  return `git add -N . && git diff --no-prefix ${contextArg} ${filterArg}`.trim();
+  return `git add -N . && git diff --no-prefix ${submoduleArg} ${contextArg} ${filterArg}`.trim();
 }
 
 /**

@@ -1,3 +1,10 @@
+# 0.1.44
+
+- Fix parsing error with submodule status lines:
+  - Handle "Submodule name contains modified content" lines
+  - Handle "Submodule name contains untracked content" lines
+  - Handle "Submodule name (new commits)" and similar status lines
+
 # 0.1.43
 
 - Show full submodule diffs instead of just commit hashes:

@@ -3,15 +3,27 @@
 // and provides helpers for unified/split view mode selection.
 
 /**
- * Strip submodule header lines from git diff output.
- * git diff --submodule=diff adds "Submodule name hash1..hash2:" lines
- * that the diff parser doesn't understand.
+ * Strip submodule status lines from git diff output.
+ * git diff --submodule=diff adds various status lines that the diff parser doesn't understand:
+ * - "Submodule name hash1..hash2:" (header before submodule diff)
+ * - "Submodule name contains modified content"
+ * - "Submodule name contains untracked content"
+ * - "Submodule name (new commits)"
+ * - "Submodule name (commits not present)"
  */
 export function stripSubmoduleHeaders(diffOutput: string): string {
-  // Match lines like "Submodule errore 1bf6fc8..d746b25:"
   return diffOutput
     .split("\n")
-    .filter((line) => !line.match(/^Submodule \S+ [a-f0-9]+\.\.[a-f0-9]+:$/))
+    .filter((line) => {
+      // Match lines like "Submodule errore 1bf6fc8..d746b25:"
+      if (line.match(/^Submodule \S+ [a-f0-9]+\.\.[a-f0-9]+:?$/)) return false;
+      // Match lines like "Submodule unframer contains modified content"
+      if (line.match(/^Submodule \S+ contains (modified|untracked) content$/))
+        return false;
+      // Match lines like "Submodule name (new commits)" or "(commits not present)"
+      if (line.match(/^Submodule \S+ \(.*\)$/)) return false;
+      return true;
+    })
     .join("\n");
 }
 

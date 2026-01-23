@@ -1,3 +1,7 @@
+# 0.1.46
+
+- Fix Q and Escape keys not working to exit when there are no changes to display (fixes #16)
+
 # 0.1.45
 
 - Support git range syntax in single argument: `critique origin/main...HEAD` or `critique main..feature`

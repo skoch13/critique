@@ -31,22 +31,24 @@ function getStatusColor(status: "added" | "modified" | "deleted", theme: ReturnT
   }
 }
 
-/**
- * Render a single tree node line with proper colors
- */
-function TreeNodeLine({
-  node,
-  theme,
-  mutedColor,
-  textColor,
-  onSelect,
-}: {
+interface TreeNodeLineProps {
   node: TreeNode
   theme: ReturnType<typeof getResolvedTheme>
   mutedColor: string
   textColor: string
   onSelect?: () => void
-}) {
+}
+
+/**
+ * Render a single tree node line with proper colors
+ */
+const TreeNodeLine: React.FC<TreeNodeLineProps> = ({
+  node,
+  theme,
+  mutedColor,
+  textColor,
+  onSelect,
+}) => {
   const [isHovered, setIsHovered] = React.useState(false)
 
   if (node.isFile) {

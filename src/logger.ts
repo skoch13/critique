@@ -47,21 +47,21 @@ function writeToFile(level: string, args: unknown[]) {
 export const logger = {
   log(...args: unknown[]) {
     if (DEBUG) {
-      console.log(...args)
+      console.error(...args)
       writeToFile("LOG", args)
     }
   },
 
   info(...args: unknown[]) {
     if (DEBUG) {
-      console.info(...args)
+      console.error(...args)
       writeToFile("INFO", args)
     }
   },
 
   warn(...args: unknown[]) {
     if (DEBUG) {
-      console.warn(...args)
+      console.error(...args)
       writeToFile("WARN", args)
     }
   },
@@ -76,7 +76,7 @@ export const logger = {
 
   debug(...args: unknown[]) {
     if (DEBUG) {
-      console.debug(...args)
+      console.error(...args)
       writeToFile("DEBUG", args)
     }
   },

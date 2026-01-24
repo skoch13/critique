@@ -6,6 +6,7 @@
   - `Ctrl+D` - half page down
   - `Ctrl+U` - half page up
 - `review` command: change debug console toggle from `Ctrl+D` to `Ctrl+Z` (consistent with main viewer)
+- Fix theme loading on Windows by using `fileURLToPath` for proper path conversion
 
 # 0.1.46
 

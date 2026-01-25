@@ -1,3 +1,10 @@
+# 0.1.50
+
+- `review` command: Fix visual gaps in ASCII diagrams
+  - Convert `|` to `│` (Unicode vertical line) - eliminates gaps between rows
+  - Convert `--` or longer to `──` (Unicode horizontal line)
+  - Single hyphens preserved (e.g. "web-render" stays intact)
+
 # 0.1.49
 
 - Add copy selection on mouseup: text selected with the mouse is automatically copied to clipboard when released

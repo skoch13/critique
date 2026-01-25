@@ -228,3 +228,15 @@ export function diagramToDebugString(parsed: ParsedDiagramLine[]): string {
     })
     .join("\n")
 }
+
+/**
+ * Convert ASCII diagram characters to Unicode box-drawing equivalents.
+ * Eliminates visual gaps between lines.
+ * - `|` → `│` (vertical lines)
+ * - `--` or more → `──` (horizontal lines, but not single hyphens in text)
+ */
+export function convertAsciiToUnicode(content: string): string {
+  return content
+    .replace(/\|/g, "│")
+    .replace(/-{2,}/g, match => "─".repeat(match.length))
+}

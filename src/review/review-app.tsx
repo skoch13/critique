@@ -13,7 +13,7 @@ import { DiffView, DirectoryTreeView } from "../components/index.ts"
 import type { TreeFileInfo } from "../directory-tree.ts"
 import { watchReviewYaml } from "./yaml-watcher.ts"
 import { createSubHunk } from "./hunk-parser.ts"
-import { parseDiagram } from "./diagram-parser.ts"
+import { parseDiagram, convertAsciiToUnicode } from "./diagram-parser.ts"
 import { useAppStore } from "../store.ts"
 import Dropdown from "../dropdown.tsx"
 import type { IndexedHunk, ReviewYaml, ReviewGroup } from "./types.ts"
@@ -620,7 +620,9 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
             id: `diagram-${nodeCounter++}`,
             flexDirection: "column",
           })
-          const parsedLines = parseDiagram(codeToken.text)
+          // Convert ASCII diagram chars to Unicode box-drawing for seamless vertical lines
+          const unicodeDiagram = convertAsciiToUnicode(codeToken.text)
+          const parsedLines = parseDiagram(unicodeDiagram)
           for (let i = 0; i < parsedLines.length; i++) {
             const line = parsedLines[i]!
             // Skip empty lines or add a single space to maintain line height

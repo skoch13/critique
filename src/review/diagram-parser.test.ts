@@ -5,6 +5,7 @@ import {
   parseDiagram,
   parseDiagramLine,
   diagramToDebugString,
+  convertAsciiToUnicode,
 } from "./diagram-parser.ts"
 
 describe("parseDiagramLine", () => {
@@ -323,5 +324,27 @@ describe("diagramToDebugString", () => {
 ***
 **B"
 `)
+  })
+})
+
+describe("convertAsciiToUnicode", () => {
+  it("should convert | to │ and -- to ──", () => {
+    const ascii = `+----+
+| Hi |
++----+
+  |
+  v`
+    expect(convertAsciiToUnicode(ascii)).toMatchInlineSnapshot(`
+      "+────+
+      │ Hi │
+      +────+
+        │
+        v"
+    `)
+  })
+
+  it("should preserve single hyphen in text like web-render", () => {
+    const ascii = `| web-render |`
+    expect(convertAsciiToUnicode(ascii)).toMatchInlineSnapshot(`"│ web-render │"`)
   })
 })

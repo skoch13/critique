@@ -67,7 +67,7 @@ const TreeNodeLine: React.FC<TreeNodeLineProps> = ({
         }}
         onMouseMove={() => setIsHovered(true)}
         onMouseOut={() => setIsHovered(false)}
-        onMouseDown={onSelect}
+        // onMouseDown={onSelect} // disabled: conflicts with copy selection
       >
         <text fg={mutedColor}>{node.prefix}{node.connector}</text>
         <text fg={pathColor}>{node.displayPath}</text>

@@ -1,3 +1,11 @@
+# 0.1.49
+
+- Add copy selection on mouseup: text selected with the mouse is automatically copied to clipboard when released
+  - Works across all TUI modes (diff viewer, review, loading states)
+  - Uses native clipboard commands (pbcopy, xclip, wl-copy) with OSC52 fallback for SSH
+  - New `useCopySelection` hook in `src/hooks/use-copy-selection.ts`
+- Disable click-to-scroll on directory tree files (conflicts with copy selection)
+
 # 0.1.48
 
 - Web rendering improvements:

@@ -5,6 +5,7 @@
 import * as React from "react"
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"
 import { MacOSScrollAccel, SyntaxStyle, BoxRenderable, CodeRenderable, TextRenderable, ScrollBoxRenderable } from "@opentui/core"
+import { useCopySelection } from "../hooks/use-copy-selection.ts"
 import type { Token } from "marked"
 import { getResolvedTheme, getSyntaxTheme, defaultThemeName, themeNames, rgbaToHex } from "../themes.ts"
 import { detectFiletype, countChanges, getViewMode } from "../diff-utils.ts"
@@ -52,6 +53,9 @@ export function ReviewApp({
   const [reviewData, setReviewData] = React.useState<ReviewYaml | null>(initialReviewData ?? null)
   const [showThemePicker, setShowThemePicker] = React.useState(false)
   const [previewTheme, setPreviewTheme] = React.useState<string | null>(null)
+
+  // Copy selection to clipboard on mouse release
+  const { onMouseUp } = useCopySelection()
 
   // Refs for vim-style scroll navigation
   const scrollboxRef = React.useRef<ScrollBoxRenderable | null>(null)
@@ -161,6 +165,7 @@ export function ReviewApp({
   if (showThemePicker) {
     return (
       <box
+        onMouseUp={onMouseUp}
         style={{
           flexDirection: "column",
           height: "100%",
@@ -207,15 +212,17 @@ export function ReviewApp({
   }
 
   return (
-    <ReviewAppView
-      hunks={hunks}
-      reviewData={reviewData}
-      isGenerating={isGenerating}
-      themeName={activeTheme}
-      width={width}
-      renderer={renderer}
-      scrollboxRef={scrollboxRef}
-    />
+    <box onMouseUp={onMouseUp} style={{ flexGrow: 1 }}>
+      <ReviewAppView
+        hunks={hunks}
+        reviewData={reviewData}
+        isGenerating={isGenerating}
+        themeName={activeTheme}
+        width={width}
+        renderer={renderer}
+        scrollboxRef={scrollboxRef}
+      />
+    </box>
   )
 }
 

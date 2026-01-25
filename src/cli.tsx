@@ -12,6 +12,7 @@ import {
   useRenderer,
   useTerminalDimensions,
 } from "@opentui/react";
+import { useCopySelection } from "./hooks/use-copy-selection.ts";
 import * as React from "react";
 import { exec, execSync } from "child_process";
 import { promisify } from "util";
@@ -1091,6 +1092,9 @@ function App({ parsedFiles }: AppProps) {
   // Ref for double-tap detection (gg)
   const lastKeyRef = React.useRef<{ key: string; time: number } | null>(null);
 
+  // Copy selection to clipboard on mouse release
+  const { onMouseUp } = useCopySelection();
+
   useOnResize(
     React.useCallback((newWidth: number) => {
       setWidth(newWidth);
@@ -1175,6 +1179,7 @@ function App({ parsedFiles }: AppProps) {
   if (parsedFiles.length === 0) {
     return (
       <box
+        onMouseUp={onMouseUp}
         style={{
           padding: 1,
           backgroundColor: getResolvedTheme(themeName).background,
@@ -1305,6 +1310,7 @@ function App({ parsedFiles }: AppProps) {
   // Always render the same structure - scrollbox is never remounted
   return (
     <box
+      onMouseUp={onMouseUp}
       style={{
         flexDirection: "column",
         height: "100%",
@@ -1496,6 +1502,9 @@ cli
 
         const watchRenderer = useRenderer();
 
+        // Copy selection to clipboard on mouse release
+        const { onMouseUp } = useCopySelection();
+
         // Handle exit keys (Q, Escape) for loading and empty states
         useKeyboard((key) => {
           if (key.name === "escape" || key.name === "q") {
@@ -1570,7 +1579,7 @@ cli
 
         if (parsedFiles === null) {
           return (
-            <box style={{ padding: 1, backgroundColor: defaultBg }}>
+            <box onMouseUp={onMouseUp} style={{ padding: 1, backgroundColor: defaultBg }}>
               <text>Loading...</text>
             </box>
           );
@@ -1578,7 +1587,7 @@ cli
 
         if (parsedFiles.length === 0) {
           return (
-            <box style={{ padding: 1, backgroundColor: defaultBg }}>
+            <box onMouseUp={onMouseUp} style={{ padding: 1, backgroundColor: defaultBg }}>
               <text>No changes to display</text>
             </box>
           );

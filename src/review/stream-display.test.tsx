@@ -33,6 +33,7 @@ describe("StreamDisplay", () => {
       <StreamDisplay notifications={[]} themeName="github" width={60} />,
       { width: 60, height: 5 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -62,6 +63,7 @@ describe("StreamDisplay", () => {
       <StreamDisplay notifications={notifications} themeName="github" width={60} />,
       { width: 60, height: 5 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -91,6 +93,7 @@ describe("StreamDisplay", () => {
       <StreamDisplay notifications={notifications} themeName="github" width={60} />,
       { width: 60, height: 5 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -119,6 +122,7 @@ describe("StreamDisplay", () => {
       <StreamDisplay notifications={notifications} themeName="github" width={60} />,
       { width: 60, height: 5 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -149,6 +153,7 @@ describe("StreamDisplay", () => {
       <StreamDisplay notifications={notifications} themeName="github" width={60} />,
       { width: 60, height: 5 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -171,6 +176,7 @@ describe("StreamDisplay", () => {
       />,
       { width: 60, height: 10 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -198,6 +204,7 @@ describe("StreamDisplay", () => {
       />,
       { width: 60, height: 15 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()

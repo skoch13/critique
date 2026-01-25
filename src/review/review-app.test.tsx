@@ -211,11 +211,16 @@ describe("ReviewAppView", () => {
         height: 45,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
+                                            └── src                                                       
+                                                ├── utils.ts (+5,-1)                                      
+                                                └── index.ts (+1)                                         
+                                                                                                          
+                                                                                                          
                  Import changes                                                                           
                                                                                                           
                  Added logger import to support new logging functionality.                                
@@ -253,11 +258,6 @@ describe("ReviewAppView", () => {
                                                                                                           
                                                                                                           
                                                                                                           
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
         (2 sections)  t theme                                      run with --web to share & collaborate  
                                                                                                           
       "
@@ -278,7 +278,7 @@ describe("ReviewAppView", () => {
         height: 10,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
@@ -310,7 +310,7 @@ describe("ReviewAppView", () => {
         height: 10,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
@@ -343,11 +343,16 @@ describe("ReviewAppView", () => {
         height: 50,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                                            
+                                                                └── src                                                                           
+                                                                    ├── utils.ts (+5,-1)                                                          
+                                                                    └── index.ts (+1)                                                             
+                                                                                                                                                  
+                                                                                                                                                  
                                      Import changes                                                                                               
                                                                                                                                                   
                                      Added logger import to support new logging functionality.                                                    
@@ -390,11 +395,6 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
         (2 sections)  t theme                                                                              run with --web to share & collaborate  
                                                                                                                                                   
       "
@@ -416,11 +416,20 @@ describe("ReviewAppView", () => {
         height: 70,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                                            
+                                                            └── src                                                                             █ 
+                                                                ├── errors                                                                      █ 
+                                                                │   └── index.ts (+6)                                                           █ 
+                                                                ├── api                                                                         █ 
+                                                                │   └── users.ts (+5,-2)                                                        █ 
+                                                                └── config                                                                      █ 
+                                                                    └── database.ts (+3,-2)                                                     █ 
+                                                                                                                                                  
+                                                                                                                                                  
                                      Custom Error Classes                                                                                         
                                                                                                                                                   
                                      Introduces a new error class for better error handling:                                                      
@@ -477,15 +486,6 @@ describe("ReviewAppView", () => {
                                                                                                                                                   
         src/config/database.ts +3-2                                                                                                               
                                                                                                                                                   
-        1   export const dbConfig = {                                        1   export const dbConfig = {                                        
-        2 -   host: 'localhost',                                             2 +   host: process.env.DB_HOST || 'localhost',                      
-        3 -   port: 5432,                                                    3 +   port: parseInt(process.env.DB_PORT || '5432'),                 
-                                                                             4 +   ssl: process.env.NODE_ENV === 'production',                    
-        4     database: 'myapp',                                             5     database: 'myapp',                                             
-        5   }                                                                6   }                                                                
-                                                                                                                                                  
-                                                                                                                                                  
-                                                                                                                                                  
                                                                                                                                                   
                                                                                                                                                   
         (3 sections)  t theme                                                                              run with --web to share & collaborate  
@@ -517,19 +517,23 @@ Added validation at handler start.`,
         height: 25,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // Should only show lines 1-7 of the hunk, not the full thing
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
-                 Input Validation                                                                         
-                                                                                                          
-                 Added validation at handler start.                                                       
-                                                                                                          
-                                                                                                          
-        src/api/handlers.ts +5-1                                                                          
-                                                                                                          
+                                          └── src/api                                                   █ 
+                                              └── handlers.ts (+9,-2)                                   █ 
+                                                                                                        █ 
+                                                                                                        █ 
+                 Input Validation                                                                       █ 
+                                                                                                        █ 
+                 Added validation at handler start.                                                     █ 
+                                                                                                        █ 
+                                                                                                        █ 
+        src/api/handlers.ts +5-1                                                                        █ 
+                                                                                                        ▀ 
         10   export async function handleRequest(req:    10   export async function handleRequest(req:    
              Request) {                                       Request) {                                  
         11 -   const data = req.body                     11 +   // Input validation                       
@@ -538,10 +542,6 @@ Added validation at handler start.`,
                                                               body is required')                          
                                                          14 +   }                                         
                                                          15 +   const data = validateInput(req.body)      
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -566,31 +566,35 @@ Added validation at handler start.`,
         height: 50,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // Should show two sections: validation (lines 1-7) then processing (lines 8-16)
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                        
-                           Input Validation                                                                                   
-                                                                                                                              
-                           Added proper input validation at the start of the handler:                                         
-                                                                                                                              
-                           - Check for missing request body                                                                   
-                           - Validate input before processing                                                                 
-                                                                                                                              
-                                                                                                                              
-                                                                                                                              
-        src/api/handlers.ts +5-1                                                                                              
-                                                                                                                              
-        10   export async function handleRequest(req: Request) {   10   export async function handleRequest(req: Request) {   
-        11 -   const data = req.body                               11 +   // Input validation                                 
-                                                                   12 +   if (!req.body) {                                    
-                                                                   13 +     throw new ValidationError('Request body is        
-                                                                        required')                                            
-                                                                   14 +   }                                                   
-                                                                   15 +   const data = validateInput(req.body)                
-                                                                                                                              
+                                                    └── src/api                                                             █ 
+                                                        └── handlers.ts (+9,-2)                                             █ 
+                                                                                                                            █ 
+                                                                                                                            █ 
+                           Input Validation                                                                                 █ 
+                                                                                                                            █ 
+                           Added proper input validation at the start of the handler:                                       █ 
+                                                                                                                            █ 
+                           - Check for missing request body                                                                 █ 
+                           - Validate input before processing                                                               █ 
+                                                                                                                            █ 
+                                                                                                                            █ 
+                                                                                                                            █ 
+        src/api/handlers.ts +5-1                                                                                            █ 
+                                                                                                                            █ 
+        10   export async function handleRequest(req: Request) {   10   export async function handleRequest(req: Request) { █ 
+        11 -   const data = req.body                               11 +   // Input validation                               █ 
+                                                                   12 +   if (!req.body) {                                  █ 
+                                                                   13 +     throw new ValidationError('Request body is      █ 
+                                                                        required')                                          █ 
+                                                                   14 +   }                                                 █ 
+                                                                   15 +   const data = validateInput(req.body)              █ 
+                                                                                                                            █ 
                                                                                                                               
                            Async Processing and Logging                                                                       
                                                                                                                               
@@ -615,10 +619,6 @@ Added validation at handler start.`,
                                                                                                                               
                                                                                                                               
                                                                                                                               
-                                                                                                                              
-                                                                                                                              
-                                                                                                                              
-                                                                                                                              
         (2 sections)  t theme                                                          run with --web to share & collaborate  
                                                                                                                               
       "
@@ -640,12 +640,19 @@ Added validation at handler start.`,
         height: 35,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // Should show: full hunk #3, then partial of largeHunk (lines 1-7)
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
+                                        └── src                                                         █ 
+                                            ├── utils.ts (+5,-1)                                        █ 
+                                            ├── index.ts (+1)                                           █ 
+                                            └── api                                                     █ 
+                                                └── handlers.ts (+9,-2)                                 █ 
+                                                                                                          
+                                                                                                          
                  Import changes                                                                           
                                                                                                           
                  Added logger import.                                                                     
@@ -669,13 +676,6 @@ Added validation at handler start.`,
         11 -   const data = req.body                     11 +   // Input validation                       
                                                          12 +   if (!req.body) {                          
                                                          13 +     throw new ValidationError('Request      
-                                                              body is required')                          
-                                                         14 +   }                                         
-                                                         15 +   const data = validateInput(req.body)      
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
         (2 sections)  t theme                                      run with --web to share & collaborate  
@@ -707,12 +707,17 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
         height: 25,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // Should show full hunk #1
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
+                                            └── src                                                       
+                                                ├── utils.ts (+5,-1)                                      
+                                                └── index.ts (+1)                                         
+                                                                                                          
+                                                                                                          
                  Full hunk via hunkId                                                                     
                                                                                                           
                  This uses hunkId instead of hunkIds but shows full hunk.                                 
@@ -725,11 +730,6 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
                                                          12 +   if (!input) return null                   
                                                          13 +   return process(input)                     
         12   }                                           14   }                                           
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -790,21 +790,25 @@ The prose above stays narrow.`,
         height: 35,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                        
-                           Configuration with Wide Content                                                                  █ 
+                                                       └── src                                                              █ 
+                                                           └── config.ts (+3)                                               █ 
                                                                                                                             █ 
-                           Here's a configuration table:                                                                    █ 
                                                                                                                             █ 
-                           ┌─────────┬──────────────────────┬───────────────┬─────────────────┐                             █ 
-                           │Setting  │Environment Variable  │Default Value  │Description      │                             █ 
-                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
-                           │Host     │DB_HOST               │localhost      │Database host    │                             █ 
-                           │─────────│──────────────────────│───────────────│─────────────────│                             █ 
-                           │Port     │DB_PORT               │5432           │Database port    │                             █ 
+                           Configuration with Wide Content                                                                    
+                                                                                                                              
+                           Here's a configuration table:                                                                      
+                                                                                                                              
+                           ┌─────────┬──────────────────────┬───────────────┬─────────────────┐                               
+                           │Setting  │Environment Variable  │Default Value  │Description      │                               
+                           │─────────│──────────────────────│───────────────│─────────────────│                               
+                           │Host     │DB_HOST               │localhost      │Database host    │                               
+                           │─────────│──────────────────────│───────────────│─────────────────│                               
+                           │Port     │DB_PORT               │5432           │Database port    │                               
                            │─────────│──────────────────────│───────────────│─────────────────│                               
                            │SSL      │DB_SSL                │false          │Enable SSL       │                               
                            │─────────│──────────────────────│───────────────│─────────────────│                               
@@ -821,10 +825,6 @@ The prose above stays narrow.`,
                                                                                                                               
                                                                                                                               
        rc/config.ts +3-0                                                                                                      
-                                                                                                                              
-        + export const config = {                                                                                             
-        +   host: 'localhost',                                                                                                
-        + }                                                                                                                   
                                                                                                                               
                                                                                                                               
         (1 section)  t theme                                                           run with --web to share & collaborate  
@@ -873,7 +873,7 @@ The diagram above should not wrap.`,
         height: 25,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
 
@@ -914,10 +914,14 @@ The diagram above should not wrap.`,
       />,
       { width: 70, height: 25 },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     expect(testSetup.captureCharFrame()).toMatchInlineSnapshot(`
       "                                                                      
+                              └── src                                       
+                                  └── config.ts (+1)                        
+                                                                            
+                                                                            
          Architecture                                                       
                                                                             
          ┌─────────────┐     ┌─────────────┐     ┌─────────────┐            
@@ -931,10 +935,6 @@ The diagram above should not wrap.`,
        rc/config.ts +1-0                                                    
                                                                             
         + export const x = 1                                                
-                                                                            
-                                                                            
-                                                                            
-                                                                            
                                                                             
                                                                             
                                                                             
@@ -994,10 +994,14 @@ The diagram above should not wrap.`,
       />,
       { width: 70, height: 25 },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     expect(testSetup.captureCharFrame()).toMatchInlineSnapshot(`
       "                                                                      
+                              └── src                                       
+                                  └── config.ts (+1)                        
+                                                                            
+                                                                            
        rchitecture                                                          
                                                                             
        ───────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────  
@@ -1008,10 +1012,6 @@ The diagram above should not wrap.`,
        rc/config.ts +1-0                                                    
                                                                             
         + export const x = 1                                                
-                                                                            
-                                                                            
-                                                                            
-                                                                            
                                                                             
                                                                             
                                                                             
@@ -1057,7 +1057,7 @@ The diagram above shows the flow.`,
       />,
       { width: 60, height: 20 },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // The diagram should render with the structural characters
@@ -1131,13 +1131,17 @@ Long configuration lines that should wrap properly.`,
         height: 30,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     // Second render required for alignment - opentui Diff uses microtask-based rebuild after layout
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
+                                           └── src                                                        
+                                               └── config.ts (+3,-2)                                      
+                                                                                                          
+                                                                                                          
                  Configuration Changes                                                                    
                                                                                                           
                  Long configuration lines that should wrap properly.                                      
@@ -1146,10 +1150,10 @@ Long configuration lines that should wrap properly.`,
         src/config.ts +3-2                                                                                
                                                                                                           
         10   export const                                10   export const                                
-             VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU      VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU 
+             VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_MU      VERY_LONG_CONFIG_SETTING_NAME_THAT_SPANS_M  
              LTIPLE_COLUMNS = {                               LTIPLE_COLUMNS = {                          
         11 -   apiEndpoint: 'https://api.example.com/v1/ 11 +   apiEndpoint: process.env.API_URL ||       
-             extremely/long/path/to/some/resource/that/       'https://api.example.com/v1/extremely/long/ 
+             extremely/long/path/to/some/resource/that/       'https://api.example.com/v1/extremely/long  
              needs/many/columns/to/display',                  path/to/some/resource/that/needs/many/      
                                                               columns/to/display/and/even/more/text/      
                                                               here',                                      
@@ -1158,10 +1162,6 @@ Long configuration lines that should wrap properly.`,
                                                          13 +   retryAttempts: parseInt(process.env.      
                                                               RETRY_ATTEMPTS || '3'),                     
         13   }                                           14   }                                           
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -1202,28 +1202,28 @@ Added environment-based URL and auth header.`,
         height: 20,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     // Second render to allow for any microtask-based rebuilds (alignment happens asynchronously)
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
-                 API Endpoint Update                                                                      
-                                                                                                          
-                 Added environment-based URL and auth header.                                             
-                                                                                                          
-                                                                                                          
-        src/api.ts +1-1                                                                                   
-                                                                                                          
+                                             └── src                                                    █ 
+                                                 └── api.ts (+1,-1)                                     █ 
+                                                                                                        █ 
+                                                                                                        █ 
+                 API Endpoint Update                                                                    █ 
+                                                                                                        █ 
+                 Added environment-based URL and auth header.                                           █ 
+                                                                                                        █ 
+                                                                                                        █ 
+        src/api.ts +1-1                                                                                 █ 
+                                                                                                        ▀ 
         1 - const response = await fetch('https://api.   1 + const response = await fetch(process.env.    
             example.com/users');                             API_BASE_URL + '/users', { headers: {        
                                                              Authorization: 'Bearer ' + token } });       
         2   return response.json();                      2   return response.json();                      
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
         (1 section)  t theme                                       run with --web to share & collaborate  
@@ -1254,17 +1254,22 @@ Added logger import.`,
         height: 25,
       },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                
-         Import changes                                                               
-                                                                                      
-         Added logger import.                                                         
-                                                                                      
-                                                                                      
-       rc/index.ts +1-0                                                               
+                                  └── src                                           █ 
+                                      ├── utils.ts (+5,-1)                          █ 
+                                      └── index.ts (+1)                             █ 
+                                                                                    █ 
+                                                                                    █ 
+         Import changes                                                             █ 
+                                                                                    █ 
+         Added logger import.                                                       █ 
+                                                                                    █ 
+                                                                                    █ 
+       rc/index.ts +1-0                                                             ▀ 
                                                                                       
           import { main } from './utils'                                              
         + import { logger } from './logger'                                           
@@ -1273,11 +1278,6 @@ Added logger import.`,
                                                                                       
                                                                                       
                                       ⠋ generating                                    
-                                                                                      
-                                                                                      
-                                                                                      
-                                                                                      
-                                                                                      
                                                                                       
                                                                                       
                                                                                       
@@ -1359,7 +1359,7 @@ AFTER: Closures preserve context
       />,
       { width: 100, height: 50 },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // Documents the incorrect rendering when markdown is malformed:
@@ -1368,6 +1368,10 @@ AFTER: Closures preserve context
     // - Both diagrams merge into one big code block
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                    
+                                             └── src                                                      
+                                                 └── config.ts (+1)                                       
+                                                                                                          
+                                                                                                          
                  ActionPanel captures actions to zustand, ActionsDialog renders them                      
                                                                                                           
                  The Problem:                                                                             
@@ -1401,10 +1405,6 @@ AFTER: Closures preserve context
        rc/config.ts +1-0                                                                                  
                                                                                                           
         + export const x = 1                                                                              
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          
                                                                                                           
                                                                                                           
                                                                                                           
@@ -1465,7 +1465,7 @@ AFTER: Closures preserve
       />,
       { width: 80, height: 35 },
     )
-
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
     // With proper markdown:
@@ -1473,6 +1473,10 @@ AFTER: Closures preserve
     // - Each diagram should be a separate code block
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                
+                                   └── src                                            
+                                       └── config.ts (+1)                             
+                                                                                      
+                                                                                      
          ActionPanel captures actions to zustand                                      
                                                                                       
          The Problem:                                                                 
@@ -1495,10 +1499,6 @@ AFTER: Closures preserve
        rc/config.ts +1-0                                                              
                                                                                       
         + export const x = 1                                                          
-                                                                                      
-                                                                                      
-                                                                                      
-                                                                                      
                                                                                       
                                                                                       
                                                                                       

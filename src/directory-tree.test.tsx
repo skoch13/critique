@@ -81,6 +81,7 @@ describe("TreeRenderer visual tests", () => {
       width: 50,
       height: 5,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -106,6 +107,7 @@ describe("TreeRenderer visual tests", () => {
       width: 50,
       height: 7,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -132,6 +134,7 @@ describe("TreeRenderer visual tests", () => {
       width: 50,
       height: 7,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -158,6 +161,7 @@ describe("TreeRenderer visual tests", () => {
       width: 50,
       height: 7,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -188,6 +192,7 @@ describe("TreeRenderer visual tests", () => {
       width: 60,
       height: 15,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -222,6 +227,7 @@ describe("TreeRenderer visual tests", () => {
       width: 60,
       height: 7,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -250,6 +256,7 @@ describe("TreeRenderer visual tests", () => {
       width: 60,
       height: 12,
     })
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -291,6 +298,7 @@ describe("DirectoryTreeView component", () => {
       <DirectoryTreeView files={files} themeName="github" />,
       { width: 60, height: 12 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()
@@ -316,6 +324,7 @@ describe("DirectoryTreeView component", () => {
       <DirectoryTreeView files={[]} themeName="github" />,
       { width: 40, height: 5 },
     )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
     await testSetup.renderOnce()
     const frame = testSetup.captureCharFrame()

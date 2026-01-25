@@ -936,16 +936,6 @@ interface WebModeOptions {
   '--'?: string[];
 }
 
-// Image mode handler
-interface ImageModeOptions {
-  staged?: boolean;
-  commit?: string;
-  context?: string;
-  filter?: string;
-  theme?: string;
-  '--'?: string[];
-}
-
 async function runWebMode(
   base: string | undefined,
   head: string | undefined,
@@ -1050,118 +1040,6 @@ async function runWebMode(
     if (options.json) {
       console.log(JSON.stringify({ error: message }));
     }
-    process.exit(1);
-  }
-}
-
-async function runImageMode(
-  base: string | undefined,
-  head: string | undefined,
-  options: ImageModeOptions
-) {
-  const { renderTerminalToImages } = await import("./image.ts");
-  const { writeTempFile, cleanupTempFile } = await import("./web-utils.ts");
-
-  const gitCommand = buildGitCommand({
-    staged: options.staged,
-    commit: options.commit,
-    base,
-    head,
-    context: options.context,
-    filter: options.filter,
-    positionalFilters: options['--'],
-  });
-
-  const themeName = options.theme && themeNames.includes(options.theme)
-    ? options.theme
-    : persistedState.themeName ?? defaultThemeName;
-
-  console.log("Capturing diff output...");
-
-  // Get the git diff
-  const { stdout: gitDiff } = await execAsync(gitCommand, {
-    encoding: "utf-8",
-  });
-
-  if (!gitDiff.trim()) {
-    console.log("No changes to display");
-    process.exit(0);
-  }
-
-  // Write diff to temp file
-  const diffFile = writeTempFile(gitDiff, "critique-image-diff", ".patch");
-
-  // Build render command for image capture
-  const renderCommand = [
-    process.argv[1]!, // path to cli.tsx
-    "web-render",
-    diffFile,
-    "--theme",
-    themeName,
-    "--cols",
-    "120",
-    "--rows",
-    "10000",
-  ];
-
-  console.log("Rendering to images...");
-
-  try {
-    // Capture PTY output
-    const decoder = new TextDecoder();
-    let ansiOutput = "";
-    const cols = 120;
-    const rows = 10000;
-
-    const proc = Bun.spawn(["bun", ...renderCommand], {
-      cwd: process.cwd(),
-      env: {
-        ...process.env,
-        TERM: "xterm-256color",
-      },
-      terminal: {
-        cols,
-        rows,
-        data(terminal, data) {
-          ansiOutput += decoder.decode(data, { stream: true });
-        },
-      },
-    });
-
-    await proc.exited;
-    proc.terminal?.close();
-    ansiOutput += decoder.decode();
-
-    // Clean up diff temp file
-    cleanupTempFile(diffFile);
-
-    if (!ansiOutput.trim()) {
-      console.error("No output captured");
-      process.exit(1);
-    }
-
-    // Strip terminal cleanup sequences
-    const clearIdx = ansiOutput.lastIndexOf("\x1b[H\x1b[J");
-    if (clearIdx > 0) {
-      ansiOutput = ansiOutput.slice(0, clearIdx);
-    }
-
-    // Render to images
-    const result = await renderTerminalToImages(ansiOutput, {
-      cols,
-      themeName,
-    });
-
-    console.log(`\nGenerated ${result.imageCount} image${result.imageCount === 1 ? "" : "s"}:`);
-    for (const path of result.paths) {
-      console.log(`  ${path}`);
-    }
-
-    process.exit(0);
-  } catch (error: unknown) {
-    cleanupTempFile(diffFile);
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Failed to generate images:", message);
     process.exit(1);
   }
 }
@@ -1577,7 +1455,6 @@ cli
   .option("--filter <pattern>", "Filter files by glob pattern (can be used multiple times)")
   .option("--theme <name>", "Theme to use for rendering")
   .option("--web [title]", "Generate web preview instead of TUI")
-  .option("--image", "Generate images instead of TUI (saved to /tmp)")
   .option("--open", "Open in browser (with --web)")
   .option("--json", "Output JSON to stdout (with --web)")
   .option("--cols <cols>", "Desktop columns for web render", { default: 240 })
@@ -1631,19 +1508,6 @@ cli
         json: options.json,
         cols: parseInt(options.cols) || 240,
         mobileCols: parseInt(options.mobileCols) || 100,
-        theme: options.theme,
-        '--': options['--'],
-      });
-      return;
-    }
-
-    // If --image flag, delegate to image generation logic
-    if (options.image) {
-      await runImageMode(base, head, {
-        staged: options.staged,
-        commit: options.commit,
-        context: options.context,
-        filter: options.filter,
         theme: options.theme,
         '--': options['--'],
       });

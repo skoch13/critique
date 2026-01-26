@@ -210,7 +210,9 @@ export async function renderFrameToImages(
   }
 
   // Create renderer with bundled Geist font (included in takumi)
+  // Preload fonts to ensure consistent rendering
   const renderer = new Renderer()
+  await renderer.loadFontsAsync([])
 
   const images: Buffer[] = []
   const paths: string[] = []
@@ -505,8 +507,9 @@ export async function renderFrameToOgImage(
   const maxLines = Math.floor(availableHeight / effectiveLineHeight)
   const visibleLines = lines.slice(0, maxLines)
 
-  // Create renderer
+  // Create renderer and preload fonts to ensure consistent rendering
   const renderer = new Renderer()
+  await renderer.loadFontsAsync([])
 
   // Calculate content width (image width minus padding)
   const contentWidth = width - paddingX * 2

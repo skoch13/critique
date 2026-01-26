@@ -43,10 +43,10 @@ function isMobileDevice(c: { req: { header: (name: string) => string | undefined
 
   // Fallback to User-Agent parsing with comprehensive regex
   const userAgent = c.req.header("User-Agent") || ""
-  
+
   // Comprehensive mobile detection regex (case-insensitive)
   const mobileRegex = /Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|Silk|NetFront|Opera M(obi|ini)|Windows Phone|webOS|Fennec|Minimo|UCBrowser|UCWEB|SonyEricsson|Symbian|Nintendo|PSP|PlayStation|MIDP|CLDC|AvantGo|Maemo|PalmOS|PalmSource|DoCoMo|UP\.Browser|Blazer|Xiino|OneBrowser/i
-  
+
   return mobileRegex.test(userAgent)
 }
 
@@ -126,9 +126,7 @@ app.post("/upload", async (c) => {
     if (ogImageUrl) {
       const title = extractTitle(body.html)
       htmlDesktop = injectOgTags(htmlDesktop, ogImageUrl, title)
-      if (htmlMobile) {
-        htmlMobile = injectOgTags(htmlMobile, ogImageUrl, title)
-      }
+      htmlMobile = htmlMobile ? injectOgTags(htmlMobile, ogImageUrl, title) : htmlMobile
     }
 
     // Store desktop version in KV with 7 day expiration
@@ -164,7 +162,7 @@ async function handleView(c: any) {
 
   // Check for version query param
   const version = c.req.query("v")
-  
+
   // If no version specified and mobile device detected, redirect to ?v=mobile
   // This is a fallback - client JS also handles this redirect
   if (!version && isMobileDevice(c)) {
@@ -176,7 +174,7 @@ async function handleView(c: any) {
   // Serve the appropriate version based on query param
   const isMobile = version === "mobile"
   let html: string | null = null
-  
+
   if (isMobile) {
     // Try mobile version first, fall back to desktop
     html = await c.env.CRITIQUE_KV.get(`${id}-mobile`)

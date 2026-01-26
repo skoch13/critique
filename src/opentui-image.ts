@@ -69,10 +69,6 @@ export interface FrameLayout {
   visibleLines: number
   /** Calculated line height in pixels */
   lineHeightPx: number
-  /** Gap overlap for negative margins */
-  gapOverlap: number
-  /** Effective line height after overlap */
-  effectiveLineHeight: number
   /** Height available for content */
   availableHeight: number
   /** Actual content height */
@@ -146,6 +142,7 @@ export function trimTrailingEmptyLines(lines: CapturedLine[]): CapturedLine[] {
 
 /**
  * Calculate layout metrics for a frame.
+ * Uses standard CSS line-height - no magic gap calculations.
  */
 export function calculateFrameLayout(
   frame: CapturedFrame,
@@ -167,8 +164,6 @@ export function calculateFrameLayout(
   const totalLines = lines.length
 
   const lineHeightPx = Math.round(fontSize * lineHeight)
-  const gapOverlap = Math.round((lineHeight - 1) * fontSize * 0.5)
-  const effectiveLineHeight = lineHeightPx - gapOverlap
 
   // If height specified, calculate how many lines fit
   let visibleLines: number
@@ -177,22 +172,20 @@ export function calculateFrameLayout(
 
   if (height) {
     availableHeight = height - paddingY * 2
-    visibleLines = Math.min(totalLines, Math.floor(availableHeight / effectiveLineHeight))
+    visibleLines = Math.min(totalLines, Math.floor(availableHeight / lineHeightPx))
     imageHeight = height
   } else {
     visibleLines = totalLines
-    availableHeight = visibleLines * effectiveLineHeight
+    availableHeight = visibleLines * lineHeightPx
     imageHeight = availableHeight + paddingY * 2
   }
 
-  const contentHeight = visibleLines * effectiveLineHeight
+  const contentHeight = visibleLines * lineHeightPx
 
   return {
     totalLines,
     visibleLines,
     lineHeightPx,
-    gapOverlap,
-    effectiveLineHeight,
     availableHeight,
     contentHeight,
     imageHeight,
@@ -234,12 +227,12 @@ export function spanToTextNode(
     style.opacity = 0.5
   }
 
-  return text(span.text, style as any)
+  return text(span.text, style )
 }
 
 /**
  * Convert opentui CapturedLine to takumi container node.
- * Handles: flex layout, line background, negative margins for gap elimination
+ * Uses standard CSS layout - no negative margin hacks.
  */
 export function lineToContainerNode(
   line: CapturedLine,
@@ -255,18 +248,17 @@ export function lineToContainerNode(
   const { backgroundColor, lineHeight, fontSize, width } = options
 
   const lineHeightPx = Math.round(fontSize * lineHeight)
-  const gapOverlap = Math.round((lineHeight - 1) * fontSize * 0.5)
 
   // Convert spans to text nodes
   let textChildren = line.spans.map((span) => spanToTextNode(span, text))
   if (textChildren.length === 0) {
-    textChildren = [text("X", { color: backgroundColor })]
+    textChildren = [text("m", { color: backgroundColor })]
   }
 
   // Get line background from last span (for diff coloring)
   const lastSpan = line.spans[line.spans.length - 1]
-  const lineBackground = lastSpan 
-    ? (rgbaToHexOrNull(lastSpan.bg) || backgroundColor) 
+  const lineBackground = lastSpan
+    ? (rgbaToHexOrNull(lastSpan.bg) || backgroundColor)
     : backgroundColor
 
   // Spacer to fill remaining width with line's background
@@ -286,8 +278,8 @@ export function lineToContainerNode(
       alignItems: "center",
       width: width ?? "100%",
       height: lineHeightPx,
-      marginBottom: -gapOverlap,
       backgroundColor: lineBackground,
+      overflow: "hidden",  // Clip text that exceeds line width
     },
     children: [...textChildren, spacer],
   })
@@ -336,6 +328,7 @@ export function frameToRootNode(
       fontFamily: "monospace",
       fontSize,
       whiteSpace: "pre",
+      overflow: "hidden",  // Clip any content that exceeds bounds
       paddingTop: paddingY,
       paddingBottom: paddingY,
       paddingLeft: paddingX,

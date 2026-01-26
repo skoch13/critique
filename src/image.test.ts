@@ -268,13 +268,13 @@ index 846e706..ca0bb64 100644
     })
 
     // Verify layout calculations are sensible
-    // With 56 total lines and 630px height, we should show ~29 lines
+    // With 56 total lines and 630px height, we should show ~24 lines
     expect(layout.totalLines).toBeGreaterThan(30)
-    expect(layout.visibleLines).toBeGreaterThanOrEqual(25)
+    expect(layout.visibleLines).toBeGreaterThanOrEqual(20)
     
-    // Unused height should be less than one effective line height
+    // Unused height should be less than one line height
     // (no room for another full line)
-    expect(layout.unusedHeight).toBeLessThan(layout.effectiveLineHeight)
+    expect(layout.unusedHeight).toBeLessThan(layout.lineHeightPx)
   })
 
   test("renderDiffToOgImage writes example image", async () => {

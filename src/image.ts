@@ -83,13 +83,9 @@ export interface OgImageLayout {
   paddingY: number
   /** Line height in pixels */
   lineHeightPx: number
-  /** Gap overlap for negative margins */
-  gapOverlap: number
-  /** Effective line height after overlap */
-  effectiveLineHeight: number
   /** Available height for content */
   availableHeight: number
-  /** Actual content height (visibleLines * effectiveLineHeight) */
+  /** Actual content height (visibleLines * lineHeightPx) */
   contentHeight: number
   /** Unused vertical space at the bottom */
   unusedHeight: number
@@ -264,14 +260,12 @@ export function calculateOgImageLayout(
   return {
     totalLines: layout.totalLines,
     visibleLines: layout.visibleLines,
-    maxLines: Math.floor(layout.availableHeight / layout.effectiveLineHeight),
+    maxLines: Math.floor(layout.availableHeight / layout.lineHeightPx),
     width,
     height,
     paddingX,
     paddingY,
     lineHeightPx: layout.lineHeightPx,
-    gapOverlap: layout.gapOverlap,
-    effectiveLineHeight: layout.effectiveLineHeight,
     availableHeight: layout.availableHeight,
     contentHeight: layout.contentHeight,
     unusedHeight: layout.availableHeight - layout.contentHeight,
@@ -294,7 +288,7 @@ export async function renderFrameToOgImage(
     themeName = "github-light",
     width = 1200,
     height = 630,
-    fontSize = 16,
+    fontSize = 18,
     lineHeight = 1.5,
     format = "png",
     quality = 90,
@@ -329,21 +323,27 @@ export async function renderDiffToOgImage(
 ): Promise<Buffer> {
   const { renderDiffToFrame } = await import("./web-utils.ts")
 
-  const cols = options.cols ?? 120
+  const width = options.width ?? 1200
+  const fontSize = options.fontSize ?? 16
+  const paddingX = 24
   const themeName = options.themeName ?? "github-light"
+
+  // Calculate cols that fit within content width
+  // Monospace char width ≈ fontSize * 0.6
+  const contentWidth = width - paddingX * 2
+  const charWidth = fontSize * 0.6
+  const cols = options.cols ?? Math.floor(contentWidth / charWidth)
 
   // Render diff to captured frame
   const frame = await renderDiffToFrame(diffContent, {
     cols,
     rows: 200,
     themeName,
-
   })
 
   // Convert frame to OG image
   return renderFrameToOgImage(frame, {
     ...options,
     themeName,
-
   })
 }

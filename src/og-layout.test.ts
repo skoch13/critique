@@ -28,8 +28,6 @@ describe("OG image layout", () => {
   const FONT_SIZE = 16
   const LINE_HEIGHT = 1.5
   const LINE_HEIGHT_PX = Math.round(FONT_SIZE * LINE_HEIGHT) // 24px
-  const GAP_OVERLAP = Math.round((LINE_HEIGHT - 1) * FONT_SIZE * 0.5) // 4px
-  const EFFECTIVE_LINE_HEIGHT = LINE_HEIGHT_PX - GAP_OVERLAP // 20px
 
   // Expected boundaries
   const CONTENT_WIDTH = OG_WIDTH - PADDING_X * 2  // 1152px
@@ -41,7 +39,7 @@ describe("OG image layout", () => {
 
   // Helper to get position from transform matrix [scaleX, skewY, skewX, scaleY, tx, ty]
   function getPos(transform: number[]): { x: number; y: number } {
-    return { x: transform[4], y: transform[5] }
+    return { x: transform[4] ?? 0, y: transform[5] ?? 0 }
   }
 
   // Helper to create a line node matching our OG image structure
@@ -53,7 +51,6 @@ describe("OG image layout", () => {
         alignItems: "center",
         width: CONTENT_WIDTH,
         height: LINE_HEIGHT_PX,
-        marginBottom: -GAP_OVERLAP,
         backgroundColor: "#1a1b26",
       },
       children: [
@@ -140,7 +137,7 @@ describe("OG image layout", () => {
     const renderer = new Renderer()
     
     // Calculate max lines that fit
-    const maxLines = Math.floor(CONTENT_HEIGHT / EFFECTIVE_LINE_HEIGHT)
+    const maxLines = Math.floor(CONTENT_HEIGHT / LINE_HEIGHT_PX)
     const lineNodes = Array.from({ length: maxLines }, (_, i) => createLineNode(`Line ${i + 1}`))
 
     const rootNode = container({
@@ -190,7 +187,7 @@ describe("OG image layout", () => {
     if (!takumiAvailable) return
 
     const renderer = new Renderer()
-    const maxLines = Math.floor(CONTENT_HEIGHT / EFFECTIVE_LINE_HEIGHT)
+    const maxLines = Math.floor(CONTENT_HEIGHT / LINE_HEIGHT_PX)
     const lineNodes = Array.from({ length: maxLines }, (_, i) => createLineNode(`Line ${i + 1}`))
 
     const rootNode = container({
@@ -271,7 +268,6 @@ index 1234567..abcdefg 100644
           alignItems: "center",
           width: CONTENT_WIDTH,
           height: LINE_HEIGHT_PX,
-          marginBottom: -GAP_OVERLAP,
           backgroundColor,
         },
         children: [

@@ -50,12 +50,40 @@ function isMobileDevice(c: { req: { header: (name: string) => string | undefined
   return mobileRegex.test(userAgent)
 }
 
+// Inject OG image meta tags into HTML
+function injectOgTags(html: string, ogImageUrl: string, title: string): string {
+  const ogTags = `
+<meta property="og:title" content="${title}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="${ogImageUrl}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:image" content="${ogImageUrl}">`
+
+  // Insert after <meta name="viewport"...> or before </head>
+  if (html.includes('name="viewport"')) {
+    return html.replace(
+      /(<meta[^>]*name="viewport"[^>]*>)/i,
+      `$1${ogTags}`
+    )
+  }
+  return html.replace("</head>", `${ogTags}\n</head>`)
+}
+
+// Extract title from HTML
+function extractTitle(html: string): string {
+  const match = html.match(/<title>([^<]*)<\/title>/i)
+  return match?.[1] ?? "Critique Diff"
+}
+
 // Upload HTML content
-// POST /upload with JSON body { html: string, htmlMobile?: string }
-// Returns { id: string, url: string }
+// POST /upload with JSON body { html: string, htmlMobile?: string, ogImage?: string (base64) }
+// Returns { id: string, url: string, ogImageUrl?: string }
 app.post("/upload", async (c) => {
   try {
-    const body = await c.req.json<{ html: string; htmlMobile?: string }>()
+    const body = await c.req.json<{ html: string; htmlMobile?: string; ogImage?: string }>()
 
     if (!body.html || typeof body.html !== "string") {
       return c.json({ error: "Missing or invalid 'html' field" }, 400)
@@ -71,22 +99,53 @@ app.post("/upload", async (c) => {
     // Use first 32 chars of hash as ID (128 bits, secure against guessing)
     const id = hashHex.slice(0, 32)
 
+    const url = new URL(c.req.url)
+    let ogImageUrl: string | undefined
+
+    // Store OG image if provided
+    if (body.ogImage && typeof body.ogImage === "string") {
+      // Decode base64 to binary
+      const binaryString = atob(body.ogImage)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+
+      // Store as binary in KV
+      await c.env.CRITIQUE_KV.put(`og-${id}`, bytes.buffer, {
+        expirationTtl: 60 * 60 * 24 * 7, // 7 days
+      })
+
+      ogImageUrl = `${url.origin}/og/${id}.png`
+    }
+
+    // Inject OG tags into HTML if we have an OG image
+    let htmlDesktop = body.html
+    let htmlMobile = body.htmlMobile
+
+    if (ogImageUrl) {
+      const title = extractTitle(body.html)
+      htmlDesktop = injectOgTags(htmlDesktop, ogImageUrl, title)
+      if (htmlMobile) {
+        htmlMobile = injectOgTags(htmlMobile, ogImageUrl, title)
+      }
+    }
+
     // Store desktop version in KV with 7 day expiration
-    await c.env.CRITIQUE_KV.put(id, body.html, {
+    await c.env.CRITIQUE_KV.put(id, htmlDesktop, {
       expirationTtl: 60 * 60 * 24 * 7, // 7 days
     })
 
     // Store mobile version if provided
-    if (body.htmlMobile && typeof body.htmlMobile === "string") {
-      await c.env.CRITIQUE_KV.put(`${id}-mobile`, body.htmlMobile, {
+    if (htmlMobile && typeof htmlMobile === "string") {
+      await c.env.CRITIQUE_KV.put(`${id}-mobile`, htmlMobile, {
         expirationTtl: 60 * 60 * 24 * 7, // 7 days
       })
     }
 
-    const url = new URL(c.req.url)
     const viewUrl = `${url.origin}/v/${id}`
 
-    return c.json({ id, url: viewUrl })
+    return c.json({ id, url: viewUrl, ogImageUrl })
   } catch (error) {
     return c.json({ error: "Failed to process upload" }, 500)
   }
@@ -152,6 +211,28 @@ async function handleView(c: any) {
 
 app.get("/v/:id", handleView)
 app.get("/view/:id", handleView)
+
+// Serve OG image
+// GET /og/:id.png
+app.get("/og/:id.png", async (c) => {
+  const idWithExt = c.req.param("id.png")
+  const id = idWithExt?.replace(".png", "")
+
+  if (!id || !/^[a-f0-9]{16,32}$/.test(id)) {
+    return c.text("Invalid ID", 400)
+  }
+
+  const imageData = await c.env.CRITIQUE_KV.get(`og-${id}`, { type: "arrayBuffer" })
+
+  if (!imageData) {
+    return c.text("Not found", 404)
+  }
+
+  return c.body(imageData, 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=604800", // 7 days
+  })
+})
 
 // Get raw HTML content (for debugging/API access)
 // GET /raw/:id

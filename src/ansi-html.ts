@@ -18,6 +18,8 @@ export interface ToHtmlOptions {
   autoTheme?: boolean
   /** HTML document title */
   title?: string
+  /** OG image URL for social media previews */
+  ogImageUrl?: string
 }
 
 /**
@@ -146,11 +148,22 @@ export function frameToHtmlDocument(frame: CapturedFrame, options: ToHtmlOptions
 
   const content = frameToHtml(frame, options)
 
+  // Build OG meta tags
+  const ogTags = options.ogImageUrl ? `
+<meta property="og:title" content="${escapeHtml(title)}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="${escapeHtml(options.ogImageUrl)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtml(title)}">
+<meta name="twitter:image" content="${escapeHtml(options.ogImageUrl)}">` : ''
+
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">${ogTags}
 <style>
 @font-face {
   font-family: 'JetBrains Mono Nerd';

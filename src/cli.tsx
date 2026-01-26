@@ -890,24 +890,18 @@ async function runResumeMode(options: ResumeModeOptions) {
   );
 }
 
-// Web mode handler
+// Web mode handler - receives already-cleaned diff content
 interface WebModeOptions {
-  staged?: boolean;
-  commit?: string;
-  context?: string;
-  filter?: string;
   title?: string;
   open?: boolean;
   cols?: number;
   mobileCols?: number;
   theme?: string;
   json?: boolean;
-  '--'?: string[];
 }
 
 async function runWebMode(
-  base: string | undefined,
-  head: string | undefined,
+  diffContent: string,
   options: WebModeOptions
 ) {
   const {
@@ -919,16 +913,6 @@ async function runWebMode(
   // Use stderr for progress when --json is set, stdout otherwise
   const log = options.json ? console.error.bind(console) : console.log.bind(console);
 
-  const gitCommand = buildGitCommand({
-    staged: options.staged,
-    commit: options.commit,
-    base,
-    head,
-    context: options.context,
-    filter: options.filter,
-    positionalFilters: options['--'],
-  });
-
   const desktopCols = options.cols || 230;
   const mobileCols = options.mobileCols || 100;
   // For web, always use default theme (with auto dark/light inversion) unless explicitly overridden via --theme
@@ -936,27 +920,9 @@ async function runWebMode(
     ? options.theme
     : defaultThemeName;
 
-  log("Capturing diff output...");
-
-  // Get the git diff first
-  const { stdout: gitDiff } = await execAsync(gitCommand, {
-    encoding: "utf-8",
-  });
-
-  if (!gitDiff.trim()) {
-    log("No changes to display");
-    if (options.json) {
-      console.log(JSON.stringify({ error: "No changes to display" }));
-    }
-    process.exit(0);
-  }
-
   // Calculate required rows from diff content
-  // Strip submodule headers before parsing - git diff --submodule=diff adds
-  // "Submodule name hash1..hash2:" lines that the diff parser doesn't understand
-  const cleanedDiff = stripSubmoduleHeaders(gitDiff);
   const { parsePatch } = await import("diff");
-  const files = parsePatch(cleanedDiff);
+  const files = parsePatch(diffContent);
   const baseRows = files.reduce((sum, file) => {
     const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
     return sum + diffLines + 5; // header + margin per file
@@ -965,14 +931,14 @@ async function runWebMode(
   log("Converting to HTML...");
 
   try {
-    const { htmlDesktop, htmlMobile } = await captureResponsiveHtml(
-      cleanedDiff,
+    const { htmlDesktop, htmlMobile, ogImage } = await captureResponsiveHtml(
+      diffContent,
       { desktopCols, mobileCols, baseRows, themeName, title: options.title }
     );
 
     log("Uploading...");
 
-    const result = await uploadHtml(htmlDesktop, htmlMobile);
+    const result = await uploadHtml(htmlDesktop, htmlMobile, ogImage);
 
     log(`\nPreview URL: ${result.url}`);
     log(`(expires in 7 days)`);
@@ -991,6 +957,45 @@ async function runWebMode(
     if (options.json) {
       console.log(JSON.stringify({ error: message }));
     }
+    process.exit(1);
+  }
+}
+
+// Image mode handler - receives already-cleaned diff content
+interface ImageModeOptions {
+  theme?: string;
+  cols?: number;
+}
+
+async function runImageMode(
+  diffContent: string,
+  options: ImageModeOptions
+) {
+  const { renderDiffToImages } = await import("./image.ts");
+
+  const themeName = options.theme && themeNames.includes(options.theme)
+    ? options.theme
+    : persistedState.themeName ?? defaultThemeName;
+
+  const cols = options.cols || 120;
+
+  console.log("Rendering to images...");
+
+  try {
+    const result = await renderDiffToImages(diffContent, {
+      cols,
+      themeName,
+    });
+
+    console.log(`\nGenerated ${result.imageCount} image${result.imageCount === 1 ? "" : "s"}:`);
+    for (const path of result.paths) {
+      console.log(`  ${path}`);
+    }
+
+    process.exit(0);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Failed to generate images:", message);
     process.exit(1);
   }
 }
@@ -1413,7 +1418,8 @@ cli
   .option("--web [title]", "Generate web preview instead of TUI")
   .option("--open", "Open in browser (with --web)")
   .option("--json", "Output JSON to stdout (with --web)")
-  .option("--cols <cols>", "Desktop columns for web render", { default: 240 })
+  .option("--image", "Generate images instead of TUI (saved to /tmp)")
+  .option("--cols <cols>", "Desktop columns for web/image render", { default: 240 })
   .option("--mobile-cols <cols>", "Mobile columns for web render", { default: 100 })
   .option("--stdin", "Read diff from stdin (for use as a pager)")
   .action(async (base, head, options) => {
@@ -1422,67 +1428,73 @@ cli
       useAppStore.setState({ themeName: options.theme });
     }
 
-    // Handle stdin mode (for lazygit pager integration)
+    // Build git command once (used by all modes)
+    const gitCommand = buildGitCommand({
+      staged: options.staged,
+      commit: options.commit,
+      base,
+      head,
+      context: options.context,
+      filter: options.filter,
+      positionalFilters: options['--'],
+    });
+
+    // Get diff content - from stdin or git
+    let diffContent: string;
+    
     if (options.stdin) {
-      let gitDiff = "";
+      // Handle stdin mode (for lazygit pager integration)
+      diffContent = "";
       for await (const chunk of process.stdin) {
-        gitDiff += chunk;
+        diffContent += chunk;
       }
-
-      const [diffModule, renderer] = await Promise.all([
-        import("diff"),
-        createCliRenderer({
-          onDestroy() {
-            process.exit(0);
-          },
-          exitOnCtrlC: true,
-        }),
-      ]);
-
-      const parsedFiles = gitDiff.trim()
-        ? processFiles(diffModule.parsePatch(stripSubmoduleHeaders(gitDiff)), diffModule.formatPatch)
-        : [];
-
-      createRoot(renderer).render(
-        <ErrorBoundary>
-          <App parsedFiles={parsedFiles} />
-        </ErrorBoundary>
-      );
-      return;
+    } else {
+      // Get diff from git (runs once for all modes)
+      const { stdout: gitDiff } = await execAsync(gitCommand, {
+        encoding: "utf-8",
+      });
+      diffContent = gitDiff;
     }
 
-    // If --web flag, delegate to web generation logic
+    // Clean submodule headers once
+    const cleanedDiff = stripSubmoduleHeaders(diffContent);
+
+    // Check for empty diff (except for --watch mode which may get content later)
+    const shouldWatch = options.watch && !base && !head && !options.commit && !options.stdin;
+    if (!cleanedDiff.trim() && !shouldWatch) {
+      // Use stderr for --json mode
+      const log = options.json ? console.error.bind(console) : console.log.bind(console);
+      log("No changes to display");
+      if (options.json) {
+        console.log(JSON.stringify({ error: "No changes to display" }));
+      }
+      process.exit(0);
+    }
+
+    // Dispatch to appropriate handler with diff content
     if (options.web !== undefined) {
       const title = typeof options.web === 'string' ? options.web : undefined;
-      await runWebMode(base, head, {
-        staged: options.staged,
-        commit: options.commit,
-        context: options.context,
-        filter: options.filter,
+      await runWebMode(cleanedDiff, {
         title,
         open: options.open,
         json: options.json,
         cols: parseInt(options.cols) || 240,
         mobileCols: parseInt(options.mobileCols) || 100,
         theme: options.theme,
-        '--': options['--'],
       });
       return;
     }
 
-    try {
-      const gitCommand = buildGitCommand({
-        staged: options.staged,
-        commit: options.commit,
-        base,
-        head,
-        context: options.context,
-        filter: options.filter,
-        positionalFilters: options['--'],
+    if (options.image) {
+      await runImageMode(cleanedDiff, {
+        theme: options.theme,
+        cols: parseInt(options.cols) || 120,
       });
+      return;
+    }
 
-      const shouldWatch = options.watch && !base && !head && !options.commit;
-
+    // TUI mode
+    try {
       // Parallelize diff module loading with renderer creation
       const [diffModule, renderer] = await Promise.all([
         import("diff"),
@@ -1495,10 +1507,16 @@ cli
       ]);
       const { parsePatch, formatPatch } = diffModule;
 
+      // Parse initial diff (already have it, no need to fetch again)
+      const initialParsedFiles = cleanedDiff.trim()
+        ? processFiles(parsePatch(cleanedDiff), formatPatch)
+        : [];
+
       function AppWithWatch() {
-        const [parsedFiles, setParsedFiles] = React.useState<
-          ParsedFile[] | null
-        >(null);
+        // Use initial parsed files, only re-fetch if watching
+        const [parsedFiles, setParsedFiles] = React.useState<ParsedFile[] | null>(
+          shouldWatch ? null : initialParsedFiles
+        );
 
         const watchRenderer = useRenderer();
 
@@ -1513,6 +1531,11 @@ cli
         });
 
         React.useEffect(() => {
+          // Skip initial fetch if not watching (we already have the data)
+          if (!shouldWatch) {
+            return;
+          }
+
           const fetchDiff = async () => {
             try {
               const { stdout: gitDiff } = await execAsync(gitCommand, {
@@ -1532,12 +1555,8 @@ cli
             }
           };
 
+          // Initial fetch for watch mode
           fetchDiff();
-
-          // Set up file watching only if --watch flag is used
-          if (!shouldWatch) {
-            return;
-          }
 
           const cwd = process.cwd();
 
@@ -1948,17 +1967,34 @@ cli
   .option("--filter <pattern>", "Filter files by glob pattern (can be used multiple times)")
   .option("--title <title>", "HTML document title")
   .action(async (base, head, options) => {
-    await runWebMode(base, head, {
+    // Build git command and get diff
+    const gitCommand = buildGitCommand({
       staged: options.staged,
       commit: options.commit,
+      base,
+      head,
       context: options.context,
       filter: options.filter,
+      positionalFilters: options['--'],
+    });
+
+    const { stdout: gitDiff } = await execAsync(gitCommand, {
+      encoding: "utf-8",
+    });
+
+    if (!gitDiff.trim()) {
+      console.log("No changes to display");
+      process.exit(0);
+    }
+
+    const cleanedDiff = stripSubmoduleHeaders(gitDiff);
+
+    await runWebMode(cleanedDiff, {
       title: options.title,
       open: options.open,
       cols: parseInt(options.cols) || 240,
       mobileCols: parseInt(options.mobileCols) || 100,
       theme: options.theme,
-      '--': options['--'],
     });
   });
 

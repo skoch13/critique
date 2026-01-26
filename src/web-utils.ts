@@ -96,6 +96,7 @@ export interface CaptureOptions {
 export interface UploadResult {
   url: string
   id: string
+  ogImageUrl?: string
 }
 
 /**
@@ -254,7 +255,7 @@ export async function captureToHtml(
 }
 
 /**
- * Generate desktop and mobile HTML versions in parallel
+ * Generate desktop and mobile HTML versions in parallel, with optional OG image
  */
 export async function captureResponsiveHtml(
   diffContent: string,
@@ -265,11 +266,24 @@ export async function captureResponsiveHtml(
     themeName: string
     title?: string
   }
-): Promise<{ htmlDesktop: string; htmlMobile: string }> {
+): Promise<{ htmlDesktop: string; htmlMobile: string; ogImage: Buffer | null }> {
   // Use large row values to ensure all content fits without scrolling
   // The frameToHtml function trims empty lines at the end
   const desktopRows = Math.max(options.baseRows * 3, 1000)
   const mobileRows = Math.max(Math.ceil(desktopRows * (options.desktopCols / options.mobileCols)), 2000)
+
+  // Try to generate OG image (takumi is optional)
+  let ogImage: Buffer | null = null
+  try {
+    const { renderDiffToOgImage } = await import("./image.ts")
+    ogImage = await renderDiffToOgImage(diffContent, {
+      themeName: options.themeName,
+      cols: 90, // Narrower for OG image readability
+    })
+  } catch (e) {
+    // takumi not installed or error - skip OG image
+    ogImage = null
+  }
 
   const [htmlDesktop, htmlMobile] = await Promise.all([
     captureToHtml(diffContent, {
@@ -286,7 +300,7 @@ export async function captureResponsiveHtml(
     }),
   ])
 
-  return { htmlDesktop, htmlMobile }
+  return { htmlDesktop, htmlMobile, ogImage }
 }
 
 export interface ReviewRenderOptions extends CaptureOptions {
@@ -434,14 +448,25 @@ export async function captureReviewResponsiveHtml(
  */
 export async function uploadHtml(
   htmlDesktop: string,
-  htmlMobile: string
+  htmlMobile: string,
+  ogImage?: Buffer | null
 ): Promise<UploadResult> {
+  const body: Record<string, string> = { 
+    html: htmlDesktop, 
+    htmlMobile,
+  }
+
+  // Include OG image as base64 if provided
+  if (ogImage) {
+    body.ogImage = ogImage.toString("base64")
+  }
+
   const response = await fetch(`${WORKER_URL}/upload`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ html: htmlDesktop, htmlMobile }),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
@@ -449,7 +474,7 @@ export async function uploadHtml(
     throw new Error(`Upload failed: ${error}`)
   }
 
-  const result = (await response.json()) as { id: string; url: string }
+  const result = (await response.json()) as { id: string; url: string; ogImageUrl?: string }
   return result
 }
 

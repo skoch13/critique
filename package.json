@@ -2,7 +2,7 @@
   "name": "critique",
   "module": "src/diff.tsx",
   "type": "module",
-  "version": "0.1.50",
+  "version": "0.1.51",
   "private": false,
   "bin": "./src/cli.tsx",
   "scripts": {
@@ -34,5 +34,9 @@
     "picocolors": "^1.1.1",
     "react": "^19.2.0",
     "zustand": "^5.0.8"
+  },
+  "optionalDependencies": {
+    "@takumi-rs/core": "^0.65.0",
+    "@takumi-rs/helpers": "^0.65.0"
   }
 }

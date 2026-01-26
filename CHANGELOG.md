@@ -1,3 +1,12 @@
+# 0.1.51
+
+- New `--image` flag for diff command:
+  - Generates WebP images of terminal output (saved to /tmp)
+  - Splits long diffs into multiple images (70 lines per image)
+  - Uses takumi for high-performance image rendering
+  - `@takumi-rs/core` and `@takumi-rs/helpers` added as optional dependencies
+  - Library exports: `renderFrameToImages`, `renderDiffToImages`, `renderReviewToImages` from `critique/src/image.ts`
+
 # 0.1.50
 
 - `review` command: Fix visual gaps in ASCII diagrams

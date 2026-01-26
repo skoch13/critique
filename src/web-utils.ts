@@ -278,7 +278,7 @@ export async function captureResponsiveHtml(
     const { renderDiffToOgImage } = await import("./image.ts")
     ogImage = await renderDiffToOgImage(diffContent, {
       themeName: options.themeName,
-      cols: 90, // Narrower for OG image readability
+      cols: 115, // 1152px content width / ~10px per char
     })
   } catch (e) {
     // takumi not installed or error - skip OG image

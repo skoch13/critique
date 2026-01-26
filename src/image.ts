@@ -513,7 +513,7 @@ export async function renderDiffToOgImage(
 ): Promise<Buffer> {
   const { renderDiffToFrame } = await import("./web-utils.ts")
 
-  const cols = options.cols ?? 100
+  const cols = options.cols ?? 115  // 1152px content width / ~10px per char
   const themeName = options.themeName ?? "tokyonight"
 
   // Render diff to captured frame

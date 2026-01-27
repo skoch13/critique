@@ -66,7 +66,7 @@ describe("safeCaptureSpans", () => {
 
   test("safeCaptureSpans uses getRealCharBytes for correct character decoding", async () => {
     // Import the function we're testing
-    const { renderDiffToFrame } = await import("./web-utils.ts")
+    const { renderDiffToFrame } = await import("./web-utils.tsx")
     
     const diffContent = `diff --git a/test.ts b/test.ts
 new file mode 100644

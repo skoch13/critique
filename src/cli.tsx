@@ -514,7 +514,7 @@ async function runReviewMode(
         uploadHtml,
         openInBrowser,
         cleanupTempFile,
-      } = await import("./web-utils.ts");
+      } = await import("./web-utils.tsx");
 
       // Read review data from YAML
       const reviewData = readReviewYaml(yamlPath);
@@ -552,6 +552,9 @@ async function runReviewMode(
         
         clack.log.success(`Preview URL: ${result.url}`, out);
         clack.log.info(formatPreviewExpiry(result.expiresInDays), out);
+        if (typeof result.expiresInDays === "number") {
+          clack.log.info("Get unlimited links: https://critique.work/buy", out);
+        }
         clack.outro("", out);
         if (json) {
           console.log(JSON.stringify({ url: result.url, id: result.id }));
@@ -830,7 +833,7 @@ async function runResumeMode(options: ResumeModeOptions) {
       captureReviewResponsiveHtml,
       uploadHtml,
       openInBrowser,
-    } = await import("./web-utils.ts");
+    } = await import("./web-utils.tsx");
 
     // For web, always use default theme (with auto dark/light inversion) unless explicitly overridden
     const themeName = defaultThemeName;
@@ -856,6 +859,9 @@ async function runResumeMode(options: ResumeModeOptions) {
 
       clack.log.success(`Preview URL: ${result.url}`);
       clack.log.info(formatPreviewExpiry(result.expiresInDays));
+      if (typeof result.expiresInDays === "number") {
+        clack.log.info("Get unlimited links: https://critique.work/buy");
+      }
       clack.outro("");
 
       if (options.open) {
@@ -911,7 +917,7 @@ async function runWebMode(
     captureResponsiveHtml,
     uploadHtml,
     openInBrowser,
-  } = await import("./web-utils.ts");
+  } = await import("./web-utils.tsx");
 
   // Use stderr for progress when --json is set, stdout otherwise
   const log = options.json ? console.error.bind(console) : console.log.bind(console);
@@ -945,6 +951,9 @@ async function runWebMode(
 
     log(`\nPreview URL: ${result.url}`);
     log(formatPreviewExpiry(result.expiresInDays));
+    if (typeof result.expiresInDays === "number") {
+      log("Get unlimited links: https://critique.work/buy");
+    }
     if (options.json) {
       console.log(JSON.stringify({ url: result.url, id: result.id }));
     }

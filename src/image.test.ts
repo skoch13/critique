@@ -69,7 +69,7 @@ index 1234567..abcdefg 100644
       return
     }
 
-    const { renderDiffToFrame } = await import("./web-utils.ts")
+    const { renderDiffToFrame } = await import("./web-utils.tsx")
     const { renderFrameToImages } = await import("./image.ts")
 
     // Create a frame with enough lines to split
@@ -189,7 +189,7 @@ ${Array.from({ length: 100 }, (_, i) => `+line ${i + 1}: some content here`).joi
       return
     }
 
-    const { renderDiffToFrame } = await import("./web-utils.ts")
+    const { renderDiffToFrame } = await import("./web-utils.tsx")
     const { calculateOgImageLayout } = await import("./image.ts")
 
     // Use a realistic diff with enough lines to fill the OG image

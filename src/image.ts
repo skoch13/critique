@@ -166,7 +166,7 @@ export async function renderDiffToImages(
     themeName?: string
   } & RenderToImagesOptions = {}
 ): Promise<RenderResult> {
-  const { renderDiffToFrame } = await import("./web-utils.ts")
+  const { renderDiffToFrame } = await import("./web-utils.tsx")
 
   const cols = options.cols ?? 120
   const rows = options.rows ?? 10000
@@ -202,7 +202,7 @@ export async function renderReviewToImages(
     themeName?: string
   } & RenderToImagesOptions
 ): Promise<RenderResult> {
-  const { renderReviewToFrame } = await import("./web-utils.ts")
+  const { renderReviewToFrame } = await import("./web-utils.tsx")
 
   const cols = options.cols ?? 120
   const rows = options.rows ?? 10000
@@ -321,7 +321,7 @@ export async function renderDiffToOgImage(
   diffContent: string,
   options: OgImageOptions & { cols?: number } = {}
 ): Promise<Buffer> {
-  const { renderDiffToFrame } = await import("./web-utils.ts")
+  const { renderDiffToFrame } = await import("./web-utils.tsx")
 
   const width = options.width ?? 1200
   const fontSize = options.fontSize ?? 16

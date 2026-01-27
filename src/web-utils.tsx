@@ -103,6 +103,24 @@ export interface UploadResult {
   expiresInDays?: number | null
 }
 
+function renderExpiryNotice(options: { textColor: string; mutedColor: string }) {
+  const buyUrl = `${WORKER_URL}/buy`
+  return (
+    <box style={{ flexDirection: "row" }}>
+      <text fg={options.textColor}>This page will expire in 7 days. </text>
+      <text fg={options.mutedColor}>Get unlimited links: </text>
+      <text fg={options.textColor}>{buyUrl}</text>
+    </box>
+  )
+}
+
+function shouldShowExpiryNotice(): boolean {
+  if (process.env.CRITIQUE_SHOW_EXPIRY === "1") {
+    return true
+  }
+  return !loadStoredLicenseKey()
+}
+
 /**
  * Render diff to CapturedFrame using opentui test renderer.
  * This replaces the subprocess + ANSI capture approach.
@@ -153,6 +171,8 @@ export async function renderDiffToFrame(
   const webText = rgbaToHex(webTheme.text)
   const webMuted = rgbaToHex(webTheme.textMuted)
 
+  const showExpiryNotice = shouldShowExpiryNotice()
+
   // Create the diff view component
   function WebApp() {
     return React.createElement(
@@ -164,6 +184,12 @@ export async function renderDiffToFrame(
           backgroundColor: webBg,
         },
       },
+      showExpiryNotice
+        ? renderExpiryNotice({
+            textColor: webText,
+            mutedColor: webMuted,
+          })
+        : null,
       filesWithRawDiff.map((file, idx) => {
         const fileName = getFileName(file)
         const oldFileName = getOldFileName(file)
@@ -343,6 +369,12 @@ export async function renderReviewToFrame(
     ? options.themeName
     : defaultThemeName
 
+  const theme = getResolvedTheme(themeName)
+  const webBg = theme.background
+  const webText = rgbaToHex(theme.text)
+  const webMuted = rgbaToHex(theme.textMuted)
+  const showExpiryNotice = shouldShowExpiryNotice()
+
   // Create test renderer
   const { renderer, renderOnce } = await createTestRenderer({
     width: options.cols,
@@ -352,15 +384,31 @@ export async function renderReviewToFrame(
   // Create the review view component
   // Pass renderer to enable custom renderNode (wrapMode: "none" for diagrams)
   function ReviewWebApp() {
-    return React.createElement(ReviewAppView, {
-      hunks: options.hunks,
-      reviewData: options.reviewData,
-      isGenerating: false,
-      themeName,
-      width: options.cols,
-      showFooter: false,
-      renderer: renderer,
-    })
+    return React.createElement(
+      "box",
+      {
+        style: {
+          flexDirection: "column",
+          height: "100%",
+          backgroundColor: webBg,
+        },
+      },
+      showExpiryNotice
+        ? renderExpiryNotice({
+            textColor: webText,
+            mutedColor: webMuted,
+          })
+        : null,
+      React.createElement(ReviewAppView, {
+        hunks: options.hunks,
+        reviewData: options.reviewData,
+        isGenerating: false,
+        themeName,
+        width: options.cols,
+        showFooter: false,
+        renderer: renderer,
+      })
+    )
   }
 
   // Render the component

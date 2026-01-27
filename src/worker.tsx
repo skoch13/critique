@@ -278,6 +278,7 @@ function injectOgTags(html: string, ogImageUrl: string, title: string): string {
   return html.replace("</head>", `${ogTags}\n</head>`)
 }
 
+
 // Extract title from HTML
 function extractTitle(html: string): string {
   const match = html.match(/<title>([^<]*)<\/title>/i)
@@ -338,6 +339,7 @@ app.post("/upload", async (c) => {
       htmlDesktop = injectOgTags(htmlDesktop, ogImageUrl, title)
       htmlMobile = htmlMobile ? injectOgTags(htmlMobile, ogImageUrl, title) : htmlMobile
     }
+
 
     // Store desktop version in KV
     await kv.setHtml(id, htmlDesktop, ttlSeconds)
@@ -608,6 +610,7 @@ async function handleView(c: any) {
   if (!html) {
     return c.text("Not found", 404)
   }
+
 
   // Stream the HTML content for faster initial load
   return stream(c, async (s) => {

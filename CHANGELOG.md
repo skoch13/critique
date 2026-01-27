@@ -1,3 +1,53 @@
+# 0.1.71
+
+- Web previews:
+  - Add `CRITIQUE_SHOW_EXPIRY=1` to force the expiry notice in web rendering
+
+# 0.1.71
+
+- Web previews:
+  - Add `CRITIQUE_SHOW_EXPIRY=1` to force the expiry notice in web rendering
+
+# 0.1.70
+
+- Web previews:
+  - Tweak expiry notice styling to remove padding and borders
+
+# 0.1.69
+
+- Web previews:
+  - Render expiry notice in TUI JSX with plain left-aligned text
+
+# 0.1.68
+
+- Web previews:
+  - `--web`: render expiry notice in the TUI JSX output before HTML generation
+
+# 0.1.67
+
+- Web previews:
+  - Remove expiry banner injection from HTML generation
+
+# 0.1.66
+
+- Web previews:
+  - `--web`: inject expiry banner during HTML generation instead of in the worker
+
+# 0.1.65
+
+- Worker:
+  - `view`: add `showExpiration=1` query param to render expiry banner on demand
+
+# 0.1.64
+
+- Web previews:
+  - `--web`: show purchase URL after expiry notice for non-licensed uploads
+
+# 0.1.63
+
+- Worker:
+  - `view`: add expiry banner to expiring pages with link to subscription
+
 # 0.1.62
 
 - Worker:

@@ -1,3 +1,19 @@
+# 0.1.62
+
+- Worker:
+  - Add Resend reply-to and tag metadata for license emails
+
+# 0.1.61
+
+- Worker:
+  - Email the license command via Resend on successful checkout
+  - Success page shows the `npx ciritque login <key>` command
+
+# 0.1.60
+
+- Tooling:
+  - Add `worker:secrets` script to upload Cloudflare secrets from `.env`
+
 # 0.1.59
 
 - Worker:

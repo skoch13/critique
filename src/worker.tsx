@@ -9,12 +9,15 @@ import { cors } from "hono/cors"
 import { stream } from "hono/streaming"
 import type { KVNamespace } from "@cloudflare/workers-types"
 import Stripe from "stripe"
+import { Resend } from "resend"
 
 type Bindings = {
   CRITIQUE_KV: KVNamespace
   STRIPE_SECRET_KEY: string
   STRIPE_WEBHOOK_SECRET: string
   PUBLIC_URL?: string
+  RESEND_API_KEY?: string
+  RESEND_FROM?: string
 }
 
 type LicenseRecord = {
@@ -170,6 +173,58 @@ class CritiqueKv {
 function generateLicenseKey(): string {
   const raw = crypto.randomUUID().replace(/-/g, "")
   return `critique_${raw}`
+}
+
+function buildLicenseCommand(licenseKey: string): string {
+  return `npx ciritque login ${licenseKey}`
+}
+
+async function sendLicenseEmail(
+  env: Bindings,
+  email: string,
+  licenseKey: string
+): Promise<void> {
+  const apiKey = env.RESEND_API_KEY
+  const from = env.RESEND_FROM
+  if (!apiKey || !from) {
+    logger.log("Resend not configured; skipping email", {
+      hasApiKey: Boolean(apiKey),
+      hasFrom: Boolean(from),
+    })
+    return
+  }
+
+  const command = buildLicenseCommand(licenseKey)
+  const resend = new Resend(apiKey)
+  const subject = "Your Critique license key"
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; color: #0f172a;">
+      <p>Thanks for subscribing to Critique.</p>
+      <p>Run this on any machine where you want to use critique:</p>
+      <pre style="background: #0b1117; color: #e6edf3; padding: 12px 14px; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">${command}</pre>
+      <p>This unlocks permanent critique links.</p>
+    </div>
+  `
+  const text = `Thanks for subscribing to Critique.\n\nRun this on any machine where you want to use critique:\n${command}\n\nThis unlocks permanent critique links.`
+
+  const { error } = await resend.emails.send({
+    from,
+    to: [email],
+    replyTo: ["tommy@unframer.co"],
+    tags: [
+      {
+        name: "critique",
+        value: "license",
+      },
+    ],
+    subject,
+    html,
+    text,
+  })
+
+  if (error) {
+    logger.log("Resend email failed", { message: error.message })
+  }
 }
 
 // Detect if request is from a mobile device
@@ -363,8 +418,10 @@ function SuccessPage({
   const message = canceled
     ? "No charge was made. You can return anytime to subscribe."
     : licenseKey
-      ? "Save this key. Use it once with critique login to unlock permanent links."
+      ? "Run this on any machine where you want to use critique."
       : "Your payment is confirmed. This page will update once the license is ready."
+
+  const command = licenseKey ? buildLicenseCommand(licenseKey) : null
 
   return (
     <html>
@@ -387,7 +444,7 @@ function SuccessPage({
           <div class="card">
             <h1>{headline}</h1>
             <p>{message}</p>
-            {licenseKey ? <div class="key">{licenseKey}</div> : null}
+            {command ? <div class="key">{command}</div> : null}
             {status ? <div class="status">Status: {status}</div> : null}
           </div>
         </div>
@@ -445,6 +502,8 @@ app.post("/stripe/webhook", async (c) => {
       id: string
       subscription?: string | null
       customer?: string | null
+      customer_details?: { email?: string | null }
+      customer_email?: string | null
     }
 
     const kv = new CritiqueKv(c.env.CRITIQUE_KV)
@@ -461,6 +520,19 @@ app.post("/stripe/webhook", async (c) => {
       await kv.setCheckoutLicense(session.id, licenseKey)
       if (session.subscription) {
         await kv.setSubscriptionLicense(session.subscription, licenseKey)
+      }
+
+      const email = session.customer_details?.email || session.customer_email
+      if (email) {
+        try {
+          await sendLicenseEmail(c.env, email, licenseKey)
+        } catch (error) {
+          logger.log("License email send failed", error)
+        }
+      } else {
+        logger.log("License email skipped: missing customer email", {
+          sessionId: session.id,
+        })
       }
     }
   }

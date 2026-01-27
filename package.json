@@ -2,7 +2,7 @@
   "name": "critique",
   "module": "src/diff.tsx",
   "type": "module",
-  "version": "0.1.59",
+  "version": "0.1.62",
   "private": false,
   "bin": "./src/cli.tsx",
   "scripts": {
@@ -11,7 +11,8 @@
     "prepublishonly": "tsc",
     "example": "bun --watch src/example.tsx",
     "worker:dev": "wrangler dev",
-    "worker:deploy": "wrangler deploy"
+    "worker:deploy": "wrangler deploy",
+    "worker:secrets": "wrangler secret bulk .env"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250525.0",
@@ -34,6 +35,7 @@
     "marked": "^17.0.1",
     "picocolors": "^1.1.1",
     "react": "^19.2.0",
+    "resend": "^6.8.0",
     "zustand": "^5.0.8"
   },
   "optionalDependencies": {

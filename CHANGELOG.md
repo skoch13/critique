@@ -1,12 +1,8 @@
-# 0.1.71
+# 0.1.75
 
 - Web previews:
-  - Add `CRITIQUE_SHOW_EXPIRY=1` to force the expiry notice in web rendering
-
-# 0.1.71
-
-- Web previews:
-  - Add `CRITIQUE_SHOW_EXPIRY=1` to force the expiry notice in web rendering
+  - Add left padding to the expiry notice
+  - Linkify URLs in HTML output (clickable links in web previews)
 
 # 0.1.70
 

@@ -33,6 +33,13 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;")
 }
 
+function linkifyHtml(text: string): string {
+  const urlRegex = /(https?:\/\/[^\s<]+)/g
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: inherit;">${url}</a>`
+  })
+}
+
 /**
  * Convert RGBA to hex string, returning null for transparent colors
  */
@@ -75,7 +82,7 @@ function spanToHtml(span: CapturedSpan): string {
     styles.push("opacity:0.5")
   }
   
-  const escapedText = escapeHtml(span.text)
+  const escapedText = linkifyHtml(escapeHtml(span.text))
   
   // Always wrap in span for consistent inline-block sizing
   if (styles.length === 0) {

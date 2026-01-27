@@ -1,5 +1,5 @@
 // DirectoryTreeView - Renders a directory tree with file status colors and change counts.
-// Shows added files in green, modified in orange, deleted in red.
+// Shows added files in green, modified in default text, deleted in red, renamed in yellow.
 // Change counts (+n,-n) use green/red for the numbers, brackets are muted.
 // Supports click-to-scroll via onFileSelect callback.
 
@@ -18,14 +18,16 @@ export interface DirectoryTreeViewProps {
 
 /**
  * Get the color for a file based on its status
- * Uses diff colors from theme: green (added), red (deleted), default text (modified)
+ * Uses diff colors from theme: green (added), red (deleted), yellow (renamed), default text (modified)
  */
-function getStatusColor(status: "added" | "modified" | "deleted", theme: ReturnType<typeof getResolvedTheme>): string {
+function getStatusColor(status: "added" | "modified" | "deleted" | "renamed", theme: ReturnType<typeof getResolvedTheme>): string {
   switch (status) {
     case "added":
       return rgbaToHex(theme.diffAdded) // green
     case "deleted":
       return rgbaToHex(theme.diffRemoved) // red
+    case "renamed":
+      return rgbaToHex(theme.warning) // yellow - renamed/moved file
     case "modified":
       return rgbaToHex(theme.text) // default text color, same as folders
   }

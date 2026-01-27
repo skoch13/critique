@@ -10,6 +10,7 @@ import { join } from "path"
 import { getResolvedTheme, rgbaToHex } from "./themes.ts"
 import { RGBA, type CapturedFrame, type CapturedLine, type CapturedSpan } from "@opentui/core"
 import type { CliRenderer } from "@opentui/core"
+import { loadStoredLicenseKey } from "./license.ts"
 
 const execAsync = promisify(exec)
 
@@ -99,6 +100,7 @@ export interface UploadResult {
   url: string
   id: string
   ogImageUrl?: string
+  expiresInDays?: number | null
 }
 
 /**
@@ -117,11 +119,13 @@ export async function renderDiffToFrame(
   const { DiffView } = await import("./components/index.ts")
   const {
     getFileName,
+    getOldFileName,
     countChanges,
     getViewMode,
     processFiles,
     detectFiletype,
     stripSubmoduleHeaders,
+    parseGitDiffFiles,
   } = await import("./diff-utils.ts")
   const { themeNames, defaultThemeName } = await import("./themes.ts")
 
@@ -129,8 +133,8 @@ export async function renderDiffToFrame(
     ? options.themeName
     : defaultThemeName
 
-  // Parse the diff
-  const files = parsePatch(stripSubmoduleHeaders(diffContent))
+  // Parse the diff (with rename detection support)
+  const files = parseGitDiffFiles(stripSubmoduleHeaders(diffContent), parsePatch)
   const filesWithRawDiff = processFiles(files, formatPatch)
 
   if (filesWithRawDiff.length === 0) {
@@ -147,6 +151,7 @@ export async function renderDiffToFrame(
   const webTheme = getResolvedTheme(themeName)
   const webBg = webTheme.background
   const webText = rgbaToHex(webTheme.text)
+  const webMuted = rgbaToHex(webTheme.textMuted)
 
   // Create the diff view component
   function WebApp() {
@@ -161,10 +166,20 @@ export async function renderDiffToFrame(
       },
       filesWithRawDiff.map((file, idx) => {
         const fileName = getFileName(file)
+        const oldFileName = getOldFileName(file)
         const filetype = detectFiletype(fileName)
         const { additions, deletions } = countChanges(file.hunks)
         // Use higher threshold (150) for web rendering vs TUI (100)
         const viewMode = getViewMode(additions, deletions, options.cols, 150)
+
+        // Build file header elements - show "old → new" for renames
+        const fileHeaderChildren = oldFileName
+          ? [
+              React.createElement("text", { fg: webMuted, key: "old" }, oldFileName.trim()),
+              React.createElement("text", { fg: webMuted, key: "arrow" }, " → "),
+              React.createElement("text", { fg: webText, key: "new" }, fileName.trim()),
+            ]
+          : [React.createElement("text", { fg: webText, key: "name" }, fileName.trim())]
 
         return React.createElement(
           "box",
@@ -181,7 +196,7 @@ export async function renderDiffToFrame(
                 alignItems: "center",
               },
             },
-            React.createElement("text", { fg: webText }, fileName.trim()),
+            ...fileHeaderChildren,
             React.createElement("text", { fg: "#2d8a47" }, ` +${additions}`),
             React.createElement("text", { fg: "#c53b53" }, `-${deletions}`)
           ),
@@ -464,11 +479,17 @@ export async function uploadHtml(
     body.ogImage = ogImage.toString("base64")
   }
 
+  const licenseKey = loadStoredLicenseKey()
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  if (licenseKey) {
+    headers["X-Critique-License"] = licenseKey
+  }
+
   const response = await fetch(`${WORKER_URL}/upload`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(body),
   })
 
@@ -477,7 +498,12 @@ export async function uploadHtml(
     throw new Error(`Upload failed: ${error}`)
   }
 
-  const result = (await response.json()) as { id: string; url: string; ogImageUrl?: string }
+  const result = (await response.json()) as {
+    id: string
+    url: string
+    ogImageUrl?: string
+    expiresInDays?: number | null
+  }
   return result
 }
 

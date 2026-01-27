@@ -5,7 +5,7 @@
 /**
  * File status based on git diff
  */
-export type FileStatus = "added" | "modified" | "deleted"
+export type FileStatus = "added" | "modified" | "deleted" | "renamed"
 
 /**
  * Input file info for tree building

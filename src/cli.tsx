@@ -30,15 +30,18 @@ import Dropdown from "./dropdown.tsx";
 import { debounce } from "./utils.ts";
 import { DiffView, DirectoryTreeView } from "./components/index.ts";
 import { logger } from "./logger.ts";
+import { saveStoredLicenseKey } from "./license.ts";
 import {
   buildGitCommand,
   getFileName,
   getFileStatus,
+  getOldFileName,
   countChanges,
   getViewMode,
   processFiles,
   detectFiletype,
   stripSubmoduleHeaders,
+  parseGitDiffFiles,
   IGNORED_FILES,
   type ParsedFile,
 } from "./diff-utils.ts";
@@ -548,7 +551,7 @@ async function runReviewMode(
         webSpinner.stop("Uploaded");
         
         clack.log.success(`Preview URL: ${result.url}`, out);
-        clack.log.info("(expires in 7 days)", out);
+        clack.log.info(formatPreviewExpiry(result.expiresInDays), out);
         clack.outro("", out);
         if (json) {
           console.log(JSON.stringify({ url: result.url, id: result.id }));
@@ -852,7 +855,7 @@ async function runResumeMode(options: ResumeModeOptions) {
       webSpinner.stop("Uploaded");
 
       clack.log.success(`Preview URL: ${result.url}`);
-      clack.log.info("(expires in 7 days)");
+      clack.log.info(formatPreviewExpiry(result.expiresInDays));
       clack.outro("");
 
       if (options.open) {
@@ -922,7 +925,7 @@ async function runWebMode(
 
   // Calculate required rows from diff content
   const { parsePatch } = await import("diff");
-  const files = parsePatch(diffContent);
+  const files = parseGitDiffFiles(diffContent, parsePatch);
   const baseRows = files.reduce((sum, file) => {
     const diffLines = file.hunks.reduce((h, hunk) => h + hunk.lines.length, 0);
     return sum + diffLines + 5; // header + margin per file
@@ -941,7 +944,7 @@ async function runWebMode(
     const result = await uploadHtml(htmlDesktop, htmlMobile, ogImage);
 
     log(`\nPreview URL: ${result.url}`);
-    log(`(expires in 7 days)`);
+    log(formatPreviewExpiry(result.expiresInDays));
     if (options.json) {
       console.log(JSON.stringify({ url: result.url, id: result.id }));
     }
@@ -1042,6 +1045,16 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 const execAsync = promisify(exec);
+
+function formatPreviewExpiry(expiresInDays?: number | null): string {
+  if (expiresInDays === null) {
+    return "(never expires)";
+  }
+  if (typeof expiresInDays === "number") {
+    return `(expires in ${expiresInDays} days)`;
+  }
+  return "(expires in 7 days)";
+}
 
 
 
@@ -1273,6 +1286,7 @@ function App({ parsedFiles }: AppProps) {
 
       {parsedFiles.map((file, idx) => {
         const fileName = getFileName(file);
+        const oldFileName = getOldFileName(file);
         const filetype = detectFiletype(fileName);
         const { additions, deletions } = countChanges(file.hunks);
         const viewMode = getViewMode(additions, deletions, width);
@@ -1296,7 +1310,15 @@ function App({ parsedFiles }: AppProps) {
                 alignItems: "center",
               }}
             >
-              <text fg={textColor}>{fileName.trim()}</text>
+              {oldFileName ? (
+                <>
+                  <text fg={mutedColor}>{oldFileName.trim()}</text>
+                  <text fg={mutedColor}> → </text>
+                  <text fg={textColor}>{fileName.trim()}</text>
+                </>
+              ) : (
+                <text fg={textColor}>{fileName.trim()}</text>
+              )}
               <text fg="#2d8a47"> +{additions}</text>
               <text fg="#c53b53">-{deletions}</text>
             </box>
@@ -1509,7 +1531,7 @@ cli
 
       // Parse initial diff (already have it, no need to fetch again)
       const initialParsedFiles = cleanedDiff.trim()
-        ? processFiles(parsePatch(cleanedDiff), formatPatch)
+        ? processFiles(parseGitDiffFiles(cleanedDiff, parsePatch), formatPatch)
         : [];
 
       function AppWithWatch() {
@@ -1547,7 +1569,7 @@ cli
                 return;
               }
 
-              const files = parsePatch(stripSubmoduleHeaders(gitDiff));
+              const files = parseGitDiffFiles(stripSubmoduleHeaders(gitDiff), parsePatch);
               const processedFiles = processFiles(files, formatPatch);
               setParsedFiles(processedFiles);
             } catch (error) {
@@ -1996,6 +2018,13 @@ cli
       mobileCols: parseInt(options.mobileCols) || 100,
       theme: options.theme,
     });
+  });
+
+cli
+  .command("login <key>", "Store a Critique license key for unlimited links")
+  .action((key: string) => {
+    saveStoredLicenseKey(key)
+    process.stdout.write("Saved license key to ~/.critique/license.json\n")
   });
 
 cli.help();

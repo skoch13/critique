@@ -1,11 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "critique-web",
-  "main": "src/worker.ts",
+  "main": "src/worker.tsx",
   "compatibility_date": "2025-05-26",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
-  
+
   // Static assets (fonts, etc.)
   "assets": {
     "directory": "./public"

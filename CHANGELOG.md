@@ -1,3 +1,43 @@
+# 0.1.59
+
+- Worker:
+  - `buy`: use Stripe SDK for checkout session creation
+
+# 0.1.58
+
+- Worker:
+  - `buy`: log Stripe checkout errors and return status details in response
+
+# 0.1.57
+
+- Worker:
+  - Centralize all KV reads/writes in a dedicated storage helper
+
+# 0.1.56
+
+- Worker:
+  - Add JS entrypoint shim for Wrangler deploy
+
+# 0.1.55
+
+- Worker:
+  - `buy`: update Stripe yearly price ID
+
+# 0.1.54
+
+- Worker:
+  - `buy`: hardcode yearly Stripe price ID for the Critique subscription
+
+# 0.1.53
+
+- Web previews:
+  - `--web`: allow licensed uploads to never expire via stored license key
+  - `review --web` and `review --resume --web`: show never-expire status from worker
+- CLI:
+  - `login`: store Critique license key in `~/.critique/license.json`
+- Worker:
+  - Add Stripe subscription routes and KV-backed license validation for permanent links
+
 # 0.1.52
 
 - Tests (OG images):

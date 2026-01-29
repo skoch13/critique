@@ -1,5 +1,5 @@
 {
-  "exclude": ["opensrc"],
+  "exclude": ["opensrc", "tmp"],
   "compilerOptions": {
     // Environment setup & latest features
     "lib": ["ESNext"],

@@ -176,7 +176,7 @@ function generateLicenseKey(): string {
 }
 
 function buildLicenseCommand(licenseKey: string): string {
-  return `npx ciritque login ${licenseKey}`
+  return `npx critique login ${licenseKey}`
 }
 
 async function sendLicenseEmail(

@@ -58,7 +58,7 @@
 
 - Worker:
   - Email the license command via Resend on successful checkout
-  - Success page shows the `npx ciritque login <key>` command
+  - Success page shows the `npx critique login <key>` command
 
 # 0.1.60
 

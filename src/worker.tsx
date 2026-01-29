@@ -201,7 +201,7 @@ async function sendLicenseEmail(
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; color: #0f172a;">
       <p>Thanks for subscribing to Critique.</p>
       <p>Run this on any machine where you want to use critique:</p>
-      <pre style="background: #0b1117; color: #e6edf3; padding: 12px 14px; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">${command}</pre>
+      <pre style="background: #0b1117; color: #e6edf3; padding: 12px 14px; border-radius: 8px; font-family: 'Courier New', Courier, monospace;">${command}</pre>
       <p>This unlocks permanent critique links.</p>
     </div>
   `

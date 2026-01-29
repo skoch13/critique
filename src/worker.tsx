@@ -33,6 +33,11 @@ const app = new Hono<{ Bindings: Bindings }>()
 const SEVEN_DAYS = 60 * 60 * 24 * 7
 const LICENSE_HEADER = "X-Critique-License"
 const STRIPE_YEARLY_PRICE_ID = "price_1Su9CZBekrVyz93iMIEnjPOk"
+
+// Favicon PNGs (32x32) - dark (white icon for dark bg) and light (black icon for light bg)
+const FAVICON_DARK_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA8ElEQVR4nO2WPwrCMBhHSxVBvIR4CsHFQXsGt6KjJyiouOosOLgI7s4OjtrjODv450lLSjPFtjZRbB/8hi9pksdHCrGskgQAV95zAQaWDkjOHRjpEOgAPUX6gC8knsA4d4l3AA3gKHVj+slmfoq236LDgDpwkOZmWQWysBBra8BeGl+aEpAlKsCOmDVgmxAImEsSW2JWpgRkCRvYhCPwMCkQMBF7dcMKyFNgKKLiplOgKaLk7wRcoCVSFYlqtxACMsW8A2l/Q60Cifg7AUfxvWNCwFM8yTwTAqn5FYG2KK9fEcgEpQCcc2jCKVv/rYLxAsud37oBTmHeAAAAAElFTkSuQmCC"
+const FAVICON_LIGHT_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA8klEQVR4nO2WPQrCQBCFP1QE8RLiKQQbC/UMdqKlJxBUbLUWLGwEe2sLS/U41hb+jAgjTJXE1WzE+ODB5mV38mWWhYW/oukESIiPQIuYJBF9AbpxAFSBeoAbwEEhbkCPBFQEtqYbw3eKHV5o+9l8rABszLuRK4A4eKJr88Da5FNfAGIgssDK5HMg4wNAgLGBWJp85gtADMTjrxeaXX0CCDDQWjWTfQygow47HbEBlNRh834LoA2U1Tn187mdCgBJegvkmwA6EY5hrAAS0b8F0AyY3/QB0A+4kvVTsQXiCFDR8SkpACdJ6gH2H+jAzq35pEx3Rh7HfgGTRuMAAAAASUVORK5CYII="
+
 const logger = {
   log: (...args: unknown[]) => {
     console.error(...args)
@@ -45,6 +50,33 @@ app.use("*", cors())
 // Redirect to GitHub repo
 app.get("/", (c) => {
   return c.redirect("https://github.com/remorses/critique")
+})
+
+// Serve favicon - dark version (white icon for dark backgrounds)
+app.get("/favicon-dark.png", (c) => {
+  const bytes = Uint8Array.from(atob(FAVICON_DARK_BASE64), (c) => c.charCodeAt(0))
+  return c.body(bytes, 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=604800",
+  })
+})
+
+// Serve favicon - light version (black icon for light backgrounds)
+app.get("/favicon-light.png", (c) => {
+  const bytes = Uint8Array.from(atob(FAVICON_LIGHT_BASE64), (c) => c.charCodeAt(0))
+  return c.body(bytes, 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=604800",
+  })
+})
+
+// Default favicon.ico - returns dark version
+app.get("/favicon.ico", (c) => {
+  const bytes = Uint8Array.from(atob(FAVICON_DARK_BASE64), (c) => c.charCodeAt(0))
+  return c.body(bytes, 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=604800",
+  })
 })
 
 function requireEnv(value: string | undefined, name: string): string {

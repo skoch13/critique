@@ -170,7 +170,10 @@ export function frameToHtmlDocument(frame: CapturedFrame, options: ToHtmlOptions
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">${ogTags}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon-light.png" media="(prefers-color-scheme: light)">
+<link rel="icon" href="/favicon-dark.png">${ogTags}
 <style>
 @font-face {
   font-family: 'JetBrains Mono Nerd';

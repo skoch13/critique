@@ -1,3 +1,9 @@
+# 0.1.77
+
+- Web previews:
+  - Add favicon support with automatic light/dark mode switching
+  - Dark mode shows white diff icon, light mode shows black diff icon
+
 # 0.1.76
 
 - Syntax highlighting:

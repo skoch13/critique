@@ -109,7 +109,7 @@ function renderExpiryNotice(options: { textColor: string; mutedColor: string }) 
     <box style={{ flexDirection: "column", paddingBottom: 1, paddingLeft: 1 }}>
       <box style={{ flexDirection: "row" }}>
         <text fg={options.textColor}>This page will expire in 7 days. </text>
-        <text fg={options.mutedColor}>Get unlimited links: </text>
+        <text fg={options.textColor}>Get unlimited links: </text>
         <text fg={options.textColor}>{buyUrl}</text>
       </box>
     </box>

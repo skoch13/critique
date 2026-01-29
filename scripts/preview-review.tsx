@@ -3,13 +3,17 @@
 // Renders example hunks and review data to preview TUI appearance.
 // Run with: bun run scripts/preview-review.tsx (TUI) or --web (HTML upload).
 
-import { createCliRenderer } from "@opentui/core"
+import { createCliRenderer, addDefaultParsers } from "@opentui/core"
+import parsersConfig from "../parsers-config.ts"
+
+// Register custom syntax highlighting parsers
+addDefaultParsers(parsersConfig.parsers)
 import { createRoot } from "@opentui/react"
 import * as React from "react"
 import { ReviewApp, ReviewAppView } from "../src/review/review-app.tsx"
 import { createHunk } from "../src/review/hunk-parser.ts"
 import type { ReviewYaml } from "../src/review/types.ts"
-import { captureReviewResponsiveHtml, uploadHtml } from "../src/web-utils.ts"
+import { captureReviewResponsiveHtml, uploadHtml } from "../src/web-utils.tsx"
 import fs from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
@@ -88,6 +92,35 @@ const exampleHunks = [
     "     expect(user).toBeDefined()",
     "   })",
     " })",
+  ]),
+  // Rust example
+  createHunk(5, "src/lib.rs", 0, 1, 1, [
+    "+use std::collections::HashMap;",
+    "+use std::sync::Arc;",
+    "+",
+    "+#[derive(Debug, Clone)]",
+    "+pub struct User {",
+    "+    pub id: u64,",
+    "+    pub name: String,",
+    "+    pub email: Option<String>,",
+    "+}",
+    "+",
+    "+impl User {",
+    "+    pub fn new(id: u64, name: impl Into<String>) -> Self {",
+    "+        Self {",
+    "+            id,",
+    "+            name: name.into(),",
+    "+            email: None,",
+    "+        }",
+    "+    }",
+    "+",
+    "+    pub fn with_email(mut self, email: impl Into<String>) -> Self {",
+    "+        self.email = Some(email.into());",
+    "+        self",
+    "+    }",
+    "+}",
+    "+",
+    "+pub type UserCache = Arc<HashMap<u64, User>>;",
   ]),
 ]
 
@@ -205,6 +238,23 @@ Added test case for the new error handling behavior, ensuring that:
 \`\`\`
 
 All tests pass and coverage is at 95%.`,
+    },
+    {
+      hunkIds: [5],
+      markdownDescription: `## Rust User Model
+
+Added a Rust implementation of the User model with:
+
+- **Derive macros**: \`Debug\` and \`Clone\` for easy debugging and copying
+- **Builder pattern**: Fluent API with \`with_email()\` method
+- **Type alias**: \`UserCache\` for thread-safe shared storage
+
+\`\`\`rust
+let user = User::new(1, "Alice")
+    .with_email("alice@example.com");
+\`\`\`
+
+This provides a type-safe, zero-cost abstraction for user data.`,
     },
   ],
 }

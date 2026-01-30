@@ -3,6 +3,7 @@
   "module": "src/diff.tsx",
   "type": "module",
   "version": "0.1.77",
+  "license": "MIT",
   "private": false,
   "bin": "./src/cli.tsx",
   "scripts": {

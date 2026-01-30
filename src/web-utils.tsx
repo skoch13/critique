@@ -323,8 +323,8 @@ export async function captureResponsiveHtml(
   try {
     const { renderDiffToOgImage } = await import("./image.ts")
     ogImage = await renderDiffToOgImage(diffContent, {
-      themeName: options.themeName,
-      // cols defaults to 200, wrapMode defaults to "none" in renderDiffToOgImage
+      // Always use github-light for OG images (no dark mode support in OG protocol)
+      themeName: "github-light",
     })
   } catch (e) {
     // takumi not installed or error - skip OG image

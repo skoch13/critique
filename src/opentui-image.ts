@@ -206,6 +206,7 @@ export function spanToTextNode(
 ) {
   const style: Record<string, string | number> = {
     display: "inline",
+    flexShrink: 0,
   }
 
   const fg = rgbaToHexOrNull(span.fg)
@@ -265,6 +266,7 @@ export function lineToContainerNode(
   const spacer = container({
     style: {
       flex: 1,
+      flexShrink: 0,
       height: "100%",
       backgroundColor: lineBackground,
     },
@@ -276,6 +278,7 @@ export function lineToContainerNode(
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
+      flexShrink: 0,
       width: width ?? "100%",
       height: lineHeightPx,
       backgroundColor: lineBackground,
@@ -320,6 +323,7 @@ export function frameToRootNode(
     style: {
       display: "flex",
       flexDirection: "column",
+      flexShrink: 0,
       gap: 0,
       width,
       height: imageHeight,

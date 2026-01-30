@@ -1,6 +1,9 @@
 # 0.1.80
 
-- OG images: Increased default font size from 16px to 20px for better readability in social previews
+- OG images:
+  - Increased default font size from 16px to 20px for better readability
+  - Fixed text clipping by adding flexShrink 0 to all elements
+  - Always use github-light theme (no dark mode support in OG protocol)
 
 # 0.1.79
 

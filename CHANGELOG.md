@@ -1,3 +1,36 @@
+# 0.1.78
+
+- **Breaking change:** Single positional argument now uses `git diff` instead of `git show`
+  - Aligns with `git diff` behavior: `critique <ref>` compares ref to working tree
+  - Before: `critique HEAD~1` showed what HEAD~1 commit introduced (just that commit)
+  - After: `critique HEAD~1` shows all changes since HEAD~1 (like `git diff HEAD~1`)
+  - Examples with `critique HEAD~N`:
+    ```
+    history:  ...---A---B---C  <- HEAD
+                           \
+                            + uncommitted (if any)
+
+    critique HEAD~2  =  shows B + C + uncommitted
+    critique HEAD~1  =  shows C + uncommitted
+    critique HEAD    =  shows only uncommitted (empty if none)
+    ```
+  - Examples with `critique <branch>` (when on feature branch):
+    ```
+    main:     A---B---C
+                       \
+    feature:            D---E---F  <- HEAD
+                                 \
+                                  + uncommitted (if any)
+
+    critique main  =  shows D + E + F + uncommitted
+    ```
+  - To get the previous behavior (view a specific commit only), use `--commit`:
+    ```
+    critique --commit HEAD~1  =  shows only what HEAD~1 introduced (just that commit)
+    critique --commit abc123  =  shows only what abc123 introduced
+    ```
+  - Two positional arguments unchanged: `critique main feature` still uses three-dot syntax
+
 # 0.1.77
 
 - Web previews:

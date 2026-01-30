@@ -520,9 +520,11 @@ describe("buildGitCommand with rename detection", () => {
     expect(cmd).toContain("-M")
   })
 
-  it("should include -M flag in single base show", () => {
+  it("should use git diff for single base (compare to working tree)", () => {
     const cmd = buildGitCommand({ base: "HEAD~1" })
     expect(cmd).toContain("-M")
+    expect(cmd).toStartWith("git diff HEAD~1")
+    expect(cmd).not.toContain("git show")
   })
 
   it("should include -M flag in three-dot range", () => {

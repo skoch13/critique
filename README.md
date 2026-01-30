@@ -27,14 +27,16 @@ critique
 # View staged changes
 critique --staged
 
-# View the last commit (works whether pushed or unpushed)
-critique HEAD
+# View changes since a ref (like git diff)
+critique HEAD~1         # shows last 1 commit (changes since HEAD~1)
+critique HEAD~3         # shows last 3 commits
+critique main           # shows changes since main (your branch's additions)
 
-# View a specific commit
+# View a specific commit only (what that commit introduced)
 critique --commit HEAD~1
-critique abc1234
+critique --commit abc1234
 
-# View combined changes from last N commits
+# Compare two refs (PR-style, shows what head added since diverging from base)
 critique HEAD~3 HEAD    # shows all changes from 3 commits ago to now
 
 # Compare two branches (PR-style, shows what head added since diverging from base)
@@ -109,10 +111,11 @@ critique review --agent claude
 # Review staged changes
 critique review --staged
 
-# Review the last commit
-critique review HEAD
+# Review changes since a ref (like git diff)
+critique review HEAD~1         # review last 1 commit
+critique review main           # review changes since main
 
-# Review a specific commit
+# Review a specific commit only (what that commit introduced)
 critique review --commit HEAD~1
 critique review --commit abc1234
 
@@ -169,10 +172,11 @@ critique web
 # View staged changes
 critique web --staged
 
-# View the last commit
-critique web HEAD
+# View changes since a ref (like git diff)
+critique web HEAD~1         # last 1 commit
+critique web main           # changes since main
 
-# View a specific commit
+# View a specific commit only (what that commit introduced)
 critique web --commit HEAD~1
 
 # Compare branches (PR-style diff)

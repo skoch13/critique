@@ -256,9 +256,9 @@ export function buildGitCommand(options: GitCommandOptions): string {
       return `git diff ${rangeBase}..${rangeHead} --no-prefix ${renameArg} ${submoduleArg} ${contextArg} ${filterArg}`.trim();
     }
   }
-  // Single ref: show that commit's changes
+  // Single ref: compare ref to working tree (like git diff)
   if (options.base) {
-    return `git show ${options.base} --no-prefix ${renameArg} ${submoduleArg} ${contextArg} ${filterArg}`.trim();
+    return `git diff ${options.base} --no-prefix ${renameArg} ${submoduleArg} ${contextArg} ${filterArg}`.trim();
   }
   return `git add -N . && git diff --no-prefix ${renameArg} ${submoduleArg} ${contextArg} ${filterArg}`.trim();
 }

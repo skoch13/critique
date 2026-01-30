@@ -558,7 +558,7 @@ async function runReviewMode(
         clack.log.success(`Preview URL: ${result.url}`, out);
         clack.log.info(formatPreviewExpiry(result.expiresInDays), out);
         if (typeof result.expiresInDays === "number") {
-          clack.log.info("Get unlimited links: https://critique.work/buy", out);
+          clack.log.info("Get unlimited links and support the project: https://critique.work/buy", out);
         }
         clack.outro("", out);
         if (json) {
@@ -865,7 +865,7 @@ async function runResumeMode(options: ResumeModeOptions) {
       clack.log.success(`Preview URL: ${result.url}`);
       clack.log.info(formatPreviewExpiry(result.expiresInDays));
       if (typeof result.expiresInDays === "number") {
-        clack.log.info("Get unlimited links: https://critique.work/buy");
+        clack.log.info("Get unlimited links and support the project: https://critique.work/buy");
       }
       clack.outro("");
 
@@ -957,7 +957,7 @@ async function runWebMode(
     log(`\nPreview URL: ${result.url}`);
     log(formatPreviewExpiry(result.expiresInDays));
     if (typeof result.expiresInDays === "number") {
-      log("Get unlimited links: https://critique.work/buy");
+      log("Get unlimited links and support the project: https://critique.work/buy");
     }
     if (options.json) {
       console.log(JSON.stringify({ url: result.url, id: result.id }));

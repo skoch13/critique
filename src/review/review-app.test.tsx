@@ -221,9 +221,9 @@ describe("ReviewAppView", () => {
                                                 └── index.ts (+1)                                         
                                                                                                           
                                                                                                           
-                 Import changes                                                                           
+         Import changes                                                                                   
                                                                                                           
-                 Added logger import to support new logging functionality.                                
+         Added logger import to support new logging functionality.                                        
                                                                                                           
                                                                                                           
        rc/index.ts +1-0                                                                                   
@@ -232,10 +232,10 @@ describe("ReviewAppView", () => {
         + import { logger } from './logger'                                                               
                                                                                                           
                                                                                                           
-                 Input validation and logging                                                             
+         Input validation and logging                                                                     
                                                                                                           
-                 These changes add input validation to the helper function and integrate                  
-                 logging in the main function.                                                            
+         These changes add input validation to the helper function and integrate logging in the main      
+         function.                                                                                        
                                                                                                           
                                                                                                           
         src/utils.ts +3-1                                                                                 
@@ -353,9 +353,9 @@ describe("ReviewAppView", () => {
                                                                     └── index.ts (+1)                                                             
                                                                                                                                                   
                                                                                                                                                   
-                                     Import changes                                                                                               
+         Import changes                                                                                                                           
                                                                                                                                                   
-                                     Added logger import to support new logging functionality.                                                    
+         Added logger import to support new logging functionality.                                                                                
                                                                                                                                                   
                                                                                                                                                   
        rc/index.ts +1-0                                                                                                                           
@@ -364,10 +364,9 @@ describe("ReviewAppView", () => {
         + import { logger } from './logger'                                                                                                       
                                                                                                                                                   
                                                                                                                                                   
-                                     Input validation and logging                                                                                 
+         Input validation and logging                                                                                                             
                                                                                                                                                   
-                                     These changes add input validation to the helper function and integrate                                      
-                                     logging in the main function.                                                                                
+         These changes add input validation to the helper function and integrate logging in the main function.                                    
                                                                                                                                                   
                                                                                                                                                   
         src/utils.ts +3-1                                                                                                                         
@@ -385,6 +384,7 @@ describe("ReviewAppView", () => {
         +   console.log(result)                                                                                                                   
             return result                                                                                                                         
           }                                                                                                                                       
+                                                                                                                                                  
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
@@ -428,16 +428,16 @@ describe("ReviewAppView", () => {
                                                                 │   └── users.ts (+5,-2)                                                        █ 
                                                                 └── config                                                                      █ 
                                                                     └── database.ts (+3,-2)                                                     █ 
+                                                                                                                                                █ 
+                                                                                                                                                █ 
+         Custom Error Classes                                                                                                                     
+                                                                                                                                                  
+         Introduces a new error class for better error handling:                                                                                  
+                                                                                                                                                  
+         - NotFoundError: Used when a requested resource doesn't exist                                                                            
                                                                                                                                                   
                                                                                                                                                   
-                                     Custom Error Classes                                                                                         
-                                                                                                                                                  
-                                     Introduces a new error class for better error handling:                                                      
-                                                                                                                                                  
-                                     - NotFoundError: Used when a requested resource doesn't exist                                                
-                                                                                                                                                  
-                                                                                                                                                  
-                                     This enables more specific catch blocks and better error messages.                                           
+         This enables more specific catch blocks and better error messages.                                                                       
                                                                                                                                                   
                                                                                                                                                   
        rc/errors/index.ts +6-0                                                                                                                    
@@ -450,17 +450,15 @@ describe("ReviewAppView", () => {
         + }                                                                                                                                       
                                                                                                                                                   
                                                                                                                                                   
-                                     User API Improvements                                                                                        
+         User API Improvements                                                                                                                    
                                                                                                                                                   
-                                     Error Handling                                                                                               
+         Error Handling                                                                                                                           
                                                                                                                                                   
-                                     The getUser function now properly handles missing users by throwing a                                        
-                                     NotFoundError.                                                                                               
+         The getUser function now properly handles missing users by throwing a NotFoundError.                                                     
                                                                                                                                                   
-                                     Security                                                                                                     
+         Security                                                                                                                                 
                                                                                                                                                   
-                                     User data is now sanitized before being returned to prevent leaking sensitive                                
-                                     fields.                                                                                                      
+         User data is now sanitized before being returned to prevent leaking sensitive fields.                                                    
                                                                                                                                                   
                                                                                                                                                   
         src/api/users.ts +5-2                                                                                                                     
@@ -474,18 +472,20 @@ describe("ReviewAppView", () => {
         18   }                                                               21   }                                                               
                                                                                                                                                   
                                                                                                                                                   
-                                     Environment-based Configuration                                                                              
+         Environment-based Configuration                                                                                                          
                                                                                                                                                   
-                                     Database configuration now reads from environment variables:                                                 
+         Database configuration now reads from environment variables:                                                                             
                                                                                                                                                   
-                                     - DB_HOST: Database hostname (default: localhost)                                                            
-                                     - DB_PORT: Database port (default: 5432)                                                                     
-                                     - SSL: Automatically enabled in production                                                                   
+         - DB_HOST: Database hostname (default: localhost)                                                                                        
+         - DB_PORT: Database port (default: 5432)                                                                                                 
+         - SSL: Automatically enabled in production                                                                                               
                                                                                                                                                   
                                                                                                                                                   
                                                                                                                                                   
         src/config/database.ts +3-2                                                                                                               
                                                                                                                                                   
+        1   export const dbConfig = {                                        1   export const dbConfig = {                                        
+        2 -   host: 'localhost',                                             2 +   host: process.env.DB_HOST || 'localhost',                      
                                                                                                                                                   
                                                                                                                                                   
         (3 sections)  t theme                                                                              run with --web to share & collaborate  
@@ -527,9 +527,9 @@ Added validation at handler start.`,
                                               └── handlers.ts (+9,-2)                                   █ 
                                                                                                         █ 
                                                                                                         █ 
-                 Input Validation                                                                       █ 
+         Input Validation                                                                               █ 
                                                                                                         █ 
-                 Added validation at handler start.                                                     █ 
+         Added validation at handler start.                                                             █ 
                                                                                                         █ 
                                                                                                         █ 
         src/api/handlers.ts +5-1                                                                        █ 
@@ -576,12 +576,12 @@ Added validation at handler start.`,
                                                         └── handlers.ts (+9,-2)                                             █ 
                                                                                                                             █ 
                                                                                                                             █ 
-                           Input Validation                                                                                 █ 
+         Input Validation                                                                                                   █ 
                                                                                                                             █ 
-                           Added proper input validation at the start of the handler:                                       █ 
+         Added proper input validation at the start of the handler:                                                         █ 
                                                                                                                             █ 
-                           - Check for missing request body                                                                 █ 
-                           - Validate input before processing                                                               █ 
+         - Check for missing request body                                                                                   █ 
+         - Validate input before processing                                                                                 █ 
                                                                                                                             █ 
                                                                                                                             █ 
                                                                                                                             █ 
@@ -596,12 +596,12 @@ Added validation at handler start.`,
                                                                    15 +   const data = validateInput(req.body)              █ 
                                                                                                                             █ 
                                                                                                                               
-                           Async Processing and Logging                                                                       
+         Async Processing and Logging                                                                                         
                                                                                                                               
-                           Improved the processing logic:                                                                     
+         Improved the processing logic:                                                                                       
                                                                                                                               
-                           - Made process call async for better performance                                                   
-                           - Added request logging for debugging                                                              
+         - Made process call async for better performance                                                                     
+         - Added request logging for debugging                                                                                
                                                                                                                               
                                                                                                                               
                                                                                                                               
@@ -653,9 +653,9 @@ Added validation at handler start.`,
                                                 └── handlers.ts (+9,-2)                                 █ 
                                                                                                           
                                                                                                           
-                 Import changes                                                                           
+         Import changes                                                                                   
                                                                                                           
-                 Added logger import.                                                                     
+         Added logger import.                                                                             
                                                                                                           
                                                                                                           
        rc/index.ts +1-0                                                                                   
@@ -664,9 +664,9 @@ Added validation at handler start.`,
         + import { logger } from './logger'                                                               
                                                                                                           
                                                                                                           
-                 Validation                                                                               
+         Validation                                                                                       
                                                                                                           
-                 Input validation logic.                                                                  
+         Input validation logic.                                                                          
                                                                                                           
                                                                                                           
         src/api/handlers.ts +5-1                                                                          
@@ -718,9 +718,9 @@ This uses hunkId instead of hunkIds but shows full hunk.`,
                                                 └── index.ts (+1)                                         
                                                                                                           
                                                                                                           
-                 Full hunk via hunkId                                                                     
+         Full hunk via hunkId                                                                             
                                                                                                           
-                 This uses hunkId instead of hunkIds but shows full hunk.                                 
+         This uses hunkId instead of hunkIds but shows full hunk.                                         
                                                                                                           
                                                                                                           
         src/utils.ts +3-1                                                                                 
@@ -799,29 +799,29 @@ The prose above stays narrow.`,
                                                            └── config.ts (+3)                                               █ 
                                                                                                                             █ 
                                                                                                                             █ 
-                           Configuration with Wide Content                                                                    
+         Configuration with Wide Content                                                                                      
                                                                                                                               
-                           Here's a configuration table:                                                                      
+         Here's a configuration table:                                                                                        
                                                                                                                               
-                           ┌─────────┬──────────────────────┬───────────────┬─────────────────┐                               
-                           │Setting  │Environment Variable  │Default Value  │Description      │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │Host     │DB_HOST               │localhost      │Database host    │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │Port     │DB_PORT               │5432           │Database port    │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │SSL      │DB_SSL                │false          │Enable SSL       │                               
-                           │─────────│──────────────────────│───────────────│─────────────────│                               
-                           │Pool     │DB_POOL_SIZE          │10             │Connection pool  │                               
-                           └─────────┴──────────────────────┴───────────────┴─────────────────┘                               
+         ┌─────────┬──────────────────────┬───────────────┬─────────────────┐                                                 
+         │Setting  │Environment Variable  │Default Value  │Description      │                                                 
+         │─────────│──────────────────────│───────────────│─────────────────│                                                 
+         │Host     │DB_HOST               │localhost      │Database host    │                                                 
+         │─────────│──────────────────────│───────────────│─────────────────│                                                 
+         │Port     │DB_PORT               │5432           │Database port    │                                                 
+         │─────────│──────────────────────│───────────────│─────────────────│                                                 
+         │SSL      │DB_SSL                │false          │Enable SSL       │                                                 
+         │─────────│──────────────────────│───────────────│─────────────────│                                                 
+         │Pool     │DB_POOL_SIZE          │10             │Connection pool  │                                                 
+         └─────────┴──────────────────────┴───────────────┴─────────────────┘                                                 
                                                                                                                               
-                           And a diagram:                                                                                     
+         And a diagram:                                                                                                       
                                                                                                                               
-                           ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                                            
-                           │   Client    │────▶│   Server    │────▶│  Database   │                                            
-                           └─────────────┘     └─────────────┘     └─────────────┘                                            
+         ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                                                              
+         │   Client    │────▶│   Server    │────▶│  Database   │                                                              
+         └─────────────┘     └─────────────┘     └─────────────┘                                                              
                                                                                                                               
-                           The prose above stays narrow.                                                                      
+         The prose above stays narrow.                                                                                        
                                                                                                                               
                                                                                                                               
        rc/config.ts +3-0                                                                                                      
@@ -1002,11 +1002,11 @@ The diagram above should not wrap.`,
                                   └── config.ts (+1)                        
                                                                             
                                                                             
-       rchitecture                                                          
+         Architecture                                                       
                                                                             
-       ───────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────  
-        Client    │────▶│   Router    │────▶│  Handler    │────▶│  Databas  
-       ───────────┘     └─────────────┘     └─────────────┘     └─────────  
+         ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌───   
+         │   Client    │────▶│   Router    │────▶│  Handler    │────▶│  D   
+         └─────────────┘     └─────────────┘     └─────────────┘     └───   
                                                                             
                                                                             
        rc/config.ts +1-0                                                    
@@ -1215,9 +1215,9 @@ Long configuration lines that should wrap properly.`,
                                                └── config.ts (+3,-2)                                      
                                                                                                           
                                                                                                           
-                 Configuration Changes                                                                    
+         Configuration Changes                                                                            
                                                                                                           
-                 Long configuration lines that should wrap properly.                                      
+         Long configuration lines that should wrap properly.                                              
                                                                                                           
                                                                                                           
         src/config.ts +3-2                                                                                
@@ -1286,9 +1286,9 @@ Added environment-based URL and auth header.`,
                                                  └── api.ts (+1,-1)                                     █ 
                                                                                                         █ 
                                                                                                         █ 
-                 API Endpoint Update                                                                    █ 
+         API Endpoint Update                                                                            █ 
                                                                                                         █ 
-                 Added environment-based URL and auth header.                                           █ 
+         Added environment-based URL and auth header.                                                   █ 
                                                                                                         █ 
                                                                                                         █ 
         src/api.ts +1-1                                                                                 █ 
@@ -1445,34 +1445,34 @@ AFTER: Closures preserve context
                                                  └── config.ts (+1)                                       
                                                                                                           
                                                                                                           
-                 ActionPanel captures actions to zustand, ActionsDialog renders them                      
+         ActionPanel captures actions to zustand, ActionsDialog renders them                              
                                                                                                           
-                 The Problem:                                                                             
+         The Problem:                                                                                     
                                                                                                           
-                 BEFORE: Context lost when rendering in dialog                                            
-                 +-----------------------+          +------------------+                                  
-                 | ListItem              |  push()  | DialogOverlay    |                                  
-                 | (has useNavigation,   | -------> | (different React |                                  
-                 |  useFormContext, etc) |          |  tree, no access |                                  
-                 +-----------------------+          |  to contexts)    |                                  
-                                                    +------------------+                                  
+         BEFORE: Context lost when rendering in dialog                                                    
+         +-----------------------+          +------------------+                                          
+         | ListItem              |  push()  | DialogOverlay    |                                          
+         | (has useNavigation,   | -------> | (different React |                                          
+         |  useFormContext, etc) |          |  tree, no access |                                          
+         +-----------------------+          |  to contexts)    |                                          
+                                            +------------------+                                          
                                                                                                           
-                 **The Solution:**                                                                        
-                 \`\`\`diagram                                                                               
-                 AFTER: Closures preserve context                                                         
-                 +------------------------+  capture   +----------------+                                 
-                 | ListItem               | ---------> | zustand        |                                 
-                 | <Offscreen>            |  execute() | capturedActions|                                 
-                 |   <ActionPanel>        |  closures  +-------+--------+                                 
-                 |     <Action execute={  |                    |                                          
-                 |       () => push(...)  | <----- closure     | read                                     
-                 |     }/>                |   retains context  v                                          
-                 |   </ActionPanel>       |            +----------------+                                 
-                 | </Offscreen>           |            | ActionsDialog  |                                 
-                 +------------------------+            | (calls execute)|                                 
-                                                       +----------------+                                 
+         **The Solution:**                                                                                
+         \`\`\`diagram                                                                                       
+         AFTER: Closures preserve context                                                                 
+         +------------------------+  capture   +----------------+                                         
+         | ListItem               | ---------> | zustand        |                                         
+         | <Offscreen>            |  execute() | capturedActions|                                         
+         |   <ActionPanel>        |  closures  +-------+--------+                                         
+         |     <Action execute={  |                    |                                                  
+         |       () => push(...)  | <----- closure     | read                                             
+         |     }/>                |   retains context  v                                                  
+         |   </ActionPanel>       |            +----------------+                                         
+         | </Offscreen>           |            | ActionsDialog  |                                         
+         +------------------------+            | (calls execute)|                                         
+                                               +----------------+                                         
                                                                                                           
-                 ActionsDialog groups actions by section.                                                 
+         ActionsDialog groups actions by section.                                                         
                                                                                                           
                                                                                                           
        rc/config.ts +1-0                                                                                  
@@ -1490,6 +1490,106 @@ AFTER: Closures preserve context
                                                                                                           
         (1 section)  t theme                                       run with --web to share & collaborate  
                                                                                                           
+      "
+    `)
+  })
+
+  it("should not expand container when diagram has super long line (WITH renderer)", async () => {
+    // Test that a diagram with a very long line doesn't expand the parent container
+    // The diagram should truncate (not wrap), and prose/hunks should stay at normal width
+    const diagramHunk = createHunk(1, "src/config.ts", 0, 1, 1, [
+      "+export const x = 1",
+    ])
+
+    // Diagram with an extremely long line (200+ chars)
+    const longLineDiagramReviewData: ReviewYaml = {
+      hunks: [{
+        hunkIds: [1],
+        markdownDescription: `## Architecture
+
+\`\`\`diagram
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                           Super Long Box That Should Not Expand Container                                                                                                                                            │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+\`\`\`
+
+This prose should stay at normal width, not expand.`,
+      }],
+    }
+
+    // First render to get renderer
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[diagramHunk]}
+        reviewData={longLineDiagramReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={80}
+      />,
+      { width: 80, height: 25 },
+    )
+    const rendererCtx = testSetup.renderer
+
+    // Re-render WITH renderer to enable custom diagram path
+    testSetup = await testRender(
+      <ReviewAppView
+        hunks={[diagramHunk]}
+        reviewData={longLineDiagramReviewData}
+        isGenerating={false}
+        themeName="github"
+        width={80}
+        renderer={rendererCtx}
+      />,
+      { width: 80, height: 25 },
+    )
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
+    await testSetup.renderOnce()
+    const frame = testSetup.captureCharFrame()
+    const lines = frame.split('\n')
+    
+    // 1. Prose should NOT be pushed far right - should start within first 15 chars
+    const proseLineIndex = lines.findIndex(line => line.includes("This prose should stay"))
+    expect(proseLineIndex).toBeGreaterThan(-1)
+    const proseLine = lines[proseLineIndex]!
+    const proseStartIndex = proseLine.indexOf("This prose")
+    expect(proseStartIndex).toBeLessThan(15)
+
+    // 2. Diagram lines should NOT wrap - top border should be a single line with ┌ visible
+    const topBorderLine = lines.find(line => line.includes("┌") && line.includes("─"))
+    expect(topBorderLine).toBeDefined()
+    // The ┌ should be near the start (within first 10 chars), not shifted right
+    expect(topBorderLine!.indexOf("┌")).toBeLessThan(10)
+
+    // 3. Hunk header should also be at normal position (not shifted)
+    const hunkHeaderLine = lines.find(line => line.includes("config.ts"))
+    expect(hunkHeaderLine).toBeDefined()
+    
+    expect(frame).toMatchInlineSnapshot(`
+      "                                                                                
+                                   └── src                                            
+                                       └── config.ts (+1)                             
+                                                                                      
+                                                                                      
+         Architecture                                                                 
+                                                                                      
+        ┌───────────────────────────────────────────────────────────────────────────  
+        │                            SuLoBThShoNExpCont                               
+        └───────────────────────────────────────────────────────────────────────────  
+         This prose should stay at normal width, not expand.                          
+                                                                                      
+                                                                                      
+       rc/config.ts +1-0                                                              
+                                                                                      
+        + export const x = 1                                                          
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+        (1 section)  t theme                   run with --web to share & collaborate  
+                                                                                      
       "
     `)
   })

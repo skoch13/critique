@@ -608,6 +608,8 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       }
 
       // Code blocks: create custom CodeRenderable with wrapMode: "none" and overflow: "hidden"
+      // maxWidth constrains to terminal width so long diagrams don't expand container
+      // Content can overflow horizontally and will be truncated (not wrapped)
       if (token.type === "code") {
         const codeToken = token as { text: string; lang?: string }
 
@@ -616,6 +618,7 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
           id: `code-wrapper-${nodeCounter++}`,
           alignSelf: "center",
           overflow: "hidden",
+          maxWidth: width - 4, // Terminal width minus padding
         })
 
         // Special handling for diagram language - color structural chars as muted
@@ -695,11 +698,12 @@ function MarkdownBlock({ content, themeName, width, renderer }: MarkdownBlockPro
       // Other elements (hr, space, etc.) use default rendering
       return undefined
     }
-  }, [renderer, maxProseWidth, syntaxStyle, textColor, concealColor, diagramTextColor])
+  }, [renderer, maxProseWidth, width, syntaxStyle, textColor, concealColor, diagramTextColor])
 
-  // Use very large width when renderer available so code blocks don't wrap
-  // Prose is constrained via renderNode, code blocks can overflow
-  const contentWidth = renderer ? 1000 : Math.min(width - 4, maxProseWidth)
+  // Use terminal width for markdown container
+  // Prose is constrained to maxProseWidth via renderNode
+  // Code blocks use wrapMode: "none" and overflow: "hidden" to truncate (not wrap) long lines
+  const contentWidth = width - 4
 
   return (
     <box

@@ -539,31 +539,47 @@ PREFER ASCII DIAGRAMS - they explain better than words.
 ALWAYS wrap diagrams in \`\`\`diagram code blocks - never render them as plain text.
 CRITICAL: Always close each code block with \`\`\` before any new text or heading. Never leave code blocks unclosed.
 
+DIAGRAM FORMATTING RULES:
+- Keep diagram lines under 70 characters wide - they will be truncated (not wrapped) if too long
+- Put ALL explanatory text OUTSIDE the code block - diagrams contain ONLY ASCII art
+- Never put prose, descriptions, or explanations inside diagram code blocks
+- Labels inside boxes should be short (1-3 words)
+
+Good diagram example:
 \`\`\`diagram
-┌─────────────┐      ┌─────────────┐      ┌────────────┐
-│   Request   │ ───▶ │   Router    │ ───▶ │   Handler  │
-└─────────────┘      └──────┬──────┘      └──────┬─────┘
-                            │                    │
-                            ▼                    ▼
-                    ┌─────────────┐      ┌─────────────┐
-                    │  Middleware │      │  Response   │
-                    └─────────────┘      └─────────────┘
+┌─────────┐     ┌─────────┐     ┌─────────┐
+│ Request │────▶│ Router  │────▶│ Handler │
+└─────────┘     └────┬────┘     └────┬────┘
+                     │               │
+                     ▼               ▼
+               ┌──────────┐   ┌──────────┐
+               │Middleware│   │ Response │
+               └──────────┘   └──────────┘
 \`\`\`
 
+Bad - line too long and prose inside code block:
 \`\`\`diagram
-                    ┌──────────────────┐
-                    │     Initial      │
-                    └────────┬─────────┘
-                             │ start()
-                             ▼
-┌───────────┐ fail   ┌──────────────────┐  success  ┌───────────┐
-│   Error   │ ◀───── │    Processing    │ ────────▶ │  Complete │
-└───────────┘        └──────────────────┘           └───────────┘
-                             │ cancel()
-                             ▼
-                     ┌──────────────────┐
-                     │    Cancelled     │
-                     └──────────────────┘
+This is my architecture explanation:
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│ Super Long Box Name That Will Cause Display Issues And Get Truncated                  │
+└───────────────────────────────────────────────────────────────────────────────────────┘
+\`\`\`
+
+State machine example:
+\`\`\`diagram
+             ┌─────────┐
+             │ Initial │
+             └────┬────┘
+                  │ start()
+                  ▼
+┌───────┐   ┌──────────┐   ┌─────────┐
+│ Error │◀──│Processing│──▶│Complete │
+└───────┘   └────┬─────┘   └─────────┘
+                 │ cancel()
+                 ▼
+            ┌─────────┐
+            │Cancelled│
+            └─────────┘
 \`\`\`
 
 USE TABLES for comparisons and summaries:

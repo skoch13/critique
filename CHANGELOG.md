@@ -1,3 +1,9 @@
+# 0.1.81
+
+- `review`:
+  - Fix diagram overflow expanding container width - long diagrams now truncate from right instead of shifting all content left
+  - Update AI prompt: diagrams should be under 70 chars wide, prose must be outside code blocks
+
 # 0.1.80
 
 - OG images:

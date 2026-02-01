@@ -80,20 +80,25 @@ new file mode 100644
 
     const frame = await renderDiffToFrame(diffContent, {
       cols: 80,
-      rows: 30,
+      maxRows: 30,
       themeName: "github",
     })
 
     // Check that we get proper content
     expect(frame.cols).toBe(80)
-    expect(frame.rows).toBe(30)
-    expect(frame.lines.length).toBe(30)
+    // Content-fitting: rows should be <= max (30) and match actual content
+    expect(frame.rows).toBeLessThanOrEqual(30)
+    expect(frame.lines.length).toBe(frame.rows)
     
     // Find lines with actual content (not just spaces)
     const contentLines = frame.lines
       .map((line, i) => ({ i, text: line.spans.map(s => s.text).join("") }))
       .filter(({ text }) => text.trim().length > 0)
     
+    // Should have content and the frame should be appropriately sized
     expect(contentLines.length).toBeGreaterThan(0)
+    // With content-fitting, frame.rows should be close to actual content lines
+    // (may have some empty lines for layout/spacing)
+    expect(frame.rows).toBeGreaterThanOrEqual(contentLines.length)
   })
 })

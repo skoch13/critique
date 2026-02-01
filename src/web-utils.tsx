@@ -8,8 +8,9 @@ import fs from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 import { getResolvedTheme, rgbaToHex } from "./themes.ts"
-import { RGBA, type CapturedFrame, type CapturedLine, type CapturedSpan } from "@opentui/core"
+import { RGBA, type CapturedFrame, type CapturedLine, type CapturedSpan, type RootRenderable } from "@opentui/core"
 import type { CliRenderer } from "@opentui/core"
+import type { IndexedHunk, ReviewYaml } from "./review/types.ts"
 import { loadStoredLicenseKey } from "./license.ts"
 
 const execAsync = promisify(exec)
@@ -89,7 +90,7 @@ export const WORKER_URL = process.env.CRITIQUE_WORKER_URL || "https://critique.w
 
 export interface CaptureOptions {
   cols: number
-  rows: number
+  maxRows: number
   themeName: string
   title?: string
   /** Wrap mode for long lines (default: "word") */
@@ -124,8 +125,50 @@ function shouldShowExpiryNotice(): boolean {
 }
 
 /**
+ * Calculate the actual content height from root's children after layout.
+ * Returns the maximum bottom edge (top + height) of all children.
+ */
+function getContentHeight(root: RootRenderable): number {
+  const children = root.getChildren()
+  if (children.length === 0) return 0
+  
+  let maxBottom = 0
+  for (const child of children) {
+    const layout = child.getLayoutNode().getComputedLayout()
+    const bottom = layout.top + layout.height
+    if (bottom > maxBottom) {
+      maxBottom = bottom
+    }
+  }
+  return Math.ceil(maxBottom)
+}
+
+/**
+ * Wait for async rendering (tree-sitter highlighting etc.) to stabilize.
+ * Returns when no render requests for stabilizeMs milliseconds.
+ */
+async function waitForRenderStabilization(
+  renderer: CliRenderer,
+  renderOnce: () => Promise<void>,
+  stabilizeMs: number = 500
+): Promise<void> {
+  let lastRenderTime = Date.now()
+  const originalRequestRender = renderer.root.requestRender.bind(renderer.root)
+  renderer.root.requestRender = function() {
+    lastRenderTime = Date.now()
+    originalRequestRender()
+  }
+  
+  while (Date.now() - lastRenderTime < stabilizeMs) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await renderOnce()
+  }
+}
+
+/**
  * Render diff to CapturedFrame using opentui test renderer.
- * This replaces the subprocess + ANSI capture approach.
+ * Uses content-fitting: renders with initial height, measures actual content,
+ * then resizes to exact content height to avoid wasting memory.
  */
 export async function renderDiffToFrame(
   diffContent: string,
@@ -161,12 +204,6 @@ export async function renderDiffToFrame(
     throw new Error("No files to display")
   }
 
-  // Create test renderer
-  const { renderer, renderOnce } = await createTestRenderer({
-    width: options.cols,
-    height: options.rows,
-  })
-
   // Get theme colors
   const webTheme = getResolvedTheme(themeName)
   const webBg = webTheme.background
@@ -176,13 +213,13 @@ export async function renderDiffToFrame(
   const showExpiryNotice = shouldShowExpiryNotice()
 
   // Create the diff view component
+  // NOTE: No height: "100%" - let content determine its natural height
   function WebApp() {
     return React.createElement(
       "box",
       {
         style: {
           flexDirection: "column",
-          height: "100%",
           backgroundColor: webBg,
         },
       },
@@ -240,26 +277,44 @@ export async function renderDiffToFrame(
     )
   }
 
-  // Render the component
-  createRoot(renderer).render(React.createElement(WebApp))
+  // Content-fitting rendering:
+  // 1. Start with small initial height
+  // 2. If content is clipped (content height == buffer height), double the buffer
+  // 3. Repeat until content fits or we hit max
+  // 4. Shrink to exact content height
+  
+  let currentHeight = 100 // Start small
+  
+  const { renderer, renderOnce, resize } = await createTestRenderer({
+    width: options.cols,
+    height: currentHeight,
+  })
 
-  // Wait for syntax highlighting to complete
-  // The diff component uses async tree-sitter highlighting
+  // Mount and do initial render
+  createRoot(renderer).render(React.createElement(WebApp))
   await renderOnce()
   
-  // Give tree-sitter time to complete async highlighting
-  // Multiple render passes may be needed for all files
-  let lastRenderTime = Date.now()
-  const originalRequestRender = renderer.root.requestRender.bind(renderer.root)
-  renderer.root.requestRender = function() {
-    lastRenderTime = Date.now()
-    originalRequestRender()
+  // Wait for async highlighting to complete
+  await waitForRenderStabilization(renderer, renderOnce)
+  
+  // Measure actual content height from layout
+  let contentHeight = getContentHeight(renderer.root)
+  
+  // If content height == buffer height, content is clipped - double until it fits
+  while (contentHeight >= currentHeight && currentHeight < options.maxRows) {
+    currentHeight = Math.min(currentHeight * 2, options.maxRows)
+    resize(options.cols, currentHeight)
+    await renderOnce()
+    await waitForRenderStabilization(renderer, renderOnce, 200)
+    contentHeight = getContentHeight(renderer.root)
   }
   
-  // Wait until no renders for 500ms (highlighting complete)
-  while (Date.now() - lastRenderTime < 500) {
-    await new Promise(resolve => setTimeout(resolve, 100))
+  // Shrink to exact content height (remove empty space at bottom)
+  const finalHeight = Math.min(Math.max(contentHeight, 1), options.maxRows)
+  if (finalHeight < renderer.height) {
+    resize(options.cols, finalHeight)
     await renderOnce()
+    await waitForRenderStabilization(renderer, renderOnce, 200)
   }
 
   // Capture the final frame (using safe version that handles invalid codepoints)
@@ -313,10 +368,10 @@ export async function captureResponsiveHtml(
     title?: string
   }
 ): Promise<{ htmlDesktop: string; htmlMobile: string; ogImage: Buffer | null }> {
-  // Use large row values to ensure all content fits without scrolling
-  // The frameToHtml function trims empty lines at the end
-  const desktopRows = Math.max(options.baseRows * 3, 1000)
-  const mobileRows = Math.max(Math.ceil(desktopRows * (options.desktopCols / options.mobileCols)), 2000)
+  // Max row values - content-fitting will grow to actual content size
+  // These act as upper bounds to prevent runaway memory usage
+  const desktopRows = Math.max(options.baseRows * 3, 5000)
+  const mobileRows = Math.max(Math.ceil(desktopRows * (options.desktopCols / options.mobileCols)), 10000)
 
   // Try to generate OG image (takumi is optional)
   let ogImage: Buffer | null = null
@@ -334,13 +389,13 @@ export async function captureResponsiveHtml(
   const [htmlDesktop, htmlMobile] = await Promise.all([
     captureToHtml(diffContent, {
       cols: options.desktopCols,
-      rows: desktopRows,
+      maxRows: desktopRows,
       themeName: options.themeName,
       title: options.title,
     }),
     captureToHtml(diffContent, {
       cols: options.mobileCols,
-      rows: mobileRows,
+      maxRows: mobileRows,
       themeName: options.themeName,
       title: options.title,
     }),
@@ -350,12 +405,14 @@ export async function captureResponsiveHtml(
 }
 
 export interface ReviewRenderOptions extends CaptureOptions {
-  hunks: any[]
-  reviewData: any
+  hunks: IndexedHunk[]
+  reviewData: ReviewYaml | null
 }
 
 /**
  * Render review to CapturedFrame using opentui test renderer.
+ * Uses content-fitting: renders with initial height, measures actual content,
+ * then resizes to exact content height to avoid wasting memory.
  */
 export async function renderReviewToFrame(
   options: ReviewRenderOptions
@@ -377,21 +434,23 @@ export async function renderReviewToFrame(
   const webMuted = rgbaToHex(theme.textMuted)
   const showExpiryNotice = shouldShowExpiryNotice()
 
-  // Create test renderer
-  const { renderer, renderOnce } = await createTestRenderer({
+  // Content-fitting: start small, double if clipped, shrink to fit
+  let currentHeight = 100
+  
+  const { renderer, renderOnce, resize } = await createTestRenderer({
     width: options.cols,
-    height: options.rows,
+    height: currentHeight,
   })
 
   // Create the review view component
   // Pass renderer to enable custom renderNode (wrapMode: "none" for diagrams)
+  // NOTE: No height: "100%" - let content determine its natural height
   function ReviewWebApp() {
     return React.createElement(
       "box",
       {
         style: {
           flexDirection: "column",
-          height: "100%",
           backgroundColor: webBg,
         },
       },
@@ -413,24 +472,31 @@ export async function renderReviewToFrame(
     )
   }
 
-  // Render the component
+  // Mount and do initial render
   createRoot(renderer).render(React.createElement(ReviewWebApp))
-
-  // Wait for syntax highlighting to complete
   await renderOnce()
   
-  // Give tree-sitter time to complete async highlighting
-  let lastRenderTime = Date.now()
-  const originalRequestRender = renderer.root.requestRender.bind(renderer.root)
-  renderer.root.requestRender = function() {
-    lastRenderTime = Date.now()
-    originalRequestRender()
+  // Wait for async highlighting to complete
+  await waitForRenderStabilization(renderer, renderOnce)
+  
+  // Measure actual content height from layout
+  let contentHeight = getContentHeight(renderer.root)
+  
+  // If content height == buffer height, content is clipped - double until it fits
+  while (contentHeight >= currentHeight && currentHeight < options.maxRows) {
+    currentHeight = Math.min(currentHeight * 2, options.maxRows)
+    resize(options.cols, currentHeight)
+    await renderOnce()
+    await waitForRenderStabilization(renderer, renderOnce, 200)
+    contentHeight = getContentHeight(renderer.root)
   }
   
-  // Wait until no renders for 500ms (highlighting complete)
-  while (Date.now() - lastRenderTime < 500) {
-    await new Promise(resolve => setTimeout(resolve, 100))
+  // Shrink to exact content height (remove empty space at bottom)
+  const finalHeight = Math.min(Math.max(contentHeight, 1), options.maxRows)
+  if (finalHeight < renderer.height) {
+    resize(options.cols, finalHeight)
     await renderOnce()
+    await waitForRenderStabilization(renderer, renderOnce, 200)
   }
 
   // Capture the final frame (using safe version that handles invalid codepoints)
@@ -475,8 +541,8 @@ export async function captureReviewToHtml(
  */
 export async function captureReviewResponsiveHtml(
   options: {
-    hunks: any[]
-    reviewData: any
+    hunks: IndexedHunk[]
+    reviewData: ReviewYaml | null
     desktopCols: number
     mobileCols: number
     baseRows: number
@@ -484,10 +550,10 @@ export async function captureReviewResponsiveHtml(
     title?: string
   }
 ): Promise<{ htmlDesktop: string; htmlMobile: string; ogImage: Buffer | null }> {
-  // Use large row values to ensure all content fits without scrolling
-  // The frameToHtml function trims empty lines at the end
-  const desktopRows = Math.max(options.baseRows * 3, 1000)
-  const mobileRows = Math.max(Math.ceil(desktopRows * (options.desktopCols / options.mobileCols)), 2000)
+  // Max row values - content-fitting will grow to actual content size
+  // These act as upper bounds to prevent runaway memory usage
+  const desktopRows = Math.max(options.baseRows * 3, 5000)
+  const mobileRows = Math.max(Math.ceil(desktopRows * (options.desktopCols / options.mobileCols)), 10000)
 
   // Generate OG image from first few hunks' raw diff
   let ogImage: Buffer | null = null
@@ -496,7 +562,7 @@ export async function captureReviewResponsiveHtml(
     // Extract raw diff from hunks (they have rawDiff field)
     const diffContent = options.hunks
       .slice(0, 5) // Take first 5 hunks max
-      .map((h: any) => h.rawDiff)
+      .map((h) => h.rawDiff)
       .join("\n")
     if (diffContent) {
       ogImage = await renderDiffToOgImage(diffContent, {
@@ -514,7 +580,7 @@ export async function captureReviewResponsiveHtml(
       hunks: options.hunks,
       reviewData: options.reviewData,
       cols: options.desktopCols,
-      rows: desktopRows,
+      maxRows: desktopRows,
       themeName: options.themeName,
       title: options.title,
     }),
@@ -522,7 +588,7 @@ export async function captureReviewResponsiveHtml(
       hunks: options.hunks,
       reviewData: options.reviewData,
       cols: options.mobileCols,
-      rows: mobileRows,
+      maxRows: mobileRows,
       themeName: options.themeName,
       title: options.title,
     }),

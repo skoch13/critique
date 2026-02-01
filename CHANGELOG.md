@@ -1,3 +1,10 @@
+# 0.1.82
+
+- `--web`:
+  - Content-fitting for HTML rendering: starts with small buffer (100 rows), doubles until content fits, then shrinks to exact size
+  - Reduces memory usage for small diffs while still supporting large ones
+  - Rename `CaptureOptions.rows` to `maxRows` to clarify it's the upper bound for buffer growth
+
 # 0.1.81
 
 - `review`:

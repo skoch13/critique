@@ -337,7 +337,7 @@ export async function renderDiffToOgImage(
   // Render diff to captured frame
   const frame = await renderDiffToFrame(diffContent, {
     cols,
-    rows: 200,
+    maxRows: 200,
     themeName,
   })
 

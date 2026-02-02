@@ -38,9 +38,7 @@ describe("Dropdown", () => {
     }
   })
 
-  // TODO: Test is flaky after opentui 0.1.77 update - keyboard events not propagating correctly
-  // The escape key triggers a React state update but it's not being captured by act() properly
-  it.skip("closes on escape", async () => {
+  it("closes on escape", async () => {
     testSetup = await testRender(<DropdownHarness />, {
       width: 50,
       height: 12,
@@ -52,12 +50,11 @@ describe("Dropdown", () => {
     let frame = testSetup.captureCharFrame()
     expect(frame).toContain("Select theme")
 
-    await act(async () => {
-      testSetup.mockInput.pressEscape()
-    })
-    await act(async () => {
-      await testSetup.renderOnce()
-    })
+    // Press escape - emits to stdin which triggers useKeyboard handler
+    testSetup.mockInput.pressEscape()
+    // Allow stdin event to be parsed and trigger React state update
+    await new Promise(r => setTimeout(r, 10))
+    // Render the updated state
     await act(async () => {
       await testSetup.renderOnce()
     })

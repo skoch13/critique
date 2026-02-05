@@ -16,6 +16,9 @@ export {
   updateCoverageFromGroup,
   getUncoveredPortions,
   formatUncoveredMessage,
+  hunkToStableId,
+  parseHunkId,
+  findHunkByStableId,
 } from "./hunk-parser.ts"
 export { AcpClient, OpencodeAcpClient, createAcpClient, type AgentType } from "./acp-client.ts"
 export { compressSession, sessionsToContextXml } from "./session-context.ts"

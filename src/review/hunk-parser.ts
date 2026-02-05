@@ -105,6 +105,68 @@ export function createHunkMap(hunks: IndexedHunk[]): Map<number, IndexedHunk> {
 }
 
 /**
+ * Generate a stable hunk ID based on file and line positions.
+ * Format: `filename:@-oldStart,oldLines+newStart,newLines`
+ * 
+ * This format is stable across runs (unlike incremental IDs) because it's
+ * derived from the hunk's position in the file, which doesn't change unless
+ * the diff itself changes.
+ */
+export function hunkToStableId(hunk: IndexedHunk): string {
+  return `${hunk.filename}:@-${hunk.oldStart},${hunk.oldLines}+${hunk.newStart},${hunk.newLines}`
+}
+
+/**
+ * Parse a stable hunk ID back into its components.
+ * Returns null if the ID format is invalid.
+ */
+export function parseHunkId(id: string): {
+  filename: string
+  oldStart: number
+  oldLines: number
+  newStart: number
+  newLines: number
+} | null {
+  // Format: filename:@-oldStart,oldLines+newStart,newLines
+  // The filename can contain colons, so we split on the last :@ sequence
+  const atIndex = id.lastIndexOf(":@")
+  if (atIndex === -1) return null
+
+  const filename = id.slice(0, atIndex)
+  const positionPart = id.slice(atIndex + 2) // Skip ":@"
+
+  // Parse -oldStart,oldLines+newStart,newLines
+  const match = positionPart.match(/^-(\d+),(\d+)\+(\d+),(\d+)$/)
+  if (!match) return null
+
+  return {
+    filename,
+    oldStart: parseInt(match[1]!, 10),
+    oldLines: parseInt(match[2]!, 10),
+    newStart: parseInt(match[3]!, 10),
+    newLines: parseInt(match[4]!, 10),
+  }
+}
+
+/**
+ * Find a hunk by its stable ID in a list of hunks.
+ * Matches by filename and line positions.
+ */
+export function findHunkByStableId(hunks: IndexedHunk[], stableId: string): IndexedHunk | undefined {
+  const parsed = parseHunkId(stableId)
+  if (!parsed) return undefined
+
+  return hunks.find(
+    h =>
+      h.filename === parsed.filename &&
+      h.oldStart === parsed.oldStart &&
+      h.oldLines === parsed.oldLines &&
+      h.newStart === parsed.newStart &&
+      h.newLines === parsed.newLines
+  )
+}
+
+/**
  * Build a valid unified diff patch string from lines
  * 
  * This function generates a valid patch that can be parsed by diff libraries.

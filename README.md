@@ -155,6 +155,58 @@ critique pick feature-branch
 
 Use the interactive UI to select files. Selected files are immediately applied as patches, deselected files are restored.
 
+### Selective Hunk Staging
+
+Non-interactive hunk staging for scripts and AI agents. Similar to `git add -p` but scriptable.
+
+```bash
+# List all unstaged hunks with stable IDs
+critique hunks list
+
+# List staged hunks
+critique hunks list --staged
+
+# Filter by file pattern
+critique hunks list --filter "src/**/*.ts"
+
+# Stage specific hunks by ID
+critique hunks add 'src/main.ts:@-10,6+10,7'
+
+# Stage multiple hunks
+critique hunks add 'src/main.ts:@-10,6+10,7' 'src/utils.ts:@-5,3+5,4'
+```
+
+**Hunk ID format:** `file:@-oldStart,oldLines+newStart,newLines`
+
+The ID is derived from the `@@` header in unified diff format, making it stable across runs (unlike incremental IDs).
+
+**Example workflow:**
+
+```bash
+# 1. List available hunks
+$ critique hunks list
+src/main.ts:@-10,6+10,7
+@@ -10,6 +10,7 @@
++import { newFeature } from './feature'
+---
+src/main.ts:@-50,3+51,5
+@@ -50,3 +51,5 @@
++  newFeature()
++  return result
+---
+
+# 2. Stage just the import hunk
+$ critique hunks add 'src/main.ts:@-10,6+10,7'
+Staged: src/main.ts:@-10,6+10,7
+
+# 3. Commit it separately
+$ git commit -m "Add newFeature import"
+
+# 4. Stage and commit the usage
+$ critique hunks add 'src/main.ts:@-50,3+51,5'
+$ git commit -m "Use newFeature in main"
+```
+
 ### Web Preview
 
 Generate a shareable web preview of your diff that you can send to anyone - no installation required.

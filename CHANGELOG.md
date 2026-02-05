@@ -1,3 +1,14 @@
+# 0.1.86
+
+- New `hunks` commands for non-interactive selective staging:
+  - `critique hunks list` - list all hunks with stable IDs
+  - `critique hunks add <id>` - stage specific hunks by ID
+  - `--staged` flag to list staged hunks
+  - `--filter` flag to filter by file pattern
+  - Hunk IDs use format `file:@-old,len+new,len` (stable across runs)
+  - Uses `diff` npm package for reliable parsing instead of shell/awk
+- Switch to `@xmorse/cac` fork for space-separated subcommand support
+
 # 0.1.85
 
 - Docs: remove undocumented `--local` option from README (fixes #24)

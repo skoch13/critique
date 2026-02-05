@@ -3,7 +3,7 @@
 // Provides TUI diff viewing, AI-powered review generation, and web preview upload.
 // Commands: default (diff), review (AI analysis), web (HTML upload), pick (cherry-pick files).
 
-import { cac } from "cac";
+import { cac } from "@xmorse/cac";
 import {
   createRoot,
   flushSync,
@@ -1485,6 +1485,131 @@ function App({ parsedFiles }: AppProps) {
     </box>
   );
 }
+
+// Hunks commands for non-interactive selective staging
+cli
+  .command("hunks list", "List all hunks with stable IDs for selective staging")
+  .option("--staged", "List staged hunks instead of unstaged")
+  .option("--filter <pattern>", "Filter files by glob pattern")
+  .action(async (options) => {
+    const {
+      parseHunksWithIds,
+      hunkToStableId,
+    } = await import("./review/index.ts");
+
+    // Build git command - unstaged by default, staged with --staged
+    const gitCommand = buildGitCommand({
+      staged: options.staged,
+      filter: options.filter,
+    });
+
+    const { stdout: gitDiff } = await execAsync(gitCommand, {
+      encoding: "utf-8",
+    });
+
+    if (!gitDiff.trim()) {
+      console.log(options.staged ? "No staged changes" : "No unstaged changes");
+      process.exit(0);
+    }
+
+    const hunks = await parseHunksWithIds(stripSubmoduleHeaders(gitDiff));
+
+    if (hunks.length === 0) {
+      console.log("No hunks found");
+      process.exit(0);
+    }
+
+    // Output each hunk with its stable ID
+    for (const hunk of hunks) {
+      const stableId = hunkToStableId(hunk);
+      console.log(stableId);
+
+      // Print the @@ header line
+      const header = `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`;
+      console.log(header);
+
+      // Print first few lines of content (max 5 non-context lines for preview)
+      let printed = 0;
+      for (const line of hunk.lines) {
+        if (printed >= 5) break;
+        // Only print change lines for preview, not context
+        if (line.startsWith("+") || line.startsWith("-")) {
+          console.log(line);
+          printed++;
+        }
+      }
+
+      console.log("---");
+    }
+  });
+
+cli
+  .command("hunks add [...ids]", "Stage specific hunks by their stable ID")
+  .action(async (ids: string[]) => {
+    if (!ids || ids.length === 0) {
+      console.error("Usage: critique hunks add <hunk-id> [<hunk-id> ...]");
+      console.error("Use 'critique hunks list' to see available hunk IDs.");
+      process.exit(1);
+    }
+
+    const {
+      parseHunksWithIds,
+      findHunkByStableId,
+      parseHunkId,
+    } = await import("./review/index.ts");
+
+    for (const id of ids) {
+      // Validate ID format
+      const parsed = parseHunkId(id);
+      if (!parsed) {
+        console.error(`Invalid hunk ID format: ${id}`);
+        console.error("Expected format: file:@-oldStart,oldLines+newStart,newLines");
+        process.exit(1);
+      }
+
+      // Get fresh diff for this specific file
+      const gitCommand = buildGitCommand({
+        staged: false,
+        filter: parsed.filename,
+      });
+
+      const { stdout: gitDiff } = await execAsync(gitCommand, {
+        encoding: "utf-8",
+      });
+
+      if (!gitDiff.trim()) {
+        console.error(`No unstaged changes in file: ${parsed.filename}`);
+        process.exit(1);
+      }
+
+      const hunks = await parseHunksWithIds(stripSubmoduleHeaders(gitDiff));
+      const hunk = findHunkByStableId(hunks, id);
+
+      if (!hunk) {
+        console.error(`Hunk not found: ${id}`);
+        console.error("The diff may have changed. Run 'critique hunks list' to see current hunks.");
+        process.exit(1);
+      }
+
+      // Apply the hunk's raw diff to staging area
+      // Use -p0 because our diff uses --no-prefix (no a/ b/ path prefixes)
+      const tmpFile = join(tmpdir(), `critique-hunk-${Date.now()}.patch`);
+      fs.writeFileSync(tmpFile, hunk.rawDiff);
+
+      try {
+        execSync(`git apply --cached -p0 "${tmpFile}"`, { stdio: "pipe" });
+        console.log(`Staged: ${id}`);
+      } catch (error) {
+        const err = error as { stderr?: Buffer };
+        const stderr = err.stderr?.toString() || "Unknown error";
+        console.error(`Failed to stage hunk: ${id}`);
+        console.error(stderr);
+        process.exit(1);
+      } finally {
+        fs.unlinkSync(tmpFile);
+      }
+    }
+  });
 
 cli
   .command(

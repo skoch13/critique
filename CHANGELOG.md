@@ -1,3 +1,41 @@
+# 0.1.92
+
+- `critique`:
+  - Keep dropdown search on `<textarea>` and fix filtering by syncing `plainText` from `onContentChange` in a microtask, plus extract shared filtering logic for deterministic matching across theme/file pickers
+  - Make watch-mode loading/empty backgrounds reactive to the selected theme by subscribing to `useAppStore` instead of reading `getState()` once
+- `critique pick`:
+  - Use the active global theme for picker UI colors instead of always forcing the default theme
+- `diff rendering`:
+  - Remount the `DiffView` wrapper on theme changes so internal diff backgrounds refresh more reliably when switching themes
+- Tests:
+  - Add `src/components/diff-view.test.tsx` to verify theme-switch background updates in `DiffView`
+  - Add dropdown filtering coverage via exported `filterDropdownOptions` tests in `src/dropdown.test.tsx`
+
+# 0.1.91
+
+- `critique`:
+  - Improve main diff layout scrolling behavior by allowing the scrollbox to shrink within the column layout (`flexShrink: 1`)
+- Tests:
+  - Add `src/cli-scroll.test.tsx` using opentui test renderer to verify mouse-wheel scrolling changes visible content in the main diff view
+  - Guard CLI entrypoint parsing with `import.meta.main` and export `App`/`AppProps` to support renderer-driven CLI view tests
+
+# 0.1.90
+
+- `critique`:
+  - Fix dropdown search input in file/theme pickers by switching to `<input onInput>` so typed text filters options immediately
+  - Ensure diff internals fully refresh on theme change by remounting `<diff>` when `themeName` changes
+  - Make loading/empty-state backgrounds reactive to theme changes in watch mode
+- `critique pick`:
+  - Use the currently selected global theme instead of always forcing the default theme
+- Tests:
+  - Add a dropdown regression test that reproduces and verifies theme search filtering
+  - Add a DiffView regression test that verifies diff background colors actually change after a runtime theme switch
+
+# 0.1.89
+
+- `critique`:
+  - Keep the main diff scrollbox focused so mouse-wheel scrolling works reliably in the default diff view
+
 # 0.1.88
 
 - Dependencies:

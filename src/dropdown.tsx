@@ -2,9 +2,9 @@
 // Supports keyboard navigation, fuzzy search filtering, and mouse interaction.
 // Used by main diff view for file picker and theme picker overlays.
 
-import React, { useState, useEffect, type ReactNode } from "react";
+import React, { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
-import { TextAttributes } from "@opentui/core";
+import { TextAttributes, TextareaRenderable } from "@opentui/core";
 import { type ResolvedTheme, rgbaToHex } from "./themes";
 
 export interface DropdownOption {
@@ -70,6 +70,18 @@ const Dropdown = (props: DropdownProps) => {
   const [selected, setSelected] = useState(0);
   const [offset, setOffset] = useState(0);
   const [searchText, setSearchText] = useState("");
+  const textareaRef = useRef<TextareaRenderable | null>(null);
+
+  const setTextareaRef = useCallback((node: TextareaRenderable | null) => {
+    textareaRef.current = node;
+  }, []);
+
+  const syncSearchFromTextarea = useCallback(() => {
+    queueMicrotask(() => {
+      const nextText = textareaRef.current?.plainText ?? "";
+      setSearchText(nextText);
+    });
+  }, []);
 
   const inFocus = true;
 
@@ -179,9 +191,12 @@ const Dropdown = (props: DropdownProps) => {
           </box>
           <box style={{ paddingTop: 1, paddingBottom: 1, flexDirection: "row" }}>
             <text flexShrink={0} fg={theme.primary}>&gt; </text>
-            <input
-              style={{ flexGrow: 1 }}
-              onInput={setSearchText}
+            <textarea
+              ref={setTextareaRef}
+              height={1}
+              flexGrow={1}
+              wrapMode="none"
+              onContentChange={syncSearchFromTextarea}
               placeholder={placeholder}
               focused={inFocus}
               focusedBackgroundColor={theme.backgroundPanel}

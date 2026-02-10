@@ -162,20 +162,20 @@ export async function renderDiffToImages(
   diffContent: string,
   options: {
     cols?: number
-    rows?: number
+    maxRows?: number
     themeName?: string
   } & RenderToImagesOptions = {}
 ): Promise<RenderResult> {
   const { renderDiffToFrame } = await import("./web-utils.tsx")
 
   const cols = options.cols ?? 120
-  const rows = options.rows ?? 10000
+  const maxRows = options.maxRows ?? 10000
   const themeName = options.themeName ?? "tokyonight"
 
   // Render diff to captured frame using opentui test renderer
   const frame = await renderDiffToFrame(diffContent, {
     cols,
-    rows,
+    maxRows,
     themeName,
   })
 
@@ -198,14 +198,14 @@ export async function renderReviewToImages(
     hunks: any[]
     reviewData: any
     cols?: number
-    rows?: number
+    maxRows?: number
     themeName?: string
   } & RenderToImagesOptions
 ): Promise<RenderResult> {
   const { renderReviewToFrame } = await import("./web-utils.tsx")
 
   const cols = options.cols ?? 120
-  const rows = options.rows ?? 10000
+  const maxRows = options.maxRows ?? 10000
   const themeName = options.themeName ?? "tokyonight"
 
   // Render review to captured frame using opentui test renderer
@@ -213,7 +213,7 @@ export async function renderReviewToImages(
     hunks: options.hunks,
     reviewData: options.reviewData,
     cols,
-    rows,
+    maxRows,
     themeName,
   })
 

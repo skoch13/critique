@@ -433,12 +433,11 @@ describe("ReviewAppView", () => {
                                                                     └── database.ts (+3,-2)                                                     █ 
                                                                                                                                                 █ 
                                                                                                                                                 █ 
-         Custom Error Classes                                                                                                                     
-                                                                                                                                                  
-         Introduces a new error class for better error handling:                                                                                  
-                                                                                                                                                  
+         Custom Error Classes                                                                                                                   █ 
+                                                                                                                                                █ 
+         Introduces a new error class for better error handling:                                                                                █ 
+                                                                                                                                                █ 
          - NotFoundError: Used when a requested resource doesn't exist                                                                            
-                                                                                                                                                  
                                                                                                                                                   
          This enables more specific catch blocks and better error messages.                                                                       
                                                                                                                                                   
@@ -484,11 +483,12 @@ describe("ReviewAppView", () => {
          - SSL: Automatically enabled in production                                                                                               
                                                                                                                                                   
                                                                                                                                                   
-                                                                                                                                                  
        src/config/database.ts +3-2                                                                                                                
                                                                                                                                                   
        1   export const dbConfig = {                                         1   export const dbConfig = {                                        
        2 -   host: 'localhost',                                              2 +   host: process.env.DB_HOST || 'localhost',                      
+       3 -   port: 5432,                                                     3 +   port: parseInt(process.env.DB_PORT || '5432'),                 
+                                                                             4 +   ssl: process.env.NODE_ENV === 'production',                    
                                                                                                                                                   
                                                                                                                                                   
         (3 sections)  t theme                                                                              run with --web to share & collaborate  
@@ -575,29 +575,28 @@ Added validation at handler start.`,
     // Should show two sections: validation (lines 1-7) then processing (lines 8-16)
     expect(frame).toMatchInlineSnapshot(`
       "                                                                                                                        
-                                                    └── src/api                                                             █ 
-                                                        └── handlers.ts (+9,-2)                                             █ 
-                                                                                                                            █ 
-                                                                                                                            █ 
-         Input Validation                                                                                                   █ 
-                                                                                                                            █ 
-         Added proper input validation at the start of the handler:                                                         █ 
-                                                                                                                            █ 
-         - Check for missing request body                                                                                   █ 
-         - Validate input before processing                                                                                 █ 
-                                                                                                                            █ 
-                                                                                                                            █ 
-                                                                                                                            █ 
-       src/api/handlers.ts +5-1                                                                                             █ 
-                                                                                                                            █ 
-       10   export async function handleRequest(req: Request) {    10   export async function handleRequest(req: Request) { █ 
-       11 -   const data = req.body                                11 +   // Input validation                               █ 
-                                                                   12 +   if (!req.body) {                                  █ 
-                                                                   13 +     throw new ValidationError('Request body is      █ 
-                                                                        required')                                          █ 
-                                                                   14 +   }                                                 █ 
-                                                                   15 +   const data = validateInput(req.body)              █ 
-                                                                                                                            █ 
+                                                    └── src/api                                                               
+                                                        └── handlers.ts (+9,-2)                                               
+                                                                                                                              
+                                                                                                                              
+         Input Validation                                                                                                     
+                                                                                                                              
+         Added proper input validation at the start of the handler:                                                           
+                                                                                                                              
+         - Check for missing request body                                                                                     
+         - Validate input before processing                                                                                   
+                                                                                                                              
+                                                                                                                              
+       src/api/handlers.ts +5-1                                                                                               
+                                                                                                                              
+       10   export async function handleRequest(req: Request) {    10   export async function handleRequest(req: Request) {   
+       11 -   const data = req.body                                11 +   // Input validation                                 
+                                                                   12 +   if (!req.body) {                                    
+                                                                   13 +     throw new ValidationError('Request body is        
+                                                                        required')                                            
+                                                                   14 +   }                                                   
+                                                                   15 +   const data = validateInput(req.body)                
+                                                                                                                              
                                                                                                                               
          Async Processing and Logging                                                                                         
                                                                                                                               
@@ -605,7 +604,6 @@ Added validation at handler start.`,
                                                                                                                               
          - Made process call async for better performance                                                                     
          - Added request logging for debugging                                                                                
-                                                                                                                              
                                                                                                                               
                                                                                                                               
        src/api/handlers.ts +4-1                                                                                               
@@ -619,6 +617,8 @@ Added validation at handler start.`,
        15                                                               id })                                                 
        16     return result                                        22                                                         
                                                                    23     return result                                       
+                                                                                                                              
+                                                                                                                              
                                                                                                                               
                                                                                                                               
                                                                                                                               

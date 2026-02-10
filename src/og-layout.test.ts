@@ -243,7 +243,7 @@ index 1234567..abcdefg 100644
     // Render to frame (same as OG image does)
     const frame = await renderDiffToFrame(sampleDiff, {
       cols: 90,
-      rows: 100,
+      maxRows: 100,
       themeName: "tokyonight",
     })
 

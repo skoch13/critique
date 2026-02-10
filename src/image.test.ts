@@ -83,7 +83,7 @@ ${Array.from({ length: 100 }, (_, i) => `+line ${i + 1}: some content here`).joi
 
     const frame = await renderDiffToFrame(longDiff, {
       cols: 80,
-      rows: 200,
+      maxRows: 200,
       themeName: "tokyonight",
     })
 
@@ -257,7 +257,7 @@ index 846e706..ca0bb64 100644
     // Render diff to frame
     const frame = await renderDiffToFrame(longDiff, {
       cols: 120,
-      rows: 200,
+      maxRows: 200,
       themeName: "tokyonight",
     })
 

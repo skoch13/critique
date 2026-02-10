@@ -1,3 +1,9 @@
+# 0.1.88
+
+- Dependencies:
+  - Keep `@opentui/*` imports/package names and install Jake's fork via npm alias mapping
+  - Map `@opentui/core` -> `npm:@opentuah/core@latest` and `@opentui/react` -> `npm:@opentuah/react@latest`
+
 # 0.1.87
 
 - `hunks`:

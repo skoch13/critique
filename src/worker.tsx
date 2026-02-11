@@ -32,6 +32,7 @@ const app = new Hono<{ Bindings: Bindings }>()
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7
 const LICENSE_HEADER = "X-Critique-License"
+const OWNER_SECRET_HEADER = "X-Critique-Owner-Secret"
 const STRIPE_YEARLY_PRICE_ID = "price_1Su9CZBekrVyz93iMIEnjPOk"
 
 // Favicon PNGs (32x32) - dark (white icon for dark bg) and light (black icon for light bg)
@@ -200,6 +201,23 @@ class CritiqueKv {
   async setSubscriptionLicense(subscriptionId: string, licenseKey: string): Promise<void> {
     await this.kv.put(`subscription:${subscriptionId}`, licenseKey)
   }
+
+  async getOwnerSecret(id: string): Promise<string | null> {
+    return this.kv.get(`owner:${id}`)
+  }
+
+  async setOwnerSecret(id: string, secret: string, ttlSeconds?: number): Promise<void> {
+    await this.kv.put(`owner:${id}`, secret, ttlSeconds ? { expirationTtl: ttlSeconds } : undefined)
+  }
+
+  async deleteAll(id: string): Promise<void> {
+    await Promise.all([
+      this.kv.delete(id),
+      this.kv.delete(`${id}-mobile`),
+      this.kv.delete(`og-${id}`),
+      this.kv.delete(`owner:${id}`),
+    ])
+  }
 }
 
 function generateLicenseKey(): string {
@@ -343,9 +361,15 @@ app.post("/upload", async (c) => {
     let ogImageUrl: string | undefined
 
     const licenseKey = c.req.header(LICENSE_HEADER)
+    const ownerSecret = c.req.header(OWNER_SECRET_HEADER)
     const license = licenseKey ? await kv.getLicense(licenseKey) : null
     const hasActiveLicense = license?.status === "active"
     const ttlSeconds = hasActiveLicense ? undefined : SEVEN_DAYS
+
+    // Store owner secret for deletion authentication
+    if (ownerSecret) {
+      await kv.setOwnerSecret(id, ownerSecret, ttlSeconds)
+    }
 
     // Store OG image if provided
     if (body.ogImage && typeof body.ogImage === "string") {
@@ -664,6 +688,44 @@ async function handleView(c: any) {
 
 app.get("/v/:id", handleView)
 app.get("/view/:id", handleView)
+
+// Delete a diff by ID (requires owner secret)
+// DELETE /v/:id with X-Critique-Owner-Secret header
+app.delete("/v/:id", async (c) => {
+  const id = c.req.param("id")
+  const kv = new CritiqueKv(c.env.CRITIQUE_KV)
+
+  if (!id || !/^[a-f0-9]{16,32}$/.test(id)) {
+    return c.json({ error: "Invalid ID" }, 400)
+  }
+
+  const ownerSecret = c.req.header(OWNER_SECRET_HEADER)
+  if (!ownerSecret) {
+    return c.json({ error: "Missing owner secret header" }, 400)
+  }
+
+  // Check if diff exists
+  const html = await kv.getHtml(id)
+  if (!html) {
+    return c.json({ error: "Not found" }, 404)
+  }
+
+  // Check if owner secret was stored
+  const storedSecret = await kv.getOwnerSecret(id)
+  if (!storedSecret) {
+    return c.json({ error: "Cannot delete - no owner recorded for this diff" }, 403)
+  }
+
+  // Verify owner secret (timing-safe comparison)
+  if (!timingSafeEqual(ownerSecret, storedSecret)) {
+    return c.json({ error: "Unauthorized - invalid owner secret" }, 403)
+  }
+
+  // Delete all related KV keys
+  await kv.deleteAll(id)
+
+  return c.json({ success: true, message: "Deleted" })
+})
 
 // Serve OG image
 // GET /og/:id.png

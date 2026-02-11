@@ -2400,6 +2400,30 @@ cli
     process.stdout.write("Saved license key to ~/.critique/license.json\n")
   });
 
+cli
+  .command("unpublish <url>", "Delete a published diff by URL or ID")
+  .action(async (url: string) => {
+    const { deleteUpload, extractDiffId } = await import("./web-utils.tsx")
+    
+    const id = extractDiffId(url)
+    if (!id) {
+      process.stderr.write("Error: Invalid URL or ID format.\n")
+      process.stderr.write("Expected: https://critique.work/v/<id> or a 16-32 character hex ID\n")
+      process.exit(1)
+    }
+
+    process.stdout.write(`Deleting diff ${id}...\n`)
+    
+    const result = await deleteUpload(url)
+    
+    if (result.success) {
+      process.stdout.write(`${result.message}\n`)
+    } else {
+      process.stderr.write(`Error: ${result.message}\n`)
+      process.exit(1)
+    }
+  });
+
 if (import.meta.main) {
   cli.help();
   cli.version("1.0.0");

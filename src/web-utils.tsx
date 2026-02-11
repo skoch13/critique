@@ -10,7 +10,7 @@ import { join } from "path"
 import { getResolvedTheme, rgbaToHex } from "./themes.ts"
 import type { CapturedFrame, RootRenderable, CliRenderer } from "@opentui/core"
 import type { IndexedHunk, ReviewYaml } from "./review/types.ts"
-import { loadStoredLicenseKey } from "./license.ts"
+import { loadStoredLicenseKey, loadOrCreateOwnerSecret } from "./license.ts"
 
 const execAsync = promisify(exec)
 
@@ -571,8 +571,10 @@ export async function uploadHtml(
   }
 
   const licenseKey = loadStoredLicenseKey()
+  const ownerSecret = loadOrCreateOwnerSecret()
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Critique-Owner-Secret": ownerSecret,
   }
   if (licenseKey) {
     headers["X-Critique-License"] = licenseKey
@@ -633,5 +635,67 @@ export function cleanupTempFile(filePath: string): void {
     fs.unlinkSync(filePath)
   } catch {
     // Ignore cleanup errors
+  }
+}
+
+export interface DeleteResult {
+  success: boolean
+  message: string
+}
+
+/**
+ * Extract diff ID from URL or raw ID string.
+ * Supports: https://critique.work/v/abc123, critique.work/v/abc123, /v/abc123, abc123
+ */
+export function extractDiffId(urlOrId: string): string | null {
+  const trimmed = urlOrId.trim()
+  
+  // Try to extract from URL path
+  const urlMatch = trimmed.match(/\/v\/([a-f0-9]{16,32})(?:\?|$|#)?/i)
+  if (urlMatch && urlMatch[1]) {
+    return urlMatch[1].toLowerCase()
+  }
+  
+  // Check if it's a raw hex ID
+  if (/^[a-f0-9]{16,32}$/i.test(trimmed)) {
+    return trimmed.toLowerCase()
+  }
+  
+  return null
+}
+
+/**
+ * Delete a published diff by URL or ID.
+ * Requires the owner secret to match what was stored on upload.
+ */
+export async function deleteUpload(urlOrId: string): Promise<DeleteResult> {
+  const id = extractDiffId(urlOrId)
+  if (!id) {
+    return {
+      success: false,
+      message: "Invalid URL or ID format. Expected a critique.work URL or 16-32 character hex ID.",
+    }
+  }
+
+  const ownerSecret = loadOrCreateOwnerSecret()
+  
+  const response = await fetch(`${WORKER_URL}/v/${id}`, {
+    method: "DELETE",
+    headers: {
+      "X-Critique-Owner-Secret": ownerSecret,
+    },
+  })
+
+  if (response.ok) {
+    return {
+      success: true,
+      message: "Diff deleted successfully.",
+    }
+  }
+
+  const result = await response.json().catch(() => ({ error: "Unknown error" })) as { error?: string }
+  return {
+    success: false,
+    message: result.error || `Failed to delete (${response.status})`,
   }
 }

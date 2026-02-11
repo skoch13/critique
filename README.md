@@ -318,6 +318,14 @@ Files with more than 6000 lines of diff are also hidden for performance.
 - [diff](https://github.com/kpdecker/jsdiff) - Diff algorithm
 - [Hono](https://hono.dev/) - Web framework for the preview worker
 
+## Sponsors
+
+<a href="https://coderabbit.link/remorses" target="_blank" rel="noopener noreferrer">
+  <img src="https://github.com/coderabbitai.png" alt="CodeRabbit" height="24" />
+</a>
+
+Sponsored by CodeRabbit.
+
 ## License
 
 MIT

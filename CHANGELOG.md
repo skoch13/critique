@@ -1,3 +1,8 @@
+# 0.1.96
+
+- `README`:
+  - Add a bottom `Sponsors` section with a compact CodeRabbit logo link to `https://coderabbit.link/remorses`
+
 # 0.1.95
 
 - Syntax highlighting:

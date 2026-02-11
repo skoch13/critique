@@ -3,13 +3,16 @@
 ; No predicates (like #set! or #eq?) that are unsupported by web-tree-sitter
 
 (pair
-  key: (string) @property)
+  key: (string
+    (string_content) @property))
 
 (pair
-  value: (string) @string)
+  value: (string
+    (string_content) @string))
 
 (array
-  (string) @string)
+  (string
+    (string_content) @string))
 
 (number) @number
 
@@ -21,6 +24,8 @@
 (null) @constant
 
 (escape_sequence) @string
+
+("\"") @punctuation.delimiter
 
 [
   ","

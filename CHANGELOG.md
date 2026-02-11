@@ -1,3 +1,9 @@
+# 0.1.95
+
+- Syntax highlighting:
+  - `json`:
+    - Color JSON quote characters (`"`) separately as `punctuation.delimiter` while keeping string text highlighted as `property` (keys) and `string` (values)
+
 # 0.1.94
 
 - Syntax highlighting:

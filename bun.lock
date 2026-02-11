@@ -7,8 +7,8 @@
       "dependencies": {
         "@agentclientprotocol/sdk": "^0.13.1",
         "@clack/prompts": "1.0.0-alpha.9",
-        "@opentui/core": "npm:@opentuah/core@^0.1.80",
-        "@opentui/react": "npm:@opentuah/react@^0.1.80",
+        "@opentui/core": "npm:@opentuah/core@^0.1.81",
+        "@opentui/react": "npm:@opentuah/react@^0.1.81",
         "@parcel/watcher": "^2.5.6",
         "@xmorse/cac": "^6.0.7",
         "diff": "^8.0.2",
@@ -229,23 +229,11 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
 
-    "@opentuah/core": ["@opentuah/core@0.1.80", "", { "dependencies": { "bun-ffi-structs": "0.1.2", "diff": "8.0.2", "jimp": "1.6.0", "marked": "17.0.1", "yoga-layout": "3.2.1" }, "optionalDependencies": { "@dimforge/rapier2d-simd-compat": "^0.17.3", "@opentuah/core-darwin-arm64": "0.1.80", "@opentuah/core-darwin-x64": "0.1.80", "@opentuah/core-linux-arm64": "0.1.80", "@opentuah/core-linux-x64": "0.1.80", "@opentuah/core-win32-arm64": "0.1.80", "@opentuah/core-win32-x64": "0.1.80", "bun-webgpu": "0.1.4", "planck": "^1.4.2", "three": "0.177.0" }, "peerDependencies": { "web-tree-sitter": "0.25.10" } }, "sha512-Rr94d5j7eTIlnGzWXGbG2f45XSj76q1iP/6MOQgxJgoK6oC8GJdRhw4QdtkY7+d5nEyRV+tbWhjkDztI8mApJw=="],
+    "@opentuah/core": ["@opentuah/core@0.1.81", "", { "dependencies": { "bun-ffi-structs": "0.1.2", "diff": "8.0.2", "jimp": "1.6.0", "marked": "17.0.1", "yoga-layout": "3.2.1" }, "optionalDependencies": { "@dimforge/rapier2d-simd-compat": "^0.17.3", "@opentuah/core-darwin-arm64": "0.1.81", "@opentuah/core-darwin-x64": "0.1.81", "@opentuah/core-linux-arm64": "0.1.81", "@opentuah/core-linux-x64": "0.1.81", "@opentuah/core-win32-arm64": "0.1.81", "@opentuah/core-win32-x64": "0.1.81", "bun-webgpu": "0.1.4", "planck": "^1.4.2", "three": "0.177.0" }, "peerDependencies": { "web-tree-sitter": "0.25.10" } }, "sha512-DCN4RkU4WBbccSeKFD3xIM77SVb7G/tHzamE7Af+W/lHh5c2cBu+36Tj7wPh1Va2MBax2CkK8SL3ZOsgUfDvbQ=="],
 
-    "@opentuah/core-darwin-arm64": ["@opentuah/core-darwin-arm64@0.1.80", "", { "os": "darwin", "cpu": "arm64" }, "sha512-buTjiO29zKv2IV9kX+Ooa2DQ0Ay8QYyl+R36B+mpMd64GxgILyts9ik6b8HVbPWsnnrEYiyqxOObvIlUZ3Y4Og=="],
+    "@opentui/core": ["@opentuah/core@0.1.81", "", { "dependencies": { "bun-ffi-structs": "0.1.2", "diff": "8.0.2", "jimp": "1.6.0", "marked": "17.0.1", "yoga-layout": "3.2.1" }, "optionalDependencies": { "@dimforge/rapier2d-simd-compat": "^0.17.3", "@opentuah/core-darwin-arm64": "0.1.81", "@opentuah/core-darwin-x64": "0.1.81", "@opentuah/core-linux-arm64": "0.1.81", "@opentuah/core-linux-x64": "0.1.81", "@opentuah/core-win32-arm64": "0.1.81", "@opentuah/core-win32-x64": "0.1.81", "bun-webgpu": "0.1.4", "planck": "^1.4.2", "three": "0.177.0" }, "peerDependencies": { "web-tree-sitter": "0.25.10" } }, "sha512-DCN4RkU4WBbccSeKFD3xIM77SVb7G/tHzamE7Af+W/lHh5c2cBu+36Tj7wPh1Va2MBax2CkK8SL3ZOsgUfDvbQ=="],
 
-    "@opentuah/core-darwin-x64": ["@opentuah/core-darwin-x64@0.1.80", "", { "os": "darwin", "cpu": "x64" }, "sha512-vzoJupXKRZrB2TYUo4tOwk7RdQKxPGZC6hp2xK41EtPvs8+IOWI9qFiAqN6g3B8VI2eohskhI2QPzUOhglzdcg=="],
-
-    "@opentuah/core-linux-arm64": ["@opentuah/core-linux-arm64@0.1.80", "", { "os": "linux", "cpu": "arm64" }, "sha512-J0cNR+qHqHXCw6FmEwurV7rxmhaaLUphRrZhjfhKdqSpj5SWtBG3tpKNWSinB9QN9Uyvs+bY89Sw8VlIB1WecQ=="],
-
-    "@opentuah/core-linux-x64": ["@opentuah/core-linux-x64@0.1.80", "", { "os": "linux", "cpu": "x64" }, "sha512-GvuKJBehO/zXOxCxecUMc6vAnMVpTZc2JJdc1TgHOTmH5FHlRVUtEPemDkWoiu4Pp4DLs4n+S4cUoSi69+X2Tw=="],
-
-    "@opentuah/core-win32-arm64": ["@opentuah/core-win32-arm64@0.1.80", "", { "os": "win32", "cpu": "arm64" }, "sha512-KEeyA/SSUm5sOn4SEhDonoi2yAVoebsBWlg6OWEvZKOMPGHgc8GnxYkiVIc/2hihiglKC2NWMaJdYnDp67J1uQ=="],
-
-    "@opentuah/core-win32-x64": ["@opentuah/core-win32-x64@0.1.80", "", { "os": "win32", "cpu": "x64" }, "sha512-lZxaBfpuvjey4pAF1Zj0DjMrfMjNI+jbEgXEacQCi5VJHP+Yuu+DlV9U/I+M3NXqM+tR7Y7w6fwB6qLSA9GtNg=="],
-
-    "@opentui/core": ["@opentuah/core@0.1.80", "", { "dependencies": { "bun-ffi-structs": "0.1.2", "diff": "8.0.2", "jimp": "1.6.0", "marked": "17.0.1", "yoga-layout": "3.2.1" }, "optionalDependencies": { "@dimforge/rapier2d-simd-compat": "^0.17.3", "@opentuah/core-darwin-arm64": "0.1.80", "@opentuah/core-darwin-x64": "0.1.80", "@opentuah/core-linux-arm64": "0.1.80", "@opentuah/core-linux-x64": "0.1.80", "@opentuah/core-win32-arm64": "0.1.80", "@opentuah/core-win32-x64": "0.1.80", "bun-webgpu": "0.1.4", "planck": "^1.4.2", "three": "0.177.0" }, "peerDependencies": { "web-tree-sitter": "0.25.10" } }, "sha512-Rr94d5j7eTIlnGzWXGbG2f45XSj76q1iP/6MOQgxJgoK6oC8GJdRhw4QdtkY7+d5nEyRV+tbWhjkDztI8mApJw=="],
-
-    "@opentui/react": ["@opentuah/react@0.1.80", "", { "dependencies": { "@opentuah/core": "0.1.80", "react-reconciler": "^0.32.0" }, "peerDependencies": { "react": ">=19.0.0", "react-devtools-core": "^7.0.1", "ws": "^8.18.0" } }, "sha512-MuIzh16Y6i0DAWLwVwvb7Ad2YRTXC5NKoEmfrWoTg5ZRrcumCNEGw6qu2MZ45elIFHxoHmBIyR9qtBZnoKiuFA=="],
+    "@opentui/react": ["@opentuah/react@0.1.81", "", { "dependencies": { "@opentuah/core": "0.1.81", "react-reconciler": "^0.32.0" }, "peerDependencies": { "react": ">=19.0.0", "react-devtools-core": "^7.0.1", "ws": "^8.18.0" } }, "sha512-TERVn3Y5XoapckoWS3WObAu3odp9a+0R1VXjP55utd5AKZ3XlpWuGIWRFr5dPj/J/dFKKNy+cTwsy6v68dUvvQ=="],
 
     "@parcel/watcher": ["@parcel/watcher@2.5.6", "", { "dependencies": { "detect-libc": "^2.0.3", "is-glob": "^4.0.3", "node-addon-api": "^7.0.0", "picomatch": "^4.0.3" }, "optionalDependencies": { "@parcel/watcher-android-arm64": "2.5.6", "@parcel/watcher-darwin-arm64": "2.5.6", "@parcel/watcher-darwin-x64": "2.5.6", "@parcel/watcher-freebsd-x64": "2.5.6", "@parcel/watcher-linux-arm-glibc": "2.5.6", "@parcel/watcher-linux-arm-musl": "2.5.6", "@parcel/watcher-linux-arm64-glibc": "2.5.6", "@parcel/watcher-linux-arm64-musl": "2.5.6", "@parcel/watcher-linux-x64-glibc": "2.5.6", "@parcel/watcher-linux-x64-musl": "2.5.6", "@parcel/watcher-win32-arm64": "2.5.6", "@parcel/watcher-win32-ia32": "2.5.6", "@parcel/watcher-win32-x64": "2.5.6" } }, "sha512-tmmZ3lQxAe/k/+rNnXQRawJ4NjxO2hqiOLTHvWchtGZULp4RyFeh6aU4XdOYBFe2KE1oShQTv4AblOs2iOrNnQ=="],
 

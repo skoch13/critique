@@ -1,3 +1,8 @@
+# 0.1.93
+
+- Dependencies:
+  - Update `@opentui/core` and `@opentui/react` npm aliases to `@opentuah/*@^0.1.81`
+
 # 0.1.92
 
 - `critique`:

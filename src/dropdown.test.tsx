@@ -63,6 +63,31 @@ describe("Dropdown", () => {
     expect(frame).not.toContain("Select theme")
   })
 
+  it("filters visible options when typing in textarea", async () => {
+    testSetup = await testRender(<DropdownHarness />, {
+      width: 50,
+      height: 12,
+    })
+
+    await act(async () => {
+      await testSetup.renderOnce()
+    })
+    let frame = testSetup.captureCharFrame()
+    // Both options visible initially
+    expect(frame).toContain("GitHub")
+    expect(frame).toContain("Tokyo Night")
+
+    // Type "tokyo" to filter — should hide GitHub and show only Tokyo Night
+    await testSetup.mockInput.typeText("tokyo")
+    await new Promise(r => setTimeout(r, 50))
+    await act(async () => {
+      await testSetup.renderOnce()
+    })
+    frame = testSetup.captureCharFrame()
+    expect(frame).toContain("Tokyo Night")
+    expect(frame).not.toContain("GitHub")
+  })
+
   it("filters options by title and keyword intersections", () => {
     const options = [
       { title: "GitHub", value: "github", keywords: ["git", "hub"] },

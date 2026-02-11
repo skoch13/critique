@@ -28,6 +28,7 @@ export function DiffView({ diff, view, filetype, themeName, wrapMode = "word" }:
 
   // Convert RGBA to hex for diff component props
   const colors = React.useMemo(() => ({
+    text: rgbaToHex(resolvedTheme.text),
     bgPanel: rgbaToHex(resolvedTheme.backgroundPanel),
     diffAddedBg: rgbaToHex(resolvedTheme.diffAddedBg),
     diffRemovedBg: rgbaToHex(resolvedTheme.diffRemovedBg),
@@ -41,6 +42,7 @@ export function DiffView({ diff, view, filetype, themeName, wrapMode = "word" }:
       <diff
         diff={diff}
         view={view}
+        fg={colors.text}
         treeSitterClient={undefined}
         filetype={filetype}
         syntaxStyle={syntaxStyle}

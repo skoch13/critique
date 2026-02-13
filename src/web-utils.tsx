@@ -33,15 +33,29 @@ export interface UploadResult {
   expiresInDays?: number | null
 }
 
-function renderExpiryNotice(options: { textColor: string; mutedColor: string }) {
+function renderNoticeBlock(options: {
+  textColor: string
+  mutedColor: string
+  showExpiry: boolean
+}) {
   const buyUrl = `${WORKER_URL}/buy`
   return (
     <box style={{ flexDirection: "column", paddingBottom: 1, paddingLeft: 1 }}>
       <box style={{ flexDirection: "row" }}>
-        <text fg={options.textColor}>This page will expire in 7 days. </text>
-        <text fg={options.textColor}>Get unlimited links and support the project: </text>
-        <text fg={options.textColor}>{buyUrl}</text>
+        <text fg={options.textColor}>This URL is private - only people with the link can access it.</text>
       </box>
+      <box style={{ flexDirection: "row" }}>
+        <text fg={options.mutedColor}>Use </text>
+        <text fg={options.textColor}>critique unpublish {"<url>"}</text>
+        <text fg={options.mutedColor}> to delete.</text>
+      </box>
+      {options.showExpiry ? (
+        <box style={{ flexDirection: "row" }}>
+          <text fg={options.textColor}>This page will expire in 7 days. </text>
+          <text fg={options.textColor}>Get unlimited links: </text>
+          <text fg={options.textColor}>{buyUrl}</text>
+        </box>
+      ) : null}
     </box>
   )
 }
@@ -157,12 +171,11 @@ export async function renderDiffToFrame(
           backgroundColor: webBg,
         },
       },
-      showExpiryNotice
-        ? renderExpiryNotice({
-            textColor: webText,
-            mutedColor: webMuted,
-          })
-        : null,
+      renderNoticeBlock({
+        textColor: webText,
+        mutedColor: webMuted,
+        showExpiry: showExpiryNotice,
+      }),
       filesWithRawDiff.map((file, idx) => {
         const fileName = getFileName(file)
         const oldFileName = getOldFileName(file)
@@ -401,12 +414,11 @@ export async function renderReviewToFrame(
           backgroundColor: webBg,
         },
       },
-      showExpiryNotice
-        ? renderExpiryNotice({
-            textColor: webText,
-            mutedColor: webMuted,
-          })
-        : null,
+      renderNoticeBlock({
+        textColor: webText,
+        mutedColor: webMuted,
+        showExpiry: showExpiryNotice,
+      }),
       React.createElement(ReviewAppView, {
         hunks: options.hunks,
         reviewData: options.reviewData,

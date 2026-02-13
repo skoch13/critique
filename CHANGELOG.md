@@ -1,3 +1,8 @@
+# 0.1.102
+
+- `critique --web` / `critique web`:
+  - Render the upload notice block in a single muted color (no mixed emphasis)
+
 # 0.1.101
 
 - `critique` / `critique --web` / OG images:

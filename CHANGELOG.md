@@ -1,3 +1,8 @@
+# 0.1.103
+
+- Syntax highlighting:
+  - JSON: render punctuation (quotes/brackets/separators) as muted instead of operator red / full-bright
+
 # 0.1.102
 
 - `critique --web` / `critique web`:

@@ -1,86 +1,89 @@
-// Tests for --stdin pager mode (lazygit integration).
+// Integration test for --stdin pager mode (lazygit integration).
 // Reproduces https://github.com/remorses/critique/issues/25
 //
-// Problem: When critique is used as a pager in lazygit:
-//   git.paging.pager: critique --stdin
+// Uses tuistory to launch critique in a PTY (exactly like lazygit does),
+// pipes a real diff via stdin, and verifies the output is plain scrollback
+// text — not interactive TUI escape sequences.
 //
-// Lazygit runs the pager using a PTY (github.com/creack/pty), so from critique's
-// perspective process.stdout.isTTY is true. The current mode selection logic:
-//
-//   if (options.scrollback || !process.stdout.isTTY)  →  scrollback mode
-//   else  →  TUI mode (interactive, cursor positioning, mouse tracking)
-//
-// Since stdout IS a TTY (PTY), critique enters TUI mode and outputs raw escape
-// sequences like [?1000h (mouse tracking), [row;col;H (cursor positioning) etc.
-// Lazygit's pager panel can't interpret these → shows garbled text.
-//
-// Fix: --stdin should always force scrollback mode. A pager consumer never
-// expects interactive TUI — it expects static colored text output.
+// tuistory spawns a PTY where isTTY=true, which is exactly how lazygit
+// runs its pager (via github.com/creack/pty). This makes the test
+// realistic: it catches the original bug where --stdin + TTY incorrectly
+// entered interactive TUI mode instead of scrollback mode.
 
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect, afterAll, beforeAll } from "bun:test"
+import { launchTerminal } from "tuistory"
+import fs from "fs"
+import path from "path"
 
-describe("--stdin pager mode selection (lazygit issue #25)", () => {
-  // This test validates the decision logic that determines whether to use
-  // scrollback mode or TUI mode. It tests the condition directly.
-  test("--stdin should force scrollback mode regardless of TTY status", () => {
-    // Current buggy condition (cli.tsx:1829):
-    const buggyCondition = (options: { scrollback?: boolean; stdin?: boolean }, isTTY: boolean) =>
-      options.scrollback || !isTTY
+const SAMPLE_DIFF = [
+  "diff --git a/src/hello.ts b/src/hello.ts",
+  "--- a/src/hello.ts",
+  "+++ b/src/hello.ts",
+  "@@ -1,3 +1,3 @@",
+  " const greeting = 'hello'",
+  "-console.log(greeting)",
+  "+console.log(greeting + ' world')",
+  " export default greeting",
+].join("\n")
 
-    // Fixed condition:
-    const fixedCondition = (options: { scrollback?: boolean; stdin?: boolean }, isTTY: boolean) =>
-      options.scrollback || options.stdin || !isTTY
+// Write diff to temp file so bash can cat it without escaping issues
+const TEMP_DIFF_PATH = path.join(import.meta.dir, ".test-stdin-diff.tmp")
 
-    // Scenario 1: lazygit PTY - stdout IS a TTY, --stdin flag set
-    const lazygitOptions = { stdin: true }
-
-    // BUG: current logic sends lazygit to TUI mode
-    expect(buggyCondition(lazygitOptions, true)).toBe(false) // false = TUI mode (wrong!)
-
-    // FIX: stdin flag should force scrollback
-    expect(fixedCondition(lazygitOptions, true)).toBe(true) // true = scrollback mode (correct!)
-
-    // Scenario 2: piped stdout (non-TTY) - both conditions work
-    expect(buggyCondition(lazygitOptions, false)).toBe(true)
-    expect(fixedCondition(lazygitOptions, false)).toBe(true)
-
-    // Scenario 3: normal TUI usage (no --stdin, real TTY)
-    const normalOptions = {}
-    expect(buggyCondition(normalOptions, true)).toBe(false) // TUI mode
-    expect(fixedCondition(normalOptions, true)).toBe(false) // TUI mode (unchanged)
-
-    // Scenario 4: explicit --scrollback
-    const scrollbackOptions = { scrollback: true }
-    expect(buggyCondition(scrollbackOptions, true)).toBe(true)
-    expect(fixedCondition(scrollbackOptions, true)).toBe(true)
+describe("--stdin pager mode (lazygit issue #25)", () => {
+  beforeAll(() => {
+    fs.writeFileSync(TEMP_DIFF_PATH, SAMPLE_DIFF)
   })
 
-  // Verify the exact line in cli.tsx has the bug
-  test("cli.tsx line 1829 should include options.stdin in the condition", async () => {
-    const fs = await import("fs")
-    const path = await import("path")
-    const cliSource = fs.readFileSync(path.join(import.meta.dir, "cli.tsx"), "utf-8")
-
-    // The current buggy condition
-    const hasBuggyCondition = cliSource.includes("options.scrollback || !process.stdout.isTTY")
-
-    // The fixed condition should include options.stdin
-    const hasFixedCondition = cliSource.includes("options.stdin") &&
-      /options\.scrollback\s*\|\|\s*options\.stdin\s*\|\|\s*!process\.stdout\.isTTY/.test(cliSource)
-
-    // This test will fail until the fix is applied, documenting the bug
-    if (hasBuggyCondition && !hasFixedCondition) {
-      // Bug is present — document it
-      expect(hasBuggyCondition).toBe(true)
-      // After fix, this assertion should change
-      console.log(
-        "BUG CONFIRMED: cli.tsx:1829 does not include options.stdin in scrollback condition.\n" +
-        "Fix: Change 'options.scrollback || !process.stdout.isTTY'\n" +
-        "  to: 'options.scrollback || options.stdin || !process.stdout.isTTY'"
-      )
-    } else {
-      // Fix has been applied
-      expect(hasFixedCondition).toBe(true)
-    }
+  afterAll(() => {
+    try {
+      fs.unlinkSync(TEMP_DIFF_PATH)
+    } catch {}
   })
+
+  // This is the real integration test: tuistory launches a PTY (isTTY=true),
+  // exactly replicating how lazygit runs its pager. We pipe a diff into
+  // `critique --stdin` and verify it renders as plain scrollback output.
+  test("critique --stdin renders scrollback output in a PTY", async () => {
+    const session = await launchTerminal({
+      command: "bash",
+      args: [
+        "-c",
+        `cat "${TEMP_DIFF_PATH}" | bun run src/cli.tsx --stdin`,
+      ],
+      cols: 100,
+      rows: 30,
+      cwd: process.cwd(),
+      env: {
+        PATH: process.env.PATH,
+        HOME: process.env.HOME,
+        TERM: "xterm-256color",
+      },
+    })
+
+    // Wait for critique to process the diff and produce output
+    const text = await session.waitForText("hello", { timeout: 15000 })
+
+    // Get a trimmed snapshot for readable assertions
+    const trimmed = await session.text({ trimEnd: true })
+
+    // Snapshot the actual output so we can see what it looks like.
+    // This is the output lazygit users see in their pager panel.
+    expect(trimmed).toMatchInlineSnapshot(`
+"\n This URL is private - only people with the link can access it.\n Use critique unpublish <url> to delete.\n\n a/src/hello.ts → b/src/hello.ts +1-1\n\n 1   const greeting = 'hello'\n 2 - console.log(greeting)\n 2 + console.log(greeting + ' world')\n 3   export default greeting"
+`)
+
+    // The output should contain actual diff content rendered as scrollback
+    expect(text).toContain("hello")
+    expect(text).toContain("greeting")
+    expect(text).toContain("hello.ts")
+
+    // The output should look like a normal diff, not a full-screen TUI app.
+    // A TUI app would fill the entire 30-row terminal with borders, scrollbars,
+    // file tree, etc. Scrollback mode outputs only the diff content and exits.
+    const lines = text.split("\n").filter((l) => l.trim().length > 0)
+    expect(lines.length).toBeLessThan(25)
+    expect(lines.length).toBeGreaterThan(0)
+
+    session.close()
+  }, 30000)
 })

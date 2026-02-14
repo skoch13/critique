@@ -4,8 +4,8 @@
 import { tmpdir } from "os"
 import { join } from "path"
 import fs from "fs"
-import { TextAttributes, rgbToHex, type RGBA } from "@opentui/core"
-import type { CapturedFrame, CapturedLine, CapturedSpan } from "@opentui/core"
+import { TextAttributes, rgbToHex, type RGBA } from "@opentuah/core"
+import type { CapturedFrame, CapturedLine, CapturedSpan } from "@opentuah/core"
 
 // ─────────────────────────────────────────────────────────────
 // Types

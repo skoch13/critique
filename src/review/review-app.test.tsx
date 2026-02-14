@@ -1,7 +1,7 @@
 // Test for ReviewAppView rendering with example YAML data
 
 import { afterEach, describe, expect, it } from "bun:test"
-import { testRender } from "@opentui/react/test-utils"
+import { testRender } from "@opentuah/react/test-utils"
 import { ReviewAppView } from "./review-app.tsx"
 import { createHunk } from "./hunk-parser.ts"
 import type { ReviewYaml } from "./types.ts"

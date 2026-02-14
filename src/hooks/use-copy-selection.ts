@@ -2,7 +2,7 @@
 // Automatically copies selected text to clipboard when user releases mouse button.
 // Uses native clipboard commands (pbcopy, xclip, etc.) with OSC52 fallback.
 
-import { useRenderer } from "@opentui/react"
+import { useRenderer } from "@opentuah/react"
 import { spawn } from "child_process"
 
 /**

@@ -1,7 +1,7 @@
 // Tests for StreamDisplay component
 
 import { afterEach, describe, expect, it } from "bun:test"
-import { testRender } from "@opentui/react/test-utils"
+import { testRender } from "@opentuah/react/test-utils"
 import type { SessionNotification } from "@agentclientprotocol/sdk"
 import { StreamDisplay } from "./stream-display.tsx"
 

@@ -8,7 +8,7 @@ import fs from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 import { getResolvedTheme, rgbaToHex } from "./themes.ts"
-import type { CapturedFrame, RootRenderable, CliRenderer } from "@opentui/core"
+import type { CapturedFrame, RootRenderable, CliRenderer } from "@opentuah/core"
 import type { IndexedHunk, ReviewYaml } from "./review/types.ts"
 import { loadStoredLicenseKey, loadOrCreateOwnerSecret } from "./license.ts"
 
@@ -118,9 +118,9 @@ export async function renderDiffToFrame(
   diffContent: string,
   options: CaptureOptions
 ): Promise<CapturedFrame> {
-  const { createTestRenderer } = await import("@opentui/core/testing")
-  const { createRoot } = await import("@opentui/react")
-  const { getTreeSitterClient } = await import("@opentui/core")
+  const { createTestRenderer } = await import("@opentuah/core/testing")
+  const { createRoot } = await import("@opentuah/react")
+  const { getTreeSitterClient } = await import("@opentuah/core")
   const React = await import("react")
   const { parsePatch, formatPatch } = await import("diff")
   
@@ -375,9 +375,9 @@ export interface ReviewRenderOptions extends CaptureOptions {
 export async function renderReviewToFrame(
   options: ReviewRenderOptions
 ): Promise<CapturedFrame> {
-  const { createTestRenderer } = await import("@opentui/core/testing")
-  const { createRoot } = await import("@opentui/react")
-  const { getTreeSitterClient } = await import("@opentui/core")
+  const { createTestRenderer } = await import("@opentuah/core/testing")
+  const { createRoot } = await import("@opentuah/react")
+  const { getTreeSitterClient } = await import("@opentuah/core")
   const React = await import("react")
   
   // Pre-initialize TreeSitter client to ensure syntax highlighting works

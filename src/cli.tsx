@@ -15,7 +15,7 @@ import {
   useOnResize,
   useRenderer,
   useTerminalDimensions,
-} from "@opentui/react";
+} from "@opentuah/react";
 import { useCopySelection } from "./hooks/use-copy-selection.ts";
 import * as React from "react";
 import { exec, execSync } from "child_process";
@@ -26,7 +26,7 @@ import {
   ScrollBoxRenderable,
   BoxRenderable,
   addDefaultParsers,
-} from "@opentui/core";
+} from "@opentuah/core";
 import parsersConfig from "../parsers-config.ts";
 
 // Register custom syntax highlighting parsers

@@ -2,8 +2,8 @@
 // Uses opentui's test renderer to capture structured span data and generates responsive HTML documents
 // with proper font scaling to fit terminal content within viewport width.
 
-import { TextAttributes, rgbToHex, type RGBA } from "@opentui/core"
-import type { CapturedFrame, CapturedLine, CapturedSpan } from "@opentui/core"
+import { TextAttributes, rgbToHex, type RGBA } from "@opentuah/core"
+import type { CapturedFrame, CapturedLine, CapturedSpan } from "@opentuah/core"
 
 export interface ToHtmlOptions {
   /** Background color for the container */

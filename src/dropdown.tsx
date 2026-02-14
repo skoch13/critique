@@ -3,8 +3,8 @@
 // Used by main diff view for file picker and theme picker overlays.
 
 import React, { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useKeyboard } from "@opentui/react";
-import { TextAttributes, TextareaRenderable } from "@opentui/core";
+import { useKeyboard } from "@opentuah/react";
+import { TextAttributes, TextareaRenderable } from "@opentuah/core";
 import { type ResolvedTheme, rgbaToHex } from "./themes";
 
 export interface DropdownOption {

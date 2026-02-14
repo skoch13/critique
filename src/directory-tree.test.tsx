@@ -2,7 +2,7 @@
 // Uses opentui test renderer with captureCharFrame() for visual testing
 
 import { afterEach, describe, expect, it } from "bun:test"
-import { testRender } from "@opentui/react/test-utils"
+import { testRender } from "@opentuah/react/test-utils"
 import { buildDirectoryTree, type TreeFileInfo, type TreeNode } from "./directory-tree.ts"
 import { DirectoryTreeView } from "./components/directory-tree-view.tsx"
 

@@ -3,8 +3,8 @@
 // Falls back gracefully: truecolor → 256 → 16 → plain text.
 
 import supportsColor from "supports-color"
-import { TextAttributes, type RGBA } from "@opentui/core"
-import type { CapturedFrame, CapturedSpan, CapturedLine } from "@opentui/core"
+import { TextAttributes, type RGBA } from "@opentuah/core"
+import type { CapturedFrame, CapturedSpan, CapturedLine } from "@opentuah/core"
 
 // Color support levels: 0=none, 1=16 colors, 2=256 colors, 3=truecolor
 type ColorLevel = 0 | 1 | 2 | 3

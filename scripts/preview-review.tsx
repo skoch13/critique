@@ -3,12 +3,12 @@
 // Renders example hunks and review data to preview TUI appearance.
 // Run with: bun run scripts/preview-review.tsx (TUI) or --web (HTML upload).
 
-import { createCliRenderer, addDefaultParsers } from "@opentui/core"
+import { createCliRenderer, addDefaultParsers } from "@opentuah/core"
 import parsersConfig from "../parsers-config.ts"
 
 // Register custom syntax highlighting parsers
 addDefaultParsers(parsersConfig.parsers)
-import { createRoot } from "@opentui/react"
+import { createRoot } from "@opentuah/react"
 import * as React from "react"
 import { ReviewApp, ReviewAppView } from "../src/review/review-app.tsx"
 import { createHunk } from "../src/review/hunk-parser.ts"

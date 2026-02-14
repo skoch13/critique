@@ -3,7 +3,7 @@
 import * as React from "react"
 import { afterEach, describe, expect, it } from "bun:test"
 import { act } from "react"
-import { testRender } from "@opentui/react/test-utils"
+import { testRender } from "@opentuah/react/test-utils"
 import { DiffView } from "./diff-view.tsx"
 import { useAppStore } from "../store.ts"
 

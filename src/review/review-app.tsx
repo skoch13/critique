@@ -3,8 +3,8 @@
 // Supports live generation updates, theme switching, and resume from saved reviews.
 
 import * as React from "react"
-import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/react"
-import { MacOSScrollAccel, SyntaxStyle, BoxRenderable, CodeRenderable, TextRenderable, ScrollBoxRenderable } from "@opentui/core"
+import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentuah/react"
+import { MacOSScrollAccel, SyntaxStyle, BoxRenderable, CodeRenderable, TextRenderable, ScrollBoxRenderable } from "@opentuah/core"
 import { useCopySelection } from "../hooks/use-copy-selection.ts"
 import type { Token } from "marked"
 import { getResolvedTheme, getSyntaxTheme, defaultThemeName, themeNames, rgbaToHex } from "../themes.ts"

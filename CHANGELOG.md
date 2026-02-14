@@ -1,3 +1,9 @@
+# 0.1.104
+
+- `critique`:
+  - Fix crash in Bun compiled binaries where terminal TTY `columns`/`rows` report as 0, causing NaN framebuffer dimensions
+  - Replace `@opentui/*` npm alias remapping with direct `@opentuah/*` imports
+
 # 0.1.103
 
 - Syntax highlighting:

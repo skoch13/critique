@@ -2,7 +2,7 @@
 // Uses opentui-image.ts for generic frame-to-image conversion.
 // Adds theme resolution and diff/review-specific rendering.
 
-import type { CapturedFrame } from "@opentui/core"
+import type { CapturedFrame } from "@opentuah/core"
 import { getResolvedTheme, rgbaToHex } from "./themes.ts"
 import {
   renderFrameToImage,

@@ -3,7 +3,7 @@
 // Shows formatted tool operations with file names and edit statistics.
 
 import * as React from "react"
-import { SyntaxStyle } from "@opentui/core"
+import { SyntaxStyle } from "@opentuah/core"
 import type { SessionNotification } from "@agentclientprotocol/sdk"
 import { formatNotifications, SYMBOLS, COLORS, isEditTool, type StreamLine } from "./acp-stream-display.ts"
 import { getSyntaxTheme, getResolvedTheme, rgbaToHex } from "../themes.ts"

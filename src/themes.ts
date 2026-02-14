@@ -2,7 +2,7 @@
 // Loads JSON theme files lazily on demand, resolves color references,
 // and provides both UI colors and Tree-sitter compatible syntax styles.
 
-import { parseColor, RGBA } from "@opentui/core";
+import { parseColor, RGBA } from "@opentuah/core";
 import { fileURLToPath } from "url";
 
 // Only import the default theme statically for fast startup

@@ -459,7 +459,7 @@ export function processFiles<T extends ParsedFile>(
 
 /**
  * Detect filetype from filename for syntax highlighting
- * Maps to tree-sitter parsers available in @opentui/core and parsers-config.ts
+ * Maps to tree-sitter parsers available in @opentuah/core and parsers-config.ts
  */
 export function detectFiletype(filePath: string): string | undefined {
   const ext = filePath.split(".").pop()?.toLowerCase();

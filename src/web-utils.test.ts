@@ -1,8 +1,8 @@
 import { describe, test, expect, afterEach } from "bun:test"
-import { createTestRenderer } from "@opentui/core/testing"
-import { createRoot } from "@opentui/react"
+import { createTestRenderer } from "@opentuah/core/testing"
+import { createRoot } from "@opentuah/react"
 import React from "react"
-import { RGBA } from "@opentui/core"
+import { RGBA } from "@opentuah/core"
 
 describe("getSpanLines rendering", () => {
   let renderer: Awaited<ReturnType<typeof createTestRenderer>>["renderer"] | null = null

@@ -17,8 +17,8 @@ gh pr view 536 -R anomalyco/opentui --json commits --jq '.commits[-1].oid[:40]'
 then use it in package.json:
 
 ```
-https://pkg.pr.new/anomalyco/opentui/@opentui/core@<hash>
-https://pkg.pr.new/anomalyco/opentui/@opentui/react@<hash>
+https://pkg.pr.new/anomalyco/opentui/@opentuah/core@<hash>
+https://pkg.pr.new/anomalyco/opentui/@opentuah/react@<hash>
 ```
 
 YOU MUST ALWAYS use the commit hash 40 characters long when changing the pkg.pr.new url! not the pr number! 
@@ -134,10 +134,7 @@ npx opensrc <owner>/<repo>      # GitHub repo (e.g., npx opensrc vercel/ai)
 
 ## opentui fork
 
-we are using an opentui fork with name opentuah with my personal PRs merged
-
-"@opentui/core": "npm:@opentuah/core@^0.1.80",
-"@opentui/react": "npm:@opentuah/react@^0.1.80",
+we are using an opentui fork published as `@opentuah`. imports use `@opentuah/core` and `@opentuah/react` directly (no npm alias remapping).
 
 To find my opentui folder with that fork see kimaki projects via kimaki cli, the one named opentui.
 

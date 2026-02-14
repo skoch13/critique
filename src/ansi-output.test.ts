@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test"
 import { spanToAnsi, frameToAnsi } from "./ansi-output.ts"
-import { RGBA } from "@opentui/core"
-import type { CapturedFrame, CapturedSpan, CapturedLine } from "@opentui/core"
+import { RGBA } from "@opentuah/core"
+import type { CapturedFrame, CapturedSpan, CapturedLine } from "@opentuah/core"
 
 const themeBg = RGBA.fromValues(0, 0, 0, 1) // Black background
 

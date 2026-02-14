@@ -3,7 +3,7 @@
 // Supports split and unified view modes with line numbers.
 
 import * as React from "react"
-import { SyntaxStyle } from "@opentui/core"
+import { SyntaxStyle } from "@opentuah/core"
 import { getSyntaxTheme, getResolvedTheme, rgbaToHex } from "../themes.ts"
 
 export interface DiffViewProps {

@@ -1,5 +1,8 @@
 # 0.1.104
 
+- `critique --stdin` (pager mode):
+  - Force scrollback mode for `--stdin` pager usage to fix lazygit integration (#25)
+  - When used as a pager (e.g. `critique --stdin` in lazygit), critique now correctly outputs static colored text instead of interactive TUI escape sequences
 - `critique`:
   - Fix crash in Bun compiled binaries where terminal TTY `columns`/`rows` report as 0, causing NaN framebuffer dimensions
   - Replace `@opentui/*` npm alias remapping with direct `@opentuah/*` imports

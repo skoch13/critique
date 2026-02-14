@@ -3,6 +3,10 @@
 // Provides TUI diff viewing, AI-powered review generation, and web preview upload.
 // Commands: default (diff), review (AI analysis), web (HTML upload), pick (cherry-pick files).
 
+// Must be first import: patches process.stdout.columns/rows for Bun compiled binaries
+// where they incorrectly return 0 instead of actual terminal dimensions.
+import "./patch-terminal-dimensions.ts";
+
 import { goke, wrapJsonSchema } from "goke";
 import {
   createRoot,
@@ -1826,7 +1830,7 @@ cli
       return;
     }
 
-    if (options.scrollback || !process.stdout.isTTY) {
+    if (options.scrollback || options.stdin || !process.stdout.isTTY) {
       // For scrollback, prefer terminal width over --cols default (240 is for web)
       const scrollbackCols = process.stdout.columns || parseInt(options.cols) || 120;
       await runScrollbackMode(cleanedDiff, {

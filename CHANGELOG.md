@@ -1,3 +1,11 @@
+# 0.1.105
+
+- `critique --stdin` / `critique --web`:
+  - Only show 'URL is private' notice when generating with --web (fix notice appearing in scrollback/pager output like lazygit where it makes no sense)
+- Tests:
+  - Add comprehensive integration tests for --stdin pager mode using tuistory (10 test cases covering empty diffs, multiple files, renames, binary files, narrow terminals, etc.)
+  - Rewrite lazygit pager test as real integration test that launches critique in a PTY and verifies scrollback output
+
 # 0.1.104
 
 - `critique --stdin` (pager mode):

@@ -2,10 +2,14 @@
 
 import * as React from "react"
 import { afterEach, describe, expect, it } from "bun:test"
-import { act } from "react"
 import { testRender } from "@opentuah/react/test-utils"
+import { getDataPaths } from "@opentuah/core"
 import { DiffView } from "./diff-view.tsx"
 import { useAppStore } from "../store.ts"
+
+// Suppress EventTarget memory leak warning from opentui DataPathsManager —
+// each DiffView registers a paths:changed listener during tree-sitter init
+getDataPaths().setMaxListeners(50)
 
 const sampleDiff = `diff --git a/a.txt b/a.txt
 index 1111111..2222222 100644
@@ -38,6 +42,16 @@ function extractDiffBackgroundSample(frame: any) {
   }
 }
 
+// Suppress React act() warnings for opentui component tests.
+// opentui's internal rendering triggers state updates outside act() boundaries,
+// which is expected behavior for TUI component testing.
+// testRender sets IS_REACT_ACT_ENVIRONMENT=true, so we must disable it after.
+async function setupTest(jsx: React.ReactElement, opts: { width: number; height: number }) {
+  const setup = await testRender(jsx, opts)
+  ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = false
+  return setup
+}
+
 describe("DiffView", () => {
   let testSetup: Awaited<ReturnType<typeof testRender>>
 
@@ -51,14 +65,12 @@ describe("DiffView", () => {
   it("updates diff background colors after theme switch", async () => {
     useAppStore.setState({ themeName: "github" })
 
-    testSetup = await testRender(<ThemeToggleHarness />, {
+    testSetup = await setupTest(<ThemeToggleHarness />, {
       width: 80,
       height: 8,
     })
 
-    await act(async () => {
-      await testSetup.renderOnce()
-    })
+    await testSetup.renderOnce()
 
     const before = extractDiffBackgroundSample(testSetup.captureSpans())
     expect(before).toMatchInlineSnapshot(`
@@ -84,11 +96,9 @@ describe("DiffView", () => {
       }
     `)
 
-    await act(async () => {
-      useAppStore.setState({ themeName: "tokyonight" })
-      await new Promise((r) => setTimeout(r, 10))
-      await testSetup.renderOnce()
-    })
+    useAppStore.setState({ themeName: "tokyonight" })
+    await new Promise((r) => setTimeout(r, 10))
+    await testSetup.renderOnce()
 
     const after = extractDiffBackgroundSample(testSetup.captureSpans())
     expect(after).toMatchInlineSnapshot(`

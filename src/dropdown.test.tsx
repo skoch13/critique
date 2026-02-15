@@ -29,6 +29,17 @@ function DropdownHarness() {
   )
 }
 
+// Suppress React act() warnings for opentui input tests.
+// opentui's mockInput triggers state updates asynchronously via stdin parsing,
+// which inherently happens outside act(). This is expected behavior for TUI
+// component testing — not a real problem.
+// testRender sets IS_REACT_ACT_ENVIRONMENT=true, so we must disable it after.
+async function setupTest(jsx: React.ReactElement, opts: { width: number; height: number }) {
+  const setup = await testRender(jsx, opts)
+  ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = false
+  return setup
+}
+
 describe("Dropdown", () => {
   let testSetup: Awaited<ReturnType<typeof testRender>>
 
@@ -39,14 +50,12 @@ describe("Dropdown", () => {
   })
 
   it("closes on escape", async () => {
-    testSetup = await testRender(<DropdownHarness />, {
+    testSetup = await setupTest(<DropdownHarness />, {
       width: 50,
       height: 12,
     })
 
-    await act(async () => {
-      await testSetup.renderOnce()
-    })
+    await testSetup.renderOnce()
     let frame = testSetup.captureCharFrame()
     expect(frame).toContain("Select theme")
 
@@ -55,23 +64,19 @@ describe("Dropdown", () => {
     // Allow stdin event to be parsed and trigger React state update
     await new Promise(r => setTimeout(r, 10))
     // Render the updated state
-    await act(async () => {
-      await testSetup.renderOnce()
-    })
+    await testSetup.renderOnce()
     frame = testSetup.captureCharFrame()
     expect(frame).toContain("closed")
     expect(frame).not.toContain("Select theme")
   })
 
   it("filters visible options when typing in textarea", async () => {
-    testSetup = await testRender(<DropdownHarness />, {
+    testSetup = await setupTest(<DropdownHarness />, {
       width: 50,
       height: 12,
     })
 
-    await act(async () => {
-      await testSetup.renderOnce()
-    })
+    await testSetup.renderOnce()
     let frame = testSetup.captureCharFrame()
     // Both options visible initially
     expect(frame).toContain("GitHub")
@@ -80,9 +85,7 @@ describe("Dropdown", () => {
     // Type "tokyo" to filter — should hide GitHub and show only Tokyo Night
     await testSetup.mockInput.typeText("tokyo")
     await new Promise(r => setTimeout(r, 50))
-    await act(async () => {
-      await testSetup.renderOnce()
-    })
+    await testSetup.renderOnce()
     frame = testSetup.captureCharFrame()
     expect(frame).toContain("Tokyo Night")
     expect(frame).not.toContain("GitHub")

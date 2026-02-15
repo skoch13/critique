@@ -24,7 +24,7 @@ export interface CaptureOptions {
   title?: string
   /** Wrap mode for long lines (default: "word") */
   wrapMode?: "word" | "char" | "none"
-  /** Show privacy/expiry notice block at top (default: true) */
+  /** Show privacy/expiry notice block at top (default: false, enabled for web uploads) */
   showNotice?: boolean
 }
 
@@ -160,7 +160,7 @@ export async function renderDiffToFrame(
   const webMuted = rgbaToHex(webTheme.textMuted)
 
   const showExpiryNotice = shouldShowExpiryNotice()
-  const showNotice = options.showNotice !== false
+  const showNotice = options.showNotice === true
 
   // Create the diff view component
   // NOTE: No height: "100%" - let content determine its natural height
@@ -293,8 +293,8 @@ export async function captureToHtml(
 ): Promise<string> {
   const { frameToHtmlDocument } = await import("./ansi-html.ts")
 
-  // Render diff to captured frame
-  const frame = await renderDiffToFrame(diffContent, options)
+  // Render diff to captured frame (with notice for web uploads)
+  const frame = await renderDiffToFrame(diffContent, { ...options, showNotice: true })
 
   // Get theme colors for HTML output
   const theme = getResolvedTheme(options.themeName)
@@ -396,7 +396,7 @@ export async function renderReviewToFrame(
   const webText = rgbaToHex(theme.text)
   const webMuted = rgbaToHex(theme.textMuted)
   const showExpiryNotice = shouldShowExpiryNotice()
-  const showNotice = options.showNotice !== false
+  const showNotice = options.showNotice === true
 
   // Content-fitting: start small, double if clipped, shrink to fit
   let currentHeight = 100
@@ -488,8 +488,8 @@ export async function captureReviewToHtml(
 ): Promise<string> {
   const { frameToHtmlDocument } = await import("./ansi-html.ts")
 
-  // Render review to captured frame
-  const frame = await renderReviewToFrame(options)
+  // Render review to captured frame (with notice for web uploads)
+  const frame = await renderReviewToFrame({ ...options, showNotice: true })
 
   // Get theme colors for HTML output
   const theme = getResolvedTheme(options.themeName)

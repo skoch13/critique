@@ -69,7 +69,13 @@ describe("--stdin pager mode (lazygit issue #25)", () => {
     // Snapshot the actual output so we can see what it looks like.
     // This is the output lazygit users see in their pager panel.
     expect(trimmed).toMatchInlineSnapshot(`
-"\n This URL is private - only people with the link can access it.\n Use critique unpublish <url> to delete.\n\n a/src/hello.ts → b/src/hello.ts +1-1\n\n 1   const greeting = 'hello'\n 2 - console.log(greeting)\n 2 + console.log(greeting + ' world')\n 3   export default greeting"
+"
+ a/src/hello.ts → b/src/hello.ts +1-1
+
+ 1   const greeting = 'hello'
+ 2 - console.log(greeting)
+ 2 + console.log(greeting + ' world')
+ 3   export default greeting"
 `)
 
     // The output should contain actual diff content rendered as scrollback

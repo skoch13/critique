@@ -510,9 +510,8 @@ async function runReviewMode(
       { model },
     );
 
-    // Web mode: wait for full generation, then render to HTML
-    if (webOptions?.web) {
-      // Wait for generation to complete
+    // Non-interactive modes (web/json or pdf): wait for full generation first
+    if (webOptions?.web || pdfOptions) {
       try {
         await sessionPromise;
         const log = ensureAnalysisLog();
@@ -521,7 +520,7 @@ async function runReviewMode(
         }
         updateToolSpinner(0);
         log.success("Analysis complete");
-        logger.info("Review generation completed, generating web preview");
+        logger.info("Review generation completed");
 
         // Save the review as completed
         savePendingReview("completed");
@@ -545,7 +544,10 @@ async function runReviewMode(
         if (json) console.log(JSON.stringify({ error: errorMessage }));
         process.exit(1);
       }
+    }
 
+    // Web mode: generate HTML and upload
+    if (webOptions?.web) {
       // Import web utilities
       const {
         captureReviewResponsiveHtml,

@@ -4,7 +4,7 @@
 // Run with: bun run scripts/preview-review.tsx (TUI) or --web (HTML upload).
 
 import { createCliRenderer, addDefaultParsers } from "@opentuah/core"
-import parsersConfig from "../parsers-config.ts"
+import parsersConfig from "../src/parsers-config.ts"
 
 // Register custom syntax highlighting parsers
 addDefaultParsers(parsersConfig.parsers)

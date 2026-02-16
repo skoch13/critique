@@ -8,10 +8,7 @@
   "bin": "./src/cli.tsx",
   "files": [
     "src",
-    "public",
-    "queries",
-    "parsers-config.ts",
-    "global.d.ts"
+    "public"
   ],
   "scripts": {
     "cli": "bun src/cli.tsx",

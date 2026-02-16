@@ -27,7 +27,7 @@ import {
   BoxRenderable,
   addDefaultParsers,
 } from "@opentuah/core";
-import parsersConfig from "../parsers-config.ts";
+import parsersConfig from "./parsers-config.ts";
 
 // Register custom syntax highlighting parsers
 addDefaultParsers(parsersConfig.parsers);
@@ -650,7 +650,8 @@ async function runReviewMode(
       pdfSpinner.start("Generating PDF...");
 
       try {
-        const themeName = defaultThemeName;
+        // PDF defaults to github-light (better for print/reading)
+        const themeName = "github-light";
         const cols = 140;
 
         // Capture frame using opentui test renderer
@@ -1124,9 +1125,10 @@ async function runPdfMode(
   const { join } = await import("path");
   const { tmpdir } = await import("os");
 
+  // PDF defaults to github-light (better for print/reading), but respects --theme
   const themeName = options.theme && themeNames.includes(options.theme)
     ? options.theme
-    : persistedState.themeName ?? defaultThemeName;
+    : "github-light";
 
   const cols = options.cols || 140;
 

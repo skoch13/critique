@@ -7,6 +7,7 @@
   "private": false,
   "bin": "./src/cli.tsx",
   "files": [
+    "dist",
     "src",
     "public"
   ],
